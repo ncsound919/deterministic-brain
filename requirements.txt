@@ -1,0 +1,35 @@
+# Core orchestration
+langgraph>=0.2.0
+langchain-core>=0.3.0
+
+# API server
+fastapi>=0.115.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
+
+# Vector search
+qdrant-client>=1.9.0
+
+# Graph database
+neo4j>=5.20.0
+
+# Embeddings (CPU-efficient)
+onnxruntime>=1.18.0
+
+# LLM inference (CPU)
+llama-cpp-python>=0.2.70
+
+# Symbolic reasoning
+z3-solver>=4.13.0
+pyreason>=2.0.0
+
+# Browser control
+browser-use>=0.1.0
+playwright>=1.44.0
+
+# Web augmentation
+tavily-python>=0.3.0
+
+# Utilities
+python-dotenv>=1.0.0
+numpy>=1.26.0
