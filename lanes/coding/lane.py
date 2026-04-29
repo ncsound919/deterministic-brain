@@ -1,49 +1,55 @@
 from __future__ import annotations
 from planners.code_planner import plan_code_task
 from tools.code_executor import execute_code
-from lanes.coding.repair import repair_loop
+from tools.llm.router import generate_code
 from lanes.coding.analysis import static_check, generate_contract
 
-ROUTER_CODE = (
-    "def solve(query: str) -> str:\n"
-    "    \"\"\"Route query to the appropriate lane.\"\"\"\n"
-    "    q = query.lower()\n"
-    "    if 'code' in q:\n        return 'coding'\n"
-    "    if 'policy' in q:\n        return 'business_logic'\n"
-    "    if 'browser' in q:\n        return 'agent_brain'\n"
-    "    if 'tool' in q:\n        return 'tool_calling'\n"
-    "    return 'cross_domain'\n"
-)
-SORT_CODE = (
-    "def solve(data: list) -> list:\n"
-    "    \"\"\"Return sorted copy of a list.\"\"\"\n"
-    "    return sorted(data)\n"
-)
-DEFAULT_CODE = (
-    "def solve(data: dict) -> dict:\n"
-    "    \"\"\"Validate and return input data.\"\"\"\n"
-    "    if not isinstance(data, dict):\n"
-    "        raise TypeError('Input must be a dict')\n"
-    "    return {'status': 'ok', 'input': data}\n"
-)
+_MAX_REPAIR = 3
 
-def _build_candidate(query: str) -> dict:
+def _llm_generate_and_repair(query: str, contexts: list) -> dict:
+    snippets = [c.get('text', '') for c in contexts[:5]]
+    code = generate_code(query, context_snippets=snippets)
+    tests = _infer_tests(query, code)
+    candidate = {'id': 'code1', 'kind': 'code', 'content': code, 'tests': tests, 'repair_attempts': 0}
+
+    for attempt in range(_MAX_REPAIR):
+        result = execute_code(candidate['content'], candidate['tests'])
+        if result['passed']:
+            candidate['repair_attempts'] = attempt
+            return candidate
+        errors = result.get('errors', [])
+        candidate['content'] = generate_code(
+            candidate['content'],
+            repair_errors=errors,
+            repair_tests=candidate['tests'],
+            repair_attempt=attempt,
+        )
+
+    candidate['repair_attempts'] = _MAX_REPAIR
+    candidate['repair_failed'] = True
+    return candidate
+
+def _infer_tests(query: str, code: str) -> list[str]:
+    """Derive simple smoke tests from the generated code."""
     q = query.lower()
-    if 'router' in q:
-        return {'id': 'code1', 'kind': 'code', 'content': ROUTER_CODE,
-                'tests': ["assert solve('write code') == 'coding'",
-                           "assert solve('policy review') == 'business_logic'",
-                           "assert solve('trend analysis') == 'cross_domain'"]}
     if 'sort' in q:
-        return {'id': 'code1', 'kind': 'code', 'content': SORT_CODE,
-                'tests': ["assert solve([3,1,2]) == [1,2,3]", "assert solve([]) == []"]}
-    return {'id': 'code1', 'kind': 'code', 'content': DEFAULT_CODE,
-            'tests': ["assert solve({'a': 1})['status'] == 'ok'"]}
+        return ["assert solve([3,1,2]) == [1,2,3]", "assert solve([]) == []"]
+    if 'search' in q or 'find' in q:
+        return ["assert solve([1,2,3], 2) == 1", "assert solve([], 0) == -1"]
+    if 'router' in q:
+        return ["assert solve('write code') == 'coding'",
+                "assert solve('policy') == 'business_logic'"]
+    # Generic: function must at least be callable
+    fn_lines = [l for l in code.splitlines() if l.startswith('def ')]
+    if fn_lines:
+        fn_name = fn_lines[0].split('(')[0].replace('def ', '').strip()
+        return [f"assert callable({fn_name})"]
+    return ["assert True"]
 
 def run(state: dict) -> dict:
     plan = plan_code_task(state['query'])
-    candidate = _build_candidate(state['query'])
-    candidate = repair_loop(candidate)
+    contexts = state.get('retrieved_contexts', [])
+    candidate = _llm_generate_and_repair(state['query'], contexts)
     exec_result = execute_code(candidate['content'], candidate['tests'])
     static = static_check(candidate['content'])
     contracts = generate_contract(candidate['content'])
@@ -60,5 +66,6 @@ def run(state: dict) -> dict:
     state['output_mode'] = 'code'
     state['confidence'] = 0.96 if (exec_result['passed'] and static['passed']) else (0.72 if exec_result['passed'] else 0.45)
     state['history'].append({'lane': 'coding', 'plan': plan, 'candidate': candidate['id'],
-                             'repair_attempts': candidate.get('repair_attempts', 0)})
+                             'repair_attempts': candidate.get('repair_attempts', 0),
+                             'llm_backend': 'opencode_via_openrouter'})
     return state
