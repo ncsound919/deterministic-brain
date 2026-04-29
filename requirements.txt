@@ -7,6 +7,9 @@ fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.7.0
 
+# LLM — OpenRouter / OpenAI-compatible (primary backbone)
+openai>=1.30.0
+
 # Vector search
 qdrant-client>=1.9.0
 
@@ -16,7 +19,7 @@ neo4j>=5.20.0
 # Embeddings (CPU-efficient)
 onnxruntime>=1.18.0
 
-# LLM inference (CPU)
+# LLM inference (CPU fallback)
 llama-cpp-python>=0.2.70
 
 # Symbolic reasoning

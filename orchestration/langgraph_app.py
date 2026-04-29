@@ -13,6 +13,7 @@ from reasoning.mcts_search import MCTSSearch
 from reasoning.z3_constraints import verify_candidate
 from reasoning.pyreason_adapter import PyReasonAdapter
 from tools.tracing import checkpoint_state, get_trace
+from tools.llm.router import generate_text
 from lanes.coding.lane import run as run_coding
 from lanes.business_logic.lane import run as run_business_logic
 from lanes.agent_brain.lane import run as run_agent_brain
@@ -20,15 +21,43 @@ from lanes.tool_calling.lane import run as run_tool_calling
 from lanes.cross_domain.lane import run as run_cross_domain
 
 LANE_RUNNERS = {
-    'coding': run_coding,
+    'coding':         run_coding,
     'business_logic': run_business_logic,
-    'agent_brain': run_agent_brain,
-    'tool_calling': run_tool_calling,
-    'cross_domain': run_cross_domain,
+    'agent_brain':    run_agent_brain,
+    'tool_calling':   run_tool_calling,
+    'cross_domain':   run_cross_domain,
 }
 
-_mcts = MCTSSearch()
+_mcts     = MCTSSearch()
 _pyreason = PyReasonAdapter()
+
+# ---------------------------------------------------------------------------
+# System prompts for CoT pre-pass
+# ---------------------------------------------------------------------------
+
+_COT_SYSTEMS: dict[str, str] = {
+    'coding': (
+        'You are a software architect. Reason step by step about the coding task: '
+        'what inputs/outputs are needed, what edge cases exist, what algorithm is best suited. '
+        'Be concise and technical.'
+    ),
+    'business_logic': (
+        'You are a policy analyst. Reason step by step about the business rule: '
+        'which stakeholders are involved, what compliance constraints apply, what conflicts might arise.'
+    ),
+    'agent_brain': (
+        'You are a browser automation planner. Reason step by step: '
+        'what page state is expected, what DOM elements to target, what could go wrong.'
+    ),
+    'tool_calling': (
+        'You are an API integration expert. Reason step by step: '
+        'which tool best fits this request, what arguments are needed, what validation is required.'
+    ),
+    'cross_domain': (
+        'You are a strategic analyst. Reason step by step: '
+        'which domains are relevant, what evidence is available, how signals interact.'
+    ),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +119,53 @@ def node_lane_selector(state: dict) -> dict:
     return state
 
 
+def node_cot_prepass(state: dict) -> dict:
+    """
+    Chain-of-thought pre-pass node.
+
+    Asks the LLM to reason step by step about the query before the lane
+    executes.  The scratchpad is stored in working_memory so the lane
+    can use it as context, and so traces capture the full reasoning chain.
+    This mirrors the o1/o3 extended thinking approach.
+    """
+    lane   = state['lane']
+    system = _COT_SYSTEMS.get(lane, _COT_SYSTEMS['cross_domain'])
+    query  = state['query']
+
+    ctx_snippets = ' | '.join(
+        c.get('text', '')[:80] for c in state.get('retrieved_contexts', [])[:3]
+    )
+    user_prompt = (
+        f'Query: {query}\n'
+        + (f'Relevant context: {ctx_snippets}\n' if ctx_snippets else '')
+        + 'Think through this step by step before the execution lane runs.'
+    )
+
+    result = generate_text(
+        prompt=user_prompt,
+        lane=lane,
+        system=system,
+        max_tokens=1024,
+        use_cot=True,
+    )
+
+    if isinstance(result, tuple):
+        scratchpad, cot_answer = result
+    else:
+        scratchpad, cot_answer = '', str(result)
+
+    state['working_memory']['cot_scratchpad'] = scratchpad
+    state['working_memory']['cot_answer']     = cot_answer
+    state['history'].append({
+        'node': 'cot_prepass',
+        'lane': lane,
+        'scratchpad_len': len(scratchpad),
+        'cot_answer_preview': cot_answer[:120],
+    })
+    checkpoint_state('cot_prepass', state)
+    return state
+
+
 def node_pyreason(state: dict) -> dict:
     """Run neuro-symbolic graph reasoning over retrieved contexts."""
     derived, trace = _pyreason.reason(
@@ -98,7 +174,7 @@ def node_pyreason(state: dict) -> dict:
         state['query'],
     )
     state['working_memory']['derived_facts'] = derived
-    state['working_memory']['logic_trace'] = trace
+    state['working_memory']['logic_trace']   = trace
     state['history'].append({'node': 'pyreason', 'derived_count': len(derived)})
     checkpoint_state('pyreason', state)
     return state
@@ -106,10 +182,9 @@ def node_pyreason(state: dict) -> dict:
 
 def node_lane_runner(state: dict) -> dict:
     """Execute the selected lane."""
-    lane = state['lane']
+    lane  = state['lane']
     state = LANE_RUNNERS[lane](state)
 
-    # Normalise artifacts for lanes that don't build candidate_artifacts themselves
     if lane == 'tool_calling' and state.get('tool_calls') and not state.get('candidate_artifacts'):
         state['candidate_artifacts'] = [{
             'id': 'tool1', 'kind': 'tool_calling',
@@ -158,7 +233,7 @@ def node_verifier(state: dict) -> dict:
     if not verdict['passed']:
         state['status'] = 'retry'
         state['final_output'] = 'Verification failed; refinement required.'
-        state['confidence'] = min(state.get('confidence', 0.0), 0.49)
+        state['confidence']   = min(state.get('confidence', 0.0), 0.49)
     else:
         state['status'] = 'ok'
     state['history'].append({'node': 'verifier', 'passed': verdict['passed'], 'stage': verdict['stage']})
@@ -168,16 +243,16 @@ def node_verifier(state: dict) -> dict:
 
 def node_composer(state: dict) -> dict:
     """Assemble final_output and set output_mode."""
-    lane = state['lane']
+    lane      = state['lane']
     artifacts = state.get('candidate_artifacts', [])
     if artifacts and not state.get('final_output'):
         state['final_output'] = artifacts[0].get('content', '')
     mode_map = {
-        'coding': 'code',
+        'coding':         'code',
         'business_logic': 'plan',
-        'agent_brain': 'action',
-        'tool_calling': 'action',
-        'cross_domain': 'answer',
+        'agent_brain':    'action',
+        'tool_calling':   'action',
+        'cross_domain':   'answer',
     }
     state['output_mode'] = mode_map.get(lane, 'answer')
     state['history'].append({'node': 'composer', 'output_mode': state['output_mode']})
@@ -187,13 +262,17 @@ def node_composer(state: dict) -> dict:
 
 def node_fallback_llm(state: dict) -> dict:
     """Low-confidence fallback: clarify or produce minimal safe answer."""
-    state['final_output'] = (
-        f'[Fallback] Query not confidently resolved. '
-        f'Lane={state["lane"]}, confidence={state.get("confidence", 0):.2f}. '
-        'Please refine your query or provide more context.'
+    fallback_prompt = (
+        f"The query '{state['query']}' could not be confidently resolved "
+        f"by lane '{state['lane']}' (confidence={state.get('confidence', 0):.2f}). "
+        "Provide a helpful clarifying response or ask what additional information is needed."
     )
-    state['status'] = 'fallback'
-    state['output_mode'] = 'clarify'
+    answer = generate_text(fallback_prompt, lane=state['lane'], max_tokens=512)
+    if isinstance(answer, tuple):
+        answer = answer[1]
+    state['final_output'] = str(answer)
+    state['status']       = 'fallback'
+    state['output_mode']  = 'clarify'
     state['history'].append({'node': 'fallback_llm'})
     checkpoint_state('fallback_llm', state)
     return state
@@ -204,9 +283,8 @@ def node_fallback_llm(state: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def route_after_verifier(state: dict) -> str:
-    """After verification: retry lane or go to composer or fallback."""
     retry_count = state['working_memory'].get('retry_count', 0)
-    budget = state.get('tool_budget', {}).get('max_retries', 2)
+    budget      = state.get('tool_budget', {}).get('max_retries', 2)
     if state['status'] == 'retry' and retry_count < budget:
         state['working_memory']['retry_count'] = retry_count + 1
         return 'lane_runner'
@@ -217,7 +295,6 @@ def route_after_verifier(state: dict) -> str:
 
 
 def route_after_lane_runner(state: dict) -> str:
-    """Skip ranker if no candidates were produced."""
     if state.get('candidate_artifacts'):
         return 'mcts_ranker'
     return 'composer'
@@ -230,30 +307,32 @@ def route_after_lane_runner(state: dict) -> str:
 def build_graph() -> StateGraph:
     g = StateGraph(dict)
 
-    g.add_node('input_parser', node_input_parser)
-    g.add_node('retriever', node_retriever)
+    g.add_node('input_parser',  node_input_parser)
+    g.add_node('retriever',     node_retriever)
     g.add_node('lane_selector', node_lane_selector)
-    g.add_node('pyreason', node_pyreason)
-    g.add_node('lane_runner', node_lane_runner)
-    g.add_node('mcts_ranker', node_mcts_ranker)
-    g.add_node('verifier', node_verifier)
-    g.add_node('composer', node_composer)
-    g.add_node('fallback_llm', node_fallback_llm)
+    g.add_node('cot_prepass',   node_cot_prepass)      # NEW
+    g.add_node('pyreason',      node_pyreason)
+    g.add_node('lane_runner',   node_lane_runner)
+    g.add_node('mcts_ranker',   node_mcts_ranker)
+    g.add_node('verifier',      node_verifier)
+    g.add_node('composer',      node_composer)
+    g.add_node('fallback_llm',  node_fallback_llm)
 
     g.set_entry_point('input_parser')
-    g.add_edge('input_parser', 'lane_selector')
+    g.add_edge('input_parser',  'lane_selector')
     g.add_edge('lane_selector', 'retriever')
-    g.add_edge('retriever', 'pyreason')
-    g.add_edge('pyreason', 'lane_runner')
-    g.add_conditional_edges('lane_runner', route_after_lane_runner,
+    g.add_edge('retriever',     'cot_prepass')         # retriever -> CoT -> pyreason
+    g.add_edge('cot_prepass',   'pyreason')
+    g.add_edge('pyreason',      'lane_runner')
+    g.add_conditional_edges('lane_runner',  route_after_lane_runner,
                             {'mcts_ranker': 'mcts_ranker', 'composer': 'composer'})
     g.add_edge('mcts_ranker', 'verifier')
     g.add_conditional_edges('verifier', route_after_verifier,
-                            {'lane_runner': 'lane_runner',
+                            {'lane_runner':  'lane_runner',
                              'fallback_llm': 'fallback_llm',
-                             'composer': 'composer'})
+                             'composer':     'composer'})
     g.add_edge('fallback_llm', END)
-    g.add_edge('composer', END)
+    g.add_edge('composer',     END)
     return g
 
 
@@ -266,7 +345,7 @@ class BrainApp:
     def run(self, query: str, lane_override: str | None = None) -> dict:
         from brain.memory import init_state
         from brain.router import route_lane
-        lane = lane_override or route_lane(query)
+        lane  = lane_override or route_lane(query)
         state = init_state(query, lane)
         return self._graph.invoke(state)
 
