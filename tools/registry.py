@@ -33,6 +33,58 @@ class ToolRegistry:
         except ImportError as e:
             logger.debug(f"send_email not available: {e}")
 
+        # API integrations
+        try:
+            from tools.news_client import fetch_news
+            self.register("fetch_news", fetch_news)
+            logger.info("Registered tool: fetch_news")
+        except ImportError as e:
+            logger.debug(f"fetch_news not available: {e}")
+
+        try:
+            from tools.market_data import MarketDataClient
+            mdc = MarketDataClient()
+            self.register("market_summary", mdc.market_summary)
+            self.register("crypto_prices", mdc.crypto_prices)
+            self.register("stock_prices", mdc.stock_prices)
+            logger.info("Registered tools: market_*")
+        except ImportError as e:
+            logger.debug(f"market_data not available: {e}")
+
+        try:
+            from tools.odds_client import fetch_odds
+            self.register("fetch_odds", fetch_odds)
+            logger.info("Registered tool: fetch_odds")
+        except ImportError as e:
+            logger.debug(f"fetch_odds not available: {e}")
+
+        try:
+            from tools.github_client import GitHubClient
+            gh = GitHubClient()
+            self.register("github_list_issues", gh.list_issues)
+            self.register("github_create_issue", gh.create_issue)
+            self.register("github_search_code", gh.search_code)
+            logger.info("Registered tools: github_*")
+        except ImportError as e:
+            logger.debug(f"github_client not available: {e}")
+
+        try:
+            from tools.cloudflare_client import CloudflareClient
+            cf = CloudflareClient()
+            self.register("cloudflare_deploy", cf.deploy_pages)
+            self.register("cloudflare_purge", cf.purge_cache)
+            logger.info("Registered tools: cloudflare_*")
+        except ImportError as e:
+            logger.debug(f"cloudflare_client not available: {e}")
+
+        try:
+            from lanes.monte_carlo_bettor import MonteCarloBettor
+            mcb = MonteCarloBettor(simulations=5000)
+            self.register("monte_carlo_bet", mcb.simulate)
+            logger.info("Registered tool: monte_carlo_bet")
+        except ImportError as e:
+            logger.debug(f"monte_carlo_bettor not available: {e}")
+
         try:
             from tools.web_fetcher import web_fetch
             self.register("web_fetch", web_fetch)

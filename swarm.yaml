@@ -137,6 +137,11 @@ routes:
   crm-pipeline:                       skill_packs/business/crm-pipeline
   content-schedule:                   skill_packs/business/content-schedule
   agent-orchestrate:                  skill_packs/business/agent-orchestrate
+  news-fetch:                         skill_packs/business/news-fetch
+  market-data:                        skill_packs/business/market-data
+  betting-analysis:                   skill_packs/business/betting-analysis
+  github-manage:                      skill_packs/business/github-manage
+  deploy-web:                         skill_packs/business/deploy-web
 
 # ── Skill aliases ─────────────────────────────────────────────────────
 # Used by the NLU route loader to expand cosine candidate text so that
@@ -169,6 +174,11 @@ aliases:
   crm-pipeline:          ["sales pipeline", "deal flow", "opportunity", "stages", "forecast"]
   content-schedule:      ["blog post", "social media", "content calendar", "schedule post"]
   agent-orchestrate:     ["orchestrate agent", "supervise agent", "openclaw", "hermes", "agent relay"]
+  news-fetch:            ["news", "headlines", "rss", "fetch news", "whats happening"]
+  market-data:           ["crypto price", "stock price", "market data", "BTC", "ETH", "market summary"]
+  betting-analysis:      ["bet", "odds", "betting", "sports bet", "prizepicks", "draftkings", "kelly"]
+  github-manage:         ["github issue", "create issue", "PR", "pull request", "CI status"]
+  deploy-web:            ["deploy to cloudflare", "ship website", "publish", "go live"]
   screenshot:                   ["take screenshot", "capture page", "page screenshot"]
   systematic-debugging:         ["debug", "fix bug", "root cause", "traceback"]
   create-react-component:       ["react component", "create component", "react hook", "JSX"]
