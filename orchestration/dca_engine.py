@@ -215,7 +215,7 @@ class DeterministicCodingAgent:
         import math as _math
         n = len(enriched) if enriched else 1
         divisor = max(1, _math.log(n, 2)) if n > 1 else 1
-        effective_threshold = max(0.05, self.CONFIDENCE_THRESHOLD / divisor)
+        effective_threshold = max(0.10, self.CONFIDENCE_THRESHOLD / divisor)
         if decision.confidence < effective_threshold:
             state["status"]       = "low_confidence"
             state["final_output"] = {
