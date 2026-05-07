@@ -20,6 +20,7 @@ from tools.dashboard import Dashboard
 from tools.web_fetcher import web_fetch
 from tools.relay import relay
 from api.middleware import RequestLoggingMiddleware, get_route_stats
+from api.routes.settings import router as settings_router
 import numpy as np
 import struct
 
@@ -50,6 +51,7 @@ dash  = Dashboard()
 app.add_middleware(CORSMiddleware,
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(RequestLoggingMiddleware)
+app.include_router(settings_router)
 
 # DevPets directory (Tamagotchi — pets grow here, battle on the website)
 DEVPETS_DIR = Path("devpets")
@@ -480,6 +482,86 @@ def kairos_stats() -> Dict:
 @app.get("/health")
 def health() -> Dict:
     return dash.health()
+
+
+# ── Health Monitor ─────────────────────────────────────────────
+@app.get("/health/monitor")
+def health_monitor() -> Dict:
+    """Aggregated health status: daemon, circuit breakers, evolution, error rate."""
+    try:
+        from orchestration.runtime_healer import runtime_healer
+        circuits = runtime_healer.all_circuit_states()
+        heals = runtime_healer.recent_heals(10)
+    except ImportError:
+        circuits = []
+        heals = []
+
+    try:
+        from evolution.skill_evolver import SkillEvolver
+        evolver = SkillEvolver()
+        skills = evolver.all_stats()
+    except ImportError:
+        skills = []
+
+    total_runs = sum(s.get("runs", 0) for s in skills)
+    total_successes = sum(s["runs"] * s.get("success_rate", 0) for s in skills)
+    error_rate = round(1 - (total_successes / max(total_runs, 1)), 4)
+
+    return {
+        "daemon": kairos_status(),
+        "circuit_breakers": circuits,
+        "recent_heals": heals,
+        "skills_health": skills[:10],
+        "error_rate": error_rate,
+        "total_skills_tracked": len(skills),
+        "last_evolve": max((s.get("last_run_ts", 0) for s in skills), default=0),
+    }
+
+
+@app.get("/health/heals")
+def health_heals(limit: int = 20) -> Dict:
+    """Recent heal events."""
+    try:
+        from orchestration.runtime_healer import runtime_healer
+        return {"heals": runtime_healer.recent_heals(limit)}
+    except ImportError:
+        return {"heals": []}
+
+
+@app.get("/health/skills")
+def health_skills() -> Dict:
+    """Per-skill health from evolver + circuit breaker states."""
+    try:
+        from evolution.skill_evolver import SkillEvolver
+        evolver = SkillEvolver()
+        return {"skills": evolver.all_stats()}
+    except ImportError:
+        return {"skills": []}
+
+
+# ── Evolution ──────────────────────────────────────────────────
+@app.post("/evolution/nightly-score")
+def nightly_score() -> Dict:
+    """Run daily skill scoring and evolution (triggers weight updates)."""
+    try:
+        from evolution import NightlyScorer
+        scorer = NightlyScorer()
+        report = scorer.run_daily_score()
+        event_bus.emit("evolution_ran", evolved_skills=report["evolved_skills"])
+        return report
+    except ImportError as e:
+        raise HTTPException(status_code=501, detail=f"Evolution module: {e}")
+
+
+@app.get("/evolution/report")
+def evolution_report() -> Dict:
+    """Get last nightly score report (does not re-run)."""
+    try:
+        from evolution import NightlyScorer
+        scorer = NightlyScorer()
+        return scorer.generate_report()
+    except ImportError:
+        return {"status": "module_not_available"}
 
 
 # ── UI ─────────────────────────────────────────────────────────────

@@ -441,6 +441,7 @@ def _check_injection(text: str) -> bool:
         # Template & encoding tricks
         r'%24',                # URL-encoded $
         r'\{\{.*\}\}',         # {{ template }}
+        r'\n',                 # newline injection (shell command splitting)
     ]
 
     for p in patterns:

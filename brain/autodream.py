@@ -269,4 +269,17 @@ def run_autodream(dry_run: bool = False) -> Dict:
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
 
+    # Emit event for cross-system listeners (skill evolver, runtime healer)
+    try:
+        from orchestration.event_bus import event_bus
+        event_bus.emit("autodream_run", dry_run=dry_run,
+                       corrections_count=len(results["corrections"]))
+        for corr in results["corrections"]:
+            event_bus.emit("skill_failure",
+                skill_id=corr.get("failed_skill", "unknown"),
+                confidence=corr.get("confidence", 0.0),
+                suggested_action=corr.get("suggested_action", ""))
+    except ImportError:
+        pass
+
     return results

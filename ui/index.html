@@ -297,6 +297,9 @@
     <div class="nav-sec">Observability</div>
     <div class="nav-item" data-page="feed"><span>&#x25C9;</span> Event Feed</div>
     <div class="nav-item" data-page="audit"><span>&#x2713;</span> Audit Log</div>
+    <div class="nav-sec">System</div>
+    <div class="nav-item" data-page="settings"><span>&#x2699;</span> Settings</div>
+    <div class="nav-item" data-page="health-mon"><span>&#x1F49A;</span> Health Monitor</div>
   </nav>
 
   <main id="main">
@@ -526,6 +529,21 @@
       </div>
     </section>
 
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="sh"><h2>&#x2699; Settings</h2><div class="line"></div></div>
+      <div id="settings-container"></div>
+    </section>
+
+    <!-- HEALTH MONITOR -->
+    <section class="page" id="page-health-mon">
+      <div class="sh"><h2>&#x1F49A; Health Monitor</h2><div class="line"></div></div>
+      <div class="card-grid" id="health-cards"></div>
+      <div class="card mt"><h3>Circuit Breakers</h3><div id="health-circuits"></div></div>
+      <div class="card mt"><h3>Skill Health</h3><div id="health-skills"></div></div>
+      <div class="card mt"><h3>Recent Heals</h3><div id="health-heals"></div></div>
+    </section>
+
   </main>
 </div>
 
@@ -572,6 +590,8 @@ document.querySelectorAll('.nav-item').forEach(el=>{
     if(p==='devpets' || p==='battle') loadDevPets();
     if(p==='kairos')    loadKairos();
     if(p==='bundles')   loadBundles();
+    if(p==='settings')  loadSettings();
+    if(p==='health-mon') loadHealthMonitor();
   });
 });
 
@@ -1042,203 +1062,96 @@ function renderBranches(branches){
     frag.appendChild(row);
   });
   el.appendChild(frag);
-}
+});
 
-function renderSkills(branches){
-  const el = $('pet-skills'); el.innerHTML = '';
+// ─── Settings page ──────────────────────────────────────────────
+async function loadSettings(){
+  const s = await api('/settings/schema');
+  const c = await api('/settings');
+  const ct = $('settings-container'); ct.innerHTML = '';
   const frag = document.createDocumentFragment();
-  let any = false;
-  Object.entries(branches).forEach(([branch,b])=>{
-    (b.signature_moves||[]).forEach(move=>{
-      const row = document.createElement('div'); row.className='skill-row';
-      row.innerHTML = `<span class="skill-name">⚡ ${esc(move)}</span>
-        <span class="skill-pow">CD: ${b.cooldown||5}</span>
-        <span class="skill-src">${esc(branch)} · ${esc(b.tier||'?')}</span>`;
-      frag.appendChild(row); any=true;
+  const cfg = c.config || {};
+  for(const [group, fields] of Object.entries(s.groups||{})){
+    const h3 = document.createElement('h3'); h3.style.cssText='color:var(--yel);margin:16px 0 8px;';
+    h3.textContent = group; frag.appendChild(h3);
+    const card = document.createElement('div'); card.className = 'card';
+    fields.forEach(f=>{
+      const row = document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);';
+      const lbl = document.createElement('div');
+      lbl.style.cssText='flex:1;font-size:13px;';
+      lbl.innerHTML = '<strong>'+esc(f.label)+'</strong><br><span style="color:var(--dim);font-size:11px;">'+esc(f.key)+'</span>';
+      row.appendChild(lbl);
+      let current = cfg[f.key.toLowerCase()] ?? f.default;
+      let input;
+      if(f.type==='bool'){
+        input = document.createElement('input'); input.type='checkbox';
+        input.checked = String(current).toLowerCase()==='true';
+      }else if(f.options){
+        input = document.createElement('select');
+        f.options.forEach(o=>{ const opt = document.createElement('option');
+          opt.value=o;opt.textContent=o; if(o===current)opt.selected=true; input.appendChild(opt); });
+      }else{
+        input = document.createElement('input'); input.type = f.type==='secret'?'password':'text';
+        input.value = current??''; input.style.cssText='width:200px;padding:4px 8px;background:var(--bg-2);color:var(--text);border:1px solid var(--bd);border-radius:4px;';
+        input.placeholder = f.default||'';
+      }
+      input.dataset.key = f.key;
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent='Save'; saveBtn.style.cssText='margin-left:8px;padding:4px 12px;';
+      saveBtn.onclick = async ()=>{
+        let v = input.type==='checkbox'?String(input.checked):input.value;
+        await api('/settings/update','POST',{key:f.key,value:v});
+        saveBtn.textContent='Saved!'; saveBtn.style.color='var(--green)';
+        setTimeout(function(){saveBtn.textContent='Save';saveBtn.style.color='';},2000);
+      };
+      row.appendChild(input); row.appendChild(saveBtn);
+      card.appendChild(row);
     });
-  });
-  if(!any){
-    const d=document.createElement('div');
-    d.style.cssText='color:var(--dim);font-family:var(--mono);font-size:11px;';
-    d.textContent='No signature moves yet. Keep coding to unlock!';
-    frag.appendChild(d);
+    frag.appendChild(card);
   }
-  el.appendChild(frag);
+  ct.appendChild(frag);
 }
 
-function renderFingerprint(fp, color){
-  const el = $('pet-fingerprint'); el.innerHTML='';
-  const items = [
-    ['Sessions',      fp.session_count??0],
-    ['Coding Min',    fp.total_coding_minutes??0],
-    ['CI Pass Rate',  fp.ci_pass_rate!=null?Math.round(fp.ci_pass_rate*100)+'%':'--'],
-    ['Languages',     fp.tools_used_distinct??0],
-    ['Primary Lang',  fp.primary_language||'--'],
-    ['Avg Task (s)',  fp.avg_task_completion_seconds!=null?fp.avg_task_completion_seconds.toFixed(1):'--'],
+// ─── Health Monitor page ───────────────────────────────────────
+async function loadHealthMonitor(){
+  const h = await api('/health/monitor');
+  if(!h) return;
+  const cards = $('health-cards'); cards.innerHTML = '';
+  var st = [
+    {l:'Daemon', v: h.daemon?.running?'Running':'Stopped', c: h.daemon?.running?'var(--green)':'var(--pink)'},
+    {l:'Error Rate', v: (h.error_rate*100).toFixed(1)+'%', c: h.error_rate<0.1?'var(--green)':h.error_rate<0.3?'var(--yel)':'var(--pink)'},
+    {l:'Skills Tracked', v: h.total_skills_tracked, c:'var(--text)'},
+    {l:'Open Circuits', v: (h.circuit_breakers||[]).filter(function(c){return c.state!=='closed'}).length||0, c:'var(--text)'},
   ];
-  const frag = document.createDocumentFragment();
-  items.forEach(([lbl,val])=>{
-    const d = document.createElement('div');
-    d.className='stat'; d.style.cssText='padding:10px 14px;gap:4px;';
-    d.innerHTML=`<div class="lbl">${esc(lbl)}</div><div class="val" style="font-size:18px;color:${color||'var(--cyan)'}">${esc(String(val))}</div>`;
-    frag.appendChild(d);
+  st.forEach(function(s){ var d=document.createElement('div');d.className='stat';
+    d.innerHTML='<div class="lbl">'+s.l+'</div><div class="val" style="color:'+s.c+'">'+s.v+'</div>';
+    cards.appendChild(d); });
+
+  var ct = $('health-circuits'); ct.innerHTML = '';
+  (h.circuit_breakers||[]).forEach(function(c){
+    var d=document.createElement('div');d.style.cssText='padding:6px 0;border-bottom:1px solid var(--bd);display:flex;gap:12px;align-items:center;';
+    d.innerHTML='<strong>'+esc(c.skill_id)+'</strong> <span style="color:'+(c.state==='closed'?'var(--green)':c.state==='half_open'?'var(--yel)':'var(--pink)')+'">'+c.state+'</span> <span style="color:var(--dim);font-size:11px">fails:'+c.failure_count+' succ:'+c.success_count+' cooldown:'+c.cooldown_remaining_s+'s</span>';
+    ct.appendChild(d);
   });
-  el.appendChild(frag);
-}
 
-// pet upload
-$('pet-upload').addEventListener('change', async e=>{
-  if(!_selectedPet) return;
-  const file = e.target.files[0]; if(!file) return;
-  const fd = new FormData(); fd.append('image', file);
-  const id = _selectedPet.identity?.developer_id ?? 'unknown';
-  ls();
-  const r = await fetch(API+'/devpets/'+id+'/image',{method:'POST',body:fd}).then(r=>r.json()).catch(e=>({error:String(e)}));
-  le();
-  if(!r.error) alert('Card art uploaded!');
-  else alert('Upload failed: '+r.error);
-});
-
-// pet battle btn
-$('pet-battle-btn').addEventListener('click', ()=>{
-  if(!_selectedPet) return;
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelector('[data-page="battle"]').classList.add('active');
-  $('page-battle').classList.add('active');
-  // pre-select this pet as A
-  const id = _selectedPet.identity?.developer_id ?? '';
-  $('battle-sel-a').value = id;
-});
-
-function populateBattleSelects(){
-  const optHtml = '<option value="">— choose pet —</option>' +
-    _allPets.map(p=>{
-      const id   = p.identity?.developer_id ?? p.id ?? '';
-      const name = p.identity?.pet_name ?? p.name ?? id;
-      return `<option value="${esc(id)}">${esc(name)}</option>`;
-    }).join('');
-  $('battle-sel-a').innerHTML = optHtml;
-  $('battle-sel-b').innerHTML = optHtml;
-}
-
-// battle arena
-async function runBattle(idA, idB, logEl){
-  if(!idA||!idB){ logEl.innerHTML='<span style="color:var(--pink);">Select two different pets.</span>'; return; }
-  if(idA===idB){ logEl.innerHTML='<span style="color:var(--pink);">A pet cannot battle itself.</span>'; return; }
-  logEl.innerHTML='<span style="color:var(--dim);">&#x23F3; Simulating battle...</span>';
-  const r = await api('/devpets/battle','POST',{pet_a_id:idA,pet_b_id:idB});
-  if(r.error){ logEl.innerHTML=`<span style="color:var(--pink);">Error: ${esc(r.error)}</span>`; return; }
-  const frag = document.createDocumentFragment();
-  (r.log??[r]).forEach(entry=>{
-    const d=document.createElement('div');
-    if(typeof entry==='string'){
-      d.className = entry.includes('wins')||entry.includes('WIN')?'blog-win':entry.includes('deals')||entry.includes('dmg')?'blog-dmg':entry.startsWith('Turn')?'blog-turn':'blog-info';
-      d.textContent=entry;
-    } else {
-      d.className='blog-info';
-      d.textContent=JSON.stringify(entry);
-    }
-    frag.appendChild(d);
+  var st2 = $('health-skills'); st2.innerHTML = '';
+  (h.skills_health||[]).forEach(function(s){
+    var d=document.createElement('div');d.style.cssText='padding:4px 0;border-bottom:1px solid var(--bd);';
+    d.innerHTML='<strong>'+esc(s.skill_id)+'</strong> <span style="color:var(--dim)">runs:'+s.runs+'</span> <span style="color:'+(s.success_rate>0.8?'var(--green)':s.success_rate>0.5?'var(--yel)':'var(--pink)')+'">'+(s.success_rate*100).toFixed(0)+'%</span> <span style="color:var(--dim)">weight:'+(s.weight||1.0).toFixed(2)+'</span>';
+    st2.appendChild(d);
   });
-  logEl.innerHTML='';
-  logEl.appendChild(frag);
-}
 
-$('arena-battle-btn').addEventListener('click', ()=>{
-  runBattle($('battle-sel-a').value,$('battle-sel-b').value,$('arena-battle-log'));
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// KAIROS
-// ═══════════════════════════════════════════════════════════════════
-async function loadKairos(){
-  const r = await api('/kairos/status');
-  const running = r.running ?? r.status==='running';
-  const dot   = $('kairos-dot');
-  const label = $('kairos-state-label');
-  const meta  = $('kairos-meta');
-  dot.className   = 'kairos-dot ' + (running?'running':'stopped');
-  label.textContent = running ? 'Running' : 'Stopped';
-  label.style.color = running ? 'var(--green)' : 'var(--dim)';
-  meta.textContent  = r.last_trigger ? ('last: ' + new Date(r.last_trigger*1000).toLocaleTimeString()) : '';
-
-  // tasks
-  const tasks = r.tasks ?? [];
-  const tasksEl = $('kairos-tasks');
-  if(!tasks.length){
-    tasksEl.innerHTML='<div style="color:var(--dim);font-family:var(--mono);font-size:12px;">No scheduled tasks found.</div>';
-  } else {
-    const frag = document.createDocumentFragment();
-    tasks.forEach(t=>{
-      const row = document.createElement('div'); row.className='task-row';
-      const stat = t.last_status ?? 'pending';
-      const cls  = stat==='ok'?'task-status-ok':stat==='error'?'task-status-err':'task-status-pending';
-      row.innerHTML=`<span class="task-name">${esc(t.name??t.id??'task')}</span>
-        <span style="color:var(--dim);font-size:10px;">${esc(t.trigger_type??'')}</span>
-        <span class="${cls}">${esc(stat)}</span>
-        <span class="task-next">${t.next_run ? new Date(t.next_run*1000).toLocaleTimeString() : '--'}</span>`;
-      frag.appendChild(row);
-    });
-    tasksEl.innerHTML='';
-    tasksEl.appendChild(frag);
-  }
-
-  // recent feed
-  const feedEvts = r.recent_events ?? [];
-  renderFeed($('kairos-feed'), feedEvts);
-}
-
-$('kairos-refresh').addEventListener('click', loadKairos);
-
-$('kairos-start').addEventListener('click', async ()=>{
-  $('kairos-start').disabled=true;
-  await api('/kairos/start','POST');
-  await loadKairos();
-  $('kairos-start').disabled=false;
-});
-$('kairos-stop').addEventListener('click', async ()=>{
-  $('kairos-stop').disabled=true;
-  await api('/kairos/stop','POST');
-  await loadKairos();
-  $('kairos-stop').disabled=false;
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// AUTODREAM
-// ═══════════════════════════════════════════════════════════════════
-$('dream-run').addEventListener('click', async ()=>{
-  const dry = $('dream-dryrun').checked;
-  $('dream-run').disabled=true;
-  const el = $('dream-results');
-  el.innerHTML='<span style="color:var(--dim);">&#x23F3; Running AutoDream...</span>';
-  const r = await api('/autodream','POST',{dry_run:dry});
-  $('dream-run').disabled=false;
-
-  if(r.error){
-    el.innerHTML=`<div style="color:var(--pink);font-family:var(--mono);">${esc(r.error)}</div>`;
-    return;
-  }
-  const results = r.results ?? r.items ?? r ?? [];
-  if(!Array.isArray(results)||!results.length){
-    el.innerHTML='<div style="color:var(--dim);font-family:var(--mono);font-size:12px;">No memories to consolidate.'+(dry?' (dry run)':'')+'</div>';
-    return;
-  }
-  const frag = document.createDocumentFragment();
-  results.forEach(item=>{
-    const action = item.action ?? item.type ?? 'processed';
-    const tag_cls= action==='consolidated'?'consolidated':action==='pruned'?'pruned':'skipped';
-    const d = document.createElement('div'); d.className='dream-item';
-    d.innerHTML=`<span class="dream-tag ${tag_cls}">${esc(action)}</span>
-      <span style="color:var(--text);flex:1;">${esc(item.key??item.id??JSON.stringify(item).slice(0,80))}</span>
-      ${dry?'<span style="color:var(--yel);font-size:10px;">(dry)</span>':''}`;
-    frag.appendChild(d);
+  var ht = $('health-heals'); ht.innerHTML = '';
+  (h.recent_heals||[]).slice().reverse().forEach(function(e){
+    var d=document.createElement('div');d.style.cssText='padding:4px 0;border-bottom:1px solid var(--bd);font-size:12px;';
+    var ts = new Date(e.ts*1000).toLocaleTimeString();
+    d.innerHTML='<span style="color:var(--dim)">'+ts+'</span> <span style="color:var(--yel)">'+esc(e.event)+'</span> '+esc(JSON.stringify(e.data).slice(0,80));
+    ht.appendChild(d);
   });
-  el.innerHTML='';
-  el.appendChild(frag);
-});
+}
 
-// ─── boot ────────────────────────────────────────────────────────────
+// ─── boot ──────────────────────────────────────────────────────
 pollHealth();
 setInterval(pollHealth, 8000);
 loadDashboard();

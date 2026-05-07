@@ -240,7 +240,7 @@ class TestPreAudit:
 
     def test_reasonable_length_fail(self):
         pa = PreAudit()
-        long_input = "x" * 3000
+        long_input = "x" * 9000  # > 8192 byte limit
         ok, issues = pa.run({"raw": long_input})
         # reasonable_length is not a blocking check
         assert "reasonable_length" in str(issues)

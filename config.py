@@ -102,5 +102,91 @@ class BrainConfig:
         }
 
 
+def reload_config() -> BrainConfig:
+    """Re-read environment variables and return a fresh BrainConfig."""
+    import os
+    try:
+        from dotenv import load_dotenv as _reload
+        _reload(override=True)
+    except ImportError:
+        pass
+    return BrainConfig()
+
+
+def get_setting_schema() -> dict:
+    """Return typed schema of all configurable settings for UI form generation."""
+    return {
+        "Database": [
+            {"key": "QDRANT_URL", "type": "string", "default": "", "label": "Qdrant URL", "help": "Vector DB endpoint"},
+            {"key": "QDRANT_API_KEY", "type": "secret", "default": "", "label": "Qdrant API Key"},
+            {"key": "RETRIEVAL_TOP_K", "type": "int", "default": "5", "label": "Retrieval Top-K", "min": 1, "max": 50},
+            {"key": "NEO4J_URI", "type": "string", "default": "", "label": "Neo4j URI"},
+            {"key": "NEO4J_USER", "type": "string", "default": "neo4j", "label": "Neo4j User"},
+            {"key": "NEO4J_PASSWORD", "type": "secret", "default": "", "label": "Neo4j Password"},
+            {"key": "NEO4J_DEPTH", "type": "int", "default": "1", "label": "Neo4j Depth", "min": 1, "max": 5},
+        ],
+        "Models": [
+            {"key": "MODEL_CODING", "type": "string", "default": "openai/o3", "label": "Coding Model", "options": ["openai/o3", "openai/gpt-4o", "anthropic/claude-opus-4", "anthropic/claude-sonnet-4-5"]},
+            {"key": "MODEL_BUSINESS_LOGIC", "type": "string", "default": "anthropic/claude-opus-4", "label": "Business Logic Model", "options": ["anthropic/claude-opus-4", "anthropic/claude-sonnet-4-5", "openai/o3", "google/gemini-2.5-pro"]},
+            {"key": "MODEL_AGENT_BRAIN", "type": "string", "default": "anthropic/claude-sonnet-4-5", "label": "Agent Brain Model", "options": ["anthropic/claude-sonnet-4-5", "anthropic/claude-opus-4", "openai/o3", "meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_TOOL_CALLING", "type": "string", "default": "meta-llama/llama-3.3-70b-instruct", "label": "Tool Calling Model"},
+            {"key": "MODEL_CROSS_DOMAIN", "type": "string", "default": "google/gemini-2.5-pro", "label": "Cross-Domain Model"},
+            {"key": "MODEL_DEFAULT", "type": "string", "default": "openai/gpt-4o", "label": "Default Model"},
+            {"key": "MODEL_OPENCODE", "type": "string", "default": "openai/o3", "label": "OpenCode Model"},
+            {"key": "LLM_CTX_SIZE", "type": "int", "default": "4096", "label": "LLM Context Size", "min": 1024, "max": 32768},
+            {"key": "LLM_MAX_TOKENS", "type": "int", "default": "2048", "label": "LLM Max Tokens", "min": 256, "max": 16384},
+            {"key": "LLM_SEED", "type": "int", "default": "42", "label": "LLM Seed", "min": 0, "max": 9999},
+        ],
+        "API": [
+            {"key": "API_HOST", "type": "string", "default": "0.0.0.0", "label": "API Host"},
+            {"key": "API_PORT", "type": "int", "default": "8000", "label": "API Port", "min": 1024, "max": 65535},
+        ],
+        "Voice": [
+            {"key": "VOICE_MODEL_SIZE", "type": "select", "default": "tiny.en", "label": "STT Model Size", "options": ["tiny.en", "base.en", "small.en"]},
+            {"key": "VOICE_TTS_VOICE", "type": "select", "default": "en_US-lessac-medium", "label": "TTS Voice", "options": ["en_US-lessac-medium", "en_US-lessac-high", "en_US-amy-medium"]},
+        ],
+        "Daemons": [
+            {"key": "TRACING_ENABLED", "type": "bool", "default": "true", "label": "Tracing Enabled"},
+            {"key": "KAIROS_ENABLED", "type": "bool", "default": "true", "label": "KAIROS Enabled"},
+            {"key": "KAIROS_IDLE_THRESHOLD", "type": "int", "default": "5", "label": "KAIROS Idle Threshold (min)", "min": 1, "max": 120},
+            {"key": "AUTODREAM_ENABLED", "type": "bool", "default": "true", "label": "AutoDream Enabled"},
+            {"key": "AUTODREAM_SCHEDULE", "type": "string", "default": "0 3 * * *", "label": "AutoDream Cron"},
+            {"key": "TRACE_RETENTION_DAYS", "type": "int", "default": "30", "label": "Trace Retention (days)", "min": 1, "max": 365},
+        ],
+        "Healing": [
+            {"key": "HEAL_ENABLED", "type": "bool", "default": "true", "label": "Self-Healing Enabled"},
+            {"key": "HEAL_MAX_RETRIES", "type": "int", "default": "3", "label": "Max Heal Retries", "min": 1, "max": 10},
+            {"key": "HEAL_CIRCUIT_BREAKER_THRESHOLD", "type": "int", "default": "5", "label": "Circuit Breaker Threshold", "min": 2, "max": 20},
+        ],
+        "MCTS": [
+            {"key": "MCTS_SIMULATIONS", "type": "int", "default": "20", "label": "MCTS Simulations", "min": 1, "max": 200},
+            {"key": "MCTS_BRANCH_FACTOR", "type": "int", "default": "3", "label": "MCTS Branch Factor", "min": 2, "max": 10},
+            {"key": "MCTS_MAX_DEPTH", "type": "int", "default": "4", "label": "MCTS Max Depth", "min": 1, "max": 10},
+        ],
+    }
+
+
+def persist_setting(key: str, value: str) -> bool:
+    """Write a setting to the .env file (creates if not exists)."""
+    import os
+    env_path = os.environ.get("DOTENV_PATH", ".env")
+    lines = []
+    found = False
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            lines = f.readlines()
+    key_upper = key.upper()
+    for i, line in enumerate(lines):
+        if line.strip().startswith(f"{key_upper}=") or line.strip().startswith(f"{key_upper}_"):
+            lines[i] = f"{key_upper}={value}\n"
+            found = True
+            break
+    if not found:
+        lines.append(f"\n{key_upper}={value}\n")
+    with open(env_path, "w") as f:
+        f.writelines(lines)
+    return True
+
+
 # Singleton
 cfg = BrainConfig()
