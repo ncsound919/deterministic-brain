@@ -30,9 +30,17 @@ import itertools
 import math
 import re
 from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 
-# ═══════════════════════════════════════════════════════════════════════
+@dataclass
+class PreAuditResult:
+    """Result of a pre-audit string check."""
+    audit_ok: bool
+    blocked_reason: Optional[str] = None
+
+
+# ════════════════════════════════════════════════════════════════
 # 1. ALGEBRAIC REASONER
 #    Symbolic constraint solving + variable unification.
 #    Models a coding decision as a system of typed constraints.
@@ -122,16 +130,20 @@ class AlgebraicReasoner:
         return True
 
     def all_solutions(self, limit: int = 64) -> List[Dict]:
-        """Return up to `limit` consistent assignments."""
+        """Return up to `limit` consistent assignments using generator."""
         domains = {v: list(d) for v, d in self.variables.items()}
         for c in self.constraints:
             if c.var in domains:
                 domains[c.var] = [val for val in domains[c.var]
                                   if c.satisfied(val)]
-        solutions = []
         keys   = list(self.variables.keys())
-        combos = list(itertools.product(*[domains.get(k, []) for k in keys]))
-        for combo in combos[:limit]:
+        # Use islice to avoid materializing all combinations in memory
+        combos = itertools.islice(
+            itertools.product(*[domains.get(k, []) for k in keys]),
+            limit
+        )
+        solutions = []
+        for combo in combos:
             candidate = dict(zip(keys, combo))
             if self._consistent(candidate):
                 solutions.append(candidate)
@@ -326,10 +338,10 @@ class QuantumProbabilistic:
     """
 
     def _hash_amplitude(self, text: str) -> complex:
-        """Deterministic complex amplitude from text hash."""
-        h    = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
+        """Deterministic complex amplitude from text (64-bit hash)."""
+        h    = int(hashlib.sha256(text.encode()).hexdigest()[:16], 16)
         # map to unit circle
-        theta = (h % 1000) / 1000 * 2 * math.pi
+        theta = (h % 10000) / 10000 * 2 * math.pi
         return complex(math.cos(theta), math.sin(theta))
 
     def _interference(self, choice: str, evidence: List[str]) -> float:
@@ -417,7 +429,7 @@ def _check_injection(text: str) -> bool:
         r'[;|&`$]',            # any of ; | & ` $
         r'&&',                 # command chaining
         r'\|\|',               # logical OR (escaped pipe)
-        r'$\(',               # $(command)
+        r'\$\(',              # $(command) — escaped $ for literal match
         r'`[^`]*`',            # `command`
 
         # Path traversal and sensitive paths
@@ -479,8 +491,8 @@ class PreAudit:
          "Possible injection in input"),
         ("known_task",      lambda t: t.get("task") != "unknown",
          "Task type is unknown — no skill available"),
-        ("reasonable_length",lambda t: len(t.get("raw", "")) < 2048,
-         "Input exceeds 2048 chars"),
+        ("reasonable_length",lambda t: len(t.get("raw", "").encode("utf-8")) < 8192,
+         "Input exceeds 8192 bytes"),
     ]
 
     def run(self, task: Dict) -> Tuple[bool, List[str]]:
@@ -501,25 +513,18 @@ class PreAudit:
                     ok = False  # blocking
         return ok, issues
 
-    def check(self, text: str) -> "PreAuditResult":
+    def check(self, text: str) -> PreAuditResult:
         """Check a string for injection patterns.
-        
+
         Args:
             text: String to check
-        
+
         Returns:
             PreAuditResult with audit_ok and blocked_reason
         """
-        from dataclasses import dataclass
-        
-        @dataclass
-        class PreAuditResult:
-            audit_ok: bool
-            blocked_reason: Optional[str] = None
-        
         if _check_injection(text):
             return PreAuditResult(audit_ok=False, blocked_reason="Possible injection detected")
-        
+
         return PreAuditResult(audit_ok=True)
 
 
@@ -594,13 +599,18 @@ class ReasoningEngine:
         # No need for DifferentialReasoner's redundant neighbor search.
         best_config = valid_configs[0] if valid_configs else {}
         if scorer_fn and len(valid_configs) > 1:
-            best_config = max(
-                valid_configs,
-                key=lambda c: scorer_fn({**c, "skill": chosen_skill})
-            )
-            final_score = scorer_fn({**best_config, "skill": chosen_skill})
-            breakdown.append({"step": "config_select", "final_config": best_config,
-                              "score": round(final_score, 4), "method": "scored_max"})
+            try:
+                best_config = max(
+                    valid_configs,
+                    key=lambda c: scorer_fn({**c, "skill": chosen_skill})
+                )
+                final_score = scorer_fn({**best_config, "skill": chosen_skill})
+                breakdown.append({"step": "config_select", "final_config": best_config,
+                                  "score": round(final_score, 4), "method": "scored_max"})
+            except Exception:
+                # scorer_fn failed — use first valid config
+                breakdown.append({"step": "config_select", "skipped": True,
+                                  "reason": "scorer_fn error"})
         else:
             breakdown.append({"step": "config_select", "skipped": True})
 
@@ -633,6 +643,15 @@ class DecisionResult:
         self.pre_audit     = pre_audit
         self.audit_ok      = audit_ok
         self.breakdown     = breakdown
+
+    def __repr__(self):
+        return (f"DecisionResult(skill={self.chosen_skill!r}, "
+                f"confidence={self.confidence}, audit_ok={self.audit_ok})")
+
+    def __eq__(self, other):
+        if not isinstance(other, DecisionResult):
+            return NotImplemented
+        return self.to_dict() == other.to_dict()
 
     def to_dict(self) -> Dict:
         return {

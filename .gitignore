@@ -13,6 +13,7 @@ build/
 # Environment
 .env
 .env.example
+.env.*
 
 # Databases
 *.db
@@ -38,6 +39,7 @@ temp/
 .kairos/
 .aether_prime_cache/
 .aether_prime_memory/
+.scheduler_tasks.json
 
 # autoDream
 .autodream_last_run.json
