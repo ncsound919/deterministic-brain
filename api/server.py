@@ -1,28 +1,40 @@
-"""FastAPI server v2.3 — /task /reason /bundle /skills /forge /dashboard /relay /health"""
+"""FastAPI server v2.4 — /task /reason /bundle /skills /forge /dashboard /relay /health /devpets"""
 from __future__ import annotations
-from fastapi import FastAPI
+import json
+import os
+import glob
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from pathlib import Path
 
 from orchestration.dca_engine import DeterministicCodingAgent
 from orchestration.swarm_dispatcher import SwarmDispatcher
 from orchestration.kairos_daemon import get_daemon, start_kairos, stop_kairos, kairos_status
+from orchestration.event_bus import event_bus
 from brain.autodream import run_autodream
 from tools.forge import Forge, forge_diff
 from tools.dashboard import Dashboard
 from tools.web_fetcher import web_fetch
 from tools.relay import relay
+from api.middleware import RequestLoggingMiddleware, get_route_stats
 
-app   = FastAPI(title="Deterministic Brain", version="2.3.0")
+app   = FastAPI(title="Deterministic Brain", version="2.4.0")
 agent = DeterministicCodingAgent()
 swarm = SwarmDispatcher()
 forge = Forge()
 dash  = Dashboard()
 
+# Middleware: CORS + request logging
 app.add_middleware(CORSMiddleware,
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(RequestLoggingMiddleware)
+
+# DevPets directory (Tamagotchi — pets grow here, battle on the website)
+DEVPETS_DIR = Path("devpets")
+DEVPETS_DIR.mkdir(exist_ok=True)
 
 
 # ── Models ─────────────────────────────────────────────────────────
@@ -52,6 +64,17 @@ class RelayRequest(BaseModel):
 class RegisterAgentRequest(BaseModel):
     name:     str
     base_url: str
+
+class AutoDreamRequest(BaseModel):
+    dry_run: bool = True
+
+class DevPetGenerateRequest(BaseModel):
+    pet_name: str = "DevPet"
+    db_path:  str = "traces.db"
+
+class DialogueRequest(BaseModel):
+    text: str
+    seed: Optional[int] = None
 
 
 # ── Core ───────────────────────────────────────────────────────────
@@ -142,18 +165,203 @@ def stats() -> Dict:
     return {"bundles": dash.bundle_stats(), "skills": dash.skill_stats()}
 
 # ── autoDream ────────────────────────────────────────────────
+@app.post("/autodream")
+def autodream(req: AutoDreamRequest) -> Dict:
+    """Run autoDream. Pass dry_run=true to preview without changes."""
+    return run_autodream(dry_run=req.dry_run)
+
 @app.post("/autodream/run")
 def autodream_run() -> Dict:
     return run_autodream(dry_run=False)
 
 @app.get("/autodream/status")
 def autodream_status() -> Dict:
-    import os
     path = ".autodream_last_run.json"
     if os.path.exists(path):
-        import json
         return json.loads(open(path).read())
     return {"status": "never_run"}
+
+
+# ── Bundles ───────────────────────────────────────────────────
+@app.get("/bundles")
+def list_bundles() -> Dict[str, List[Dict]]:
+    """Return all available bundles from swarm.yaml for the UI dropdown."""
+    import yaml
+    config_path = os.environ.get("SWARM_CONFIG", "swarm.yaml")
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+    except Exception:
+        config = {}
+    bundles = []
+    for name, data in config.get("bundles", {}).items():
+        bundles.append({
+            "name": name,
+            "description": data.get("description", ""),
+            "lanes": data.get("lanes", []),
+        })
+    return {"bundles": bundles}
+
+
+# ── DevPets (Tamagotchi — pets grow here, battle on devpet-web/) ──
+@app.get("/devpets")
+def list_devpets() -> Dict[str, List[Dict]]:
+    """List all DevPets from the devpets/ directory."""
+    pets = []
+    for fpath in glob.glob(str(DEVPETS_DIR / "*.json")):
+        try:
+            data = json.loads(Path(fpath).read_text())
+            identity = data.get("identity", {})
+            pets.append({
+                "id": identity.get("developer_id", Path(fpath).stem),
+                "pet_name": identity.get("pet_name", "Unknown"),
+                "species": identity.get("pet_species", "Unknown"),
+                "level": data.get("level", 1),
+                "evolution_stage": data.get("evolution_stage", 1),
+                "pet_type": data.get("pet_type", "normal"),
+                "battle_stats": data.get("battle_stats", {}),
+                "file": Path(fpath).name,
+            })
+        except Exception:
+            continue
+    return {"devpets": pets, "count": len(pets)}
+
+
+@app.get("/devpets/{pet_id}")
+def get_devpet(pet_id: str) -> Dict:
+    """Get a single DevPet's full data."""
+    for fpath in glob.glob(str(DEVPETS_DIR / "*.json")):
+        try:
+            data = json.loads(Path(fpath).read_text())
+            identity = data.get("identity", {})
+            if identity.get("developer_id") == pet_id or Path(fpath).stem == pet_id:
+                return {"pet": data, "file": Path(fpath).name}
+        except Exception:
+            continue
+    raise HTTPException(status_code=404, detail=f"DevPet '{pet_id}' not found")
+
+
+@app.get("/devpets/{pet_id}/stats")
+def get_devpet_stats(pet_id: str) -> Dict:
+    """Get a DevPet's battle stats and work fingerprint."""
+    for fpath in glob.glob(str(DEVPETS_DIR / "*.json")):
+        try:
+            data = json.loads(Path(fpath).read_text())
+            if (data.get("identity", {}).get("developer_id") == pet_id
+                    or Path(fpath).stem == pet_id):
+                return {
+                    "pet_name": data.get("identity", {}).get("pet_name"),
+                    "level": data.get("level"),
+                    "evolution_stage": data.get("evolution_stage"),
+                    "pet_type": data.get("pet_type"),
+                    "battle_stats": data.get("battle_stats", {}),
+                    "work_fingerprint": data.get("work_fingerprint", {}),
+                    "tool_branches": {
+                        k: {"tier": v.get("tier"), "xp": v.get("xp"),
+                            "signature_moves": v.get("signature_moves", [])}
+                        for k, v in data.get("tool_branches", {}).items()
+                    },
+                }
+        except Exception:
+            continue
+    raise HTTPException(status_code=404, detail=f"DevPet '{pet_id}' not found")
+
+
+@app.post("/devpets/generate")
+def generate_devpet(req: DevPetGenerateRequest) -> Dict:
+    """Generate a .devpet file from the trace database (Tamagotchi mode)."""
+    from devpet.tracker import DevPetTracker
+    from devpet.export import save_devpet_file
+
+    tracker = DevPetTracker(db_path=req.db_path, pet_name=req.pet_name)
+    pet = tracker.process_events()
+    tracker.close()
+
+    path = DEVPETS_DIR / f"{pet.developer_id}.json"
+    save_devpet_file(pet, str(path))
+
+    event_bus.emit("devpet_generated",
+        pet_name=pet.pet_name, developer_id=pet.developer_id,
+        level=pet.level, evolution_stage=pet.evolution_stage)
+
+    return {
+        "pet_name": pet.pet_name,
+        "species": pet.species,
+        "level": pet.level,
+        "evolution_stage": pet.evolution_stage,
+        "battle_stats": pet.battle_stats.to_dict(),
+        "file": str(path),
+    }
+
+
+@app.post("/devpets/{pet_id}/image")
+async def upload_devpet_image(pet_id: str, image: UploadFile = File(...)) -> Dict:
+    """Upload card art for a DevPet."""
+    # Verify pet exists
+    pet_found = False
+    for fpath in glob.glob(str(DEVPETS_DIR / "*.json")):
+        data = json.loads(Path(fpath).read_text())
+        if data.get("identity", {}).get("developer_id") == pet_id:
+            pet_found = True
+            break
+    if not pet_found:
+        raise HTTPException(status_code=404, detail=f"DevPet '{pet_id}' not found")
+
+    img_dir = DEVPETS_DIR / "images"
+    img_dir.mkdir(exist_ok=True)
+    ext = Path(image.filename or "card.png").suffix or ".png"
+    img_path = img_dir / f"{pet_id}{ext}"
+    img_path.write_bytes(await image.read())
+
+    return {"status": "ok", "image_path": str(img_path)}
+
+
+# ── Dialogue ──────────────────────────────────────────────────
+@app.post("/dialogue/process")
+def dialogue_process(req: DialogueRequest) -> Dict:
+    """Process text through the dialogue pipeline (NLU, state machine, response)."""
+    from dialogue import create_dialogue_pipeline
+
+    pipeline = create_dialogue_pipeline(seed=req.seed)
+    result = pipeline.process(req.text)
+    pipeline.close()
+
+    event_bus.emit("dialogue_turn",
+        input_text=req.text, intent=result.intent,
+        response=result.response, state=result.state)
+
+    return {
+        "response": result.response,
+        "intent": result.intent,
+        "confidence": result.intent_confidence,
+        "slots": result.slots,
+        "state": result.state,
+        "action": result.action,
+        "session_id": result.session_id,
+    }
+
+
+# ── Dashboard (middleware stats) ──────────────────────────────
+@app.get("/dashboard/middleware-stats")
+def middleware_stats_route() -> Dict:
+    """Return per-route latency, error rate, and throughput stats."""
+    return {"routes": get_route_stats()}
+
+
+# ── Voice (stubs — full implementation requires Whisper/TTS) ──
+@app.get("/voice/status")
+def voice_status() -> Dict:
+    return {"status": "ready", "stt": "browser_required", "tts": "browser_required", "note": "Full voice stack requires Whisper + TTS engine"}
+
+
+@app.post("/voice/transcribe")
+def voice_transcribe() -> Dict:
+    return {"text": "", "confidence": 0.0, "note": "STT stub — use browser MediaRecorder + Whisper API"}
+
+
+@app.post("/voice/speak")
+def voice_speak(body: Dict) -> Dict:
+    return {"audio": "", "format": "wav", "note": "TTS stub — use browser SpeechSynthesis or ElevenLabs"}
 
 
 # ── KAIROS ───────────────────────────────────────────────────

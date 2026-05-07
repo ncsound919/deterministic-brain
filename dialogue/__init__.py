@@ -5,18 +5,14 @@
 2. NLU Layer - intent classification and slot/entity extraction (spaCy + rule-based)
 3. Dialogue Policy - deterministic state machine with transitions
 4. Response Realization - template selection with weighted variation
-5. Speech Layer - offline TTS via Piper (in features/voice_mode.py)
-
-Key Features:
-- Offline-first: works without cloud APIs for NLU and TTS
-- Deterministic: seeded randomness for reproducibility
-- Modular: layers can be swapped independently
+5. Voice Mode - intent routing to backend actions (dialogue/voice_mode.py)
 """
 from dialogue.pipeline import DialoguePipeline, create_dialogue_pipeline, DialogueResult
 from dialogue.nlu_layer import NLUPipeline, Intent, NLUResult, Entity
 from dialogue.dialogue_policy import DialogueStateMachine, DialogueState, DialogueAction
 from dialogue.response_realizer import TemplateRealizer, ResponseTemplate, RealizedResponse
 from dialogue.input_normalizer import InputNormalizer, NormalizedInput
+from dialogue.voice_mode import VoiceMode, create_default_voice_mode
 from dialogue.reproducibility import (
     ReproducibilityManager,
     start_dialogue_session,
@@ -27,7 +23,7 @@ from dialogue.reproducibility import (
 
 __all__ = [
     "DialoguePipeline",
-    "create_dialogue_pipeline", 
+    "create_dialogue_pipeline",
     "DialogueResult",
     "NLUPipeline",
     "Intent",
@@ -41,6 +37,8 @@ __all__ = [
     "RealizedResponse",
     "InputNormalizer",
     "NormalizedInput",
+    "VoiceMode",
+    "create_default_voice_mode",
     "ReproducibilityManager",
     "start_dialogue_session",
     "log_dialogue_event",
