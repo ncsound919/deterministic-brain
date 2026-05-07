@@ -284,6 +284,8 @@
     <div class="nav-item" data-page="task"><span>&#x25B6;</span> Run Task</div>
     <div class="nav-item" data-page="reason"><span>&#x2B22;</span> Reasoner</div>
     <div class="nav-item" data-page="bundles"><span>&#x27F3;</span> Bundles</div>
+    <div class="nav-sec">Build</div>
+    <div class="nav-item" data-page="planner"><span>&#x1F527;</span> Build Planner</div>
     <div class="nav-sec">Companions</div>
     <div class="nav-item" data-page="devpets"><span>&#x1F43E;</span> DevPets</div>
     <div class="nav-item" data-page="battle"><span>&#x2694;</span> Battle Arena</div>
@@ -535,6 +537,84 @@
       <div id="settings-container"></div>
     </section>
 
+    <!-- BUILD PLANNER -->
+    <section class="page" id="page-planner">
+      <div class="sh"><h2>&#x1F527; Build Planner</h2><div class="line"></div></div>
+      <div class="card">
+        <div class="pg" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <h3 style="color:var(--yel);margin-bottom:8px;">Verb</h3>
+            <div id="plan-verbs">
+              <label class="rad"><input type="radio" name="verb" value="build" checked> build</label>
+              <label class="rad"><input type="radio" name="verb" value="scaffold"> scaffold</label>
+              <label class="rad"><input type="radio" name="verb" value="create"> create</label>
+              <label class="rad"><input type="radio" name="verb" value="debug"> debug</label>
+              <label class="rad"><input type="radio" name="verb" value="deploy"> deploy</label>
+            </div>
+          </div>
+          <div>
+            <h3 style="color:var(--yel);margin-bottom:8px;">Domain</h3>
+            <div id="plan-domains">
+              <label class="rad"><input type="radio" name="domain" value="web" checked> web</label>
+              <label class="rad"><input type="radio" name="domain" value="api"> api</label>
+              <label class="rad"><input type="radio" name="domain" value="component"> component</label>
+              <label class="rad"><input type="radio" name="domain" value="docker"> docker</label>
+              <label class="rad"><input type="radio" name="domain" value="test"> test</label>
+              <label class="rad"><input type="radio" name="domain" value="auth"> auth</label>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="font-size:11px;color:var(--dim);">Language</label>
+            <select id="plan-lang" class="sel" onchange="refreshShorthand()">
+              <option value="typescript">TypeScript</option>
+              <option value="python">Python</option>
+              <option value="javascript">JavaScript</option>
+              <option value="go">Go</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--dim);">Size</label>
+            <select id="plan-size" class="sel" onchange="refreshShorthand()">
+              <option value="tiny">tiny</option>
+              <option value="small">small</option>
+              <option value="medium" selected>medium</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--dim);">Async</label>
+            <div><label class="tg"><input type="checkbox" id="plan-async" onchange="refreshShorthand()"> ON</label></div>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:11px;color:var(--dim);">Features</label>
+          <div id="plan-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+            <span class="badge feature-tag" data-val="canvas" onclick="this.remove();refreshShorthand()" style="cursor:pointer;">canvas ✕</span>
+            <span class="badge feature-tag" data-val="auth:jwt" onclick="this.remove();refreshShorthand()" style="cursor:pointer;">auth:jwt ✕</span>
+            <span class="badge feature-tag" data-val="crud" onclick="this.remove();refreshShorthand()" style="cursor:pointer;">crud ✕</span>
+            <span class="badge feature-tag" data-val="battle:turnbased" onclick="this.remove();refreshShorthand()" style="cursor:pointer;">battle:turnbased ✕</span>
+            <input type="text" id="plan-newtag" placeholder="+ tag:value" class="inp" style="width:140px;padding:2px 8px;"
+              onkeydown="if(event.key==='Enter'){addTag();refreshShorthand()}">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:11px;color:var(--dim);">Name / Target</label>
+          <input type="text" id="plan-name" class="inp" placeholder="e.g. BattleCard" oninput="refreshShorthand()">
+        </div>
+        <div class="card" style="background:var(--bg-2);">
+          <div style="font-size:11px;color:var(--dim);margin-bottom:4px;">SHORTHAND PREVIEW</div>
+          <code id="plan-shorthand" style="color:var(--green);font-size:14px;">build:web[canvas, auth:jwt, crud, battle:turnbased, lang:typescript]</code>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn" onclick="analysePlan()">ANALYSE ONLY</button>
+        <button class="btn green" onclick="executePlan()">BUILD</button>
+      </div>
+      <div class="card mt" id="plan-reason-panel"></div>
+      <div class="card mt" id="plan-sequence" style="display:none;"></div>
+    </section>
+
     <!-- HEALTH MONITOR -->
     <section class="page" id="page-health-mon">
       <div class="sh"><h2>&#x1F49A; Health Monitor</h2><div class="line"></div></div>
@@ -594,6 +674,7 @@ document.querySelectorAll('.nav-item').forEach(el=>{
     if(p==='bundles')   loadBundles();
     if(p==='settings')  loadSettings();
     if(p==='health-mon') loadHealthMonitor();
+    if(p==='planner')   refreshShorthand();
   });
 });
 
@@ -1150,6 +1231,98 @@ async function loadHealthMonitor(){
     var ts = new Date(e.ts*1000).toLocaleTimeString();
     d.innerHTML='<span style="color:var(--dim)">'+ts+'</span> <span style="color:var(--yel)">'+esc(e.event)+'</span> '+esc(JSON.stringify(e.data).slice(0,80));
     ht.appendChild(d);
+  });
+}
+
+// ─── Build Planner ─────────────────────────────────────────────
+function refreshShorthand(){
+  var verb   = document.querySelector('input[name="verb"]:checked')?.value || 'build';
+  var domain = document.querySelector('input[name="domain"]:checked')?.value || 'web';
+  var lang   = ($('plan-lang')?.value) || 'typescript';
+  var name   = ($('plan-name')?.value) || '';
+  var tags   = [];
+  document.querySelectorAll('.feature-tag').forEach(function(t){tags.push(t.dataset.val);});
+  var params = tags.slice();
+  if(lang) params.push('lang:'+lang);
+  if(name) params.push('name:'+name);
+  var shorthand = verb+':'+domain+'['+params.join(', ')+']';
+  var el = $('plan-shorthand');
+  if(el) el.textContent = shorthand;
+  return shorthand;
+}
+
+function addTag(){
+  var inp = $('plan-newtag');
+  var val = inp.value.trim();
+  if(!val) return;
+  var span = document.createElement('span');
+  span.className = 'badge feature-tag';
+  span.dataset.val = val;
+  span.textContent = val + ' \u2715';
+  span.style.cursor = 'pointer';
+  span.onclick = function(){this.remove();refreshShorthand();};
+  $('plan-tags').insertBefore(span, inp);
+  inp.value = '';
+}
+
+async function analysePlan(){
+  var q = refreshShorthand();
+  var r = await api('/reason', 'POST', {query: q});
+  if(!r||!r.decision) return;
+  renderReasonPanel($('plan-reason-panel'), r);
+  renderPlanSequence(r.decision);
+}
+
+async function executePlan(){
+  var q = refreshShorthand();
+  var r = await api('/task', 'POST', {query: q});
+  if(!r) return;
+  var panel = $('plan-reason-panel');
+  panel.innerHTML = '<h3 style="color:var(--green)">Build Result</h3>';
+  var fo = r.final_output || {};
+  var arts = fo.artifacts || [];
+  var outDiv = document.createElement('div'); outDiv.className='card';
+  outDiv.innerHTML = '<strong>Status:</strong> '+esc(r.status||'?')+
+    ' &middot; <strong>Score:</strong> '+esc(r.score||'--')+
+    ' &middot; <strong>Artifacts:</strong> '+arts.length;
+  panel.appendChild(outDiv);
+  arts.forEach(function(a,i){
+    var d=document.createElement('div'); d.className='card';
+    d.innerHTML = '<h4 style="color:var(--yel)">['+(a.lang||'text')+'] Artifact '+(i+1)+'</h4>'+
+      '<pre style="max-height:300px;overflow:auto;font-size:12px;">'+esc((a.content||'').slice(0,2000))+'</pre>';
+    panel.appendChild(d);
+  });
+  if(r.reasoning) renderPlanSequence(r.reasoning);
+}
+
+function renderPlanSequence(decision){
+  var seq = $('plan-sequence');
+  if(!seq) return;
+  seq.style.display = 'block';
+  seq.innerHTML = '<h3 style="color:var(--yel)">Execution Plan</h3>';
+  var steps = decision?.breakdown || [];
+  if(!steps.length){ seq.innerHTML += '<div style="color:var(--dim)">No plan steps available</div>'; return; }
+  var labels = {
+    pre_audit: 'VALIDATE', algebraic: 'CONFIG', bm25: 'ROUTE', semantic: 'ROUTE',
+    linear: 'ROUTE', quantum: 'ROUTE (collapse)', config_select: 'CONFIG (final)',
+    shorthand: 'SHORTHAND', shorthand_resolved: 'SHORTHAND'
+  };
+  steps.forEach(function(s,i){
+    var label = labels[s.step] || s.step.toUpperCase();
+    var d = document.createElement('div');
+    d.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:10px;';
+    var num = document.createElement('span');
+    num.style.cssText = 'color:var(--yel);font-weight:bold;min-width:24px;';
+    num.textContent = String.fromCharCode(0x2460 + i);
+    var body = document.createElement('div');
+    body.innerHTML = '<strong>'+esc(label)+'</strong>'+
+      (s.top_skill ? '<div style="color:var(--dim);font-size:11px;">skill: '+esc(s.top_skill)+'</div>' : '')+
+      (s.confidence ? '<div style="color:var(--dim);font-size:11px;">confidence: '+s.confidence+'</div>' : '')+
+      (s.candidates ? '<div style="color:var(--dim);font-size:11px;">candidates: '+s.candidates+'</div>' : '')+
+      (s.score ? '<div style="color:var(--dim);font-size:11px;">score: '+s.score+'</div>' : '')+
+      (s.matched ? '<div style="color:var(--green);font-size:11px;">matched: '+esc(s.matched)+'</div>' : '');
+    d.appendChild(num); d.appendChild(body);
+    seq.appendChild(d);
   });
 }
 
