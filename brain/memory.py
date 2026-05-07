@@ -1,17 +1,21 @@
+"""Session memory — plain dict, no vector store, no LLM."""
 from __future__ import annotations
+import uuid
+import time
+from typing import Dict
 
-from hashlib import sha256
-from schemas.state import BrainState
 
-def init_state(query: str, lane: str) -> BrainState:
-    sid = sha256(query.encode()).hexdigest()[:16]
+def init_state(query: str, task: Dict) -> Dict:
     return {
-        'session_id': sid, 'query': query, 'lane': lane,
-        'goal_stack': [query], 'permission_context': {},
-        'working_memory': {}, 'retrieved_contexts': [],
-        'graph_refs': [], 'tool_budget': {'max_calls': 8, 'used_calls': 0},
-        'browser_sessions': {}, 'candidate_artifacts': [],
-        'tool_calls': [], 'verification_results': [],
-        'history': [], 'confidence': 0.0,
-        'output_mode': 'answer', 'final_output': '', 'status': 'ok',
+        "session_id":   str(uuid.uuid4()),
+        "created_at":   time.time(),
+        "query":        query,
+        "task":         task,
+        "lane":         task.get("task", "unknown"),
+        "history":      [],
+        "artifacts":    [],
+        "audit_results":[],
+        "score":        0.0,
+        "status":       "pending",
+        "final_output": {},
     }
