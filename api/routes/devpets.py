@@ -12,8 +12,8 @@ from orchestration.event_bus import event_bus
 
 router = APIRouter(prefix="/devpets", tags=["devpets"])
 
-DEVPETS_DIR = Path("devpets")
-DEVPETS_DIR.mkdir(exist_ok=True)
+DEVPETS_DIR = Path("devpets").resolve()
+DEVPETS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class DevPetGenerateRequest(BaseModel):

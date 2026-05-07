@@ -24,20 +24,26 @@ class Forge:
 
     def list_skills(self) -> List[Dict]:
         skills = []
-        for path in glob.glob(os.path.join(self.SKILLS_ROOT, "**/*.skill.md"), recursive=True):
-            try:
-                with open(path) as f:
-                    content = f.read()
-                fm = content.split("---")[1] if content.startswith("---") else ""
-                meta = yaml.safe_load(fm) or {}
-                skills.append({
-                    "skill":   meta.get("skill", path),
-                    "version": meta.get("version", "?"),
-                    "path":    path,
-                    "mc":      meta.get("monte_carlo", False),
-                })
-            except Exception:
-                pass
+        seen = set()
+        # Discover both *.skill.md (original) and SKILL.md (imported)
+        for pattern in ["**/*.skill.md", "**/SKILL.md"]:
+            for path in glob.glob(os.path.join(self.SKILLS_ROOT, pattern), recursive=True):
+                if path in seen:
+                    continue
+                seen.add(path)
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        content = f.read()
+                    fm = content.split("---")[1] if content.startswith("---") else ""
+                    meta = yaml.safe_load(fm) or {}
+                    skills.append({
+                        "skill":   meta.get("skill", path),
+                        "version": meta.get("version", "?"),
+                        "path":    path,
+                        "mc":      meta.get("monte_carlo", False),
+                    })
+                except Exception:
+                    pass
         return skills
 
     def diff(self, old_content: str, new_content: str, filename: str = "file") -> str:
