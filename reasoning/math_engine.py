@@ -602,6 +602,21 @@ class ReasoningEngine:
 
         # ── Step 0: Pre-Audit ────────────────────────────────────────────
         audit_ok, audit_issues = self.pre_audit.run(task)
+
+        # ── Step 0.5: Shorthand Parser (fastest path) ──────────────────
+        task_raw = task.get("raw", task.get("task", ""))
+        shorthand_skill = None
+        try:
+            from brain.shorthand_parser import ShorthandParser, intent_to_skill
+            sp = ShorthandParser()
+            token = sp.parse(task_raw)
+            if token.confidence > 0.8:
+                shorthand_skill = intent_to_skill(token)
+                if shorthand_skill:
+                    breakdown.append({"step": "shorthand", "matched": shorthand_skill,
+                                      "confidence": round(token.confidence, 3)})
+        except ImportError:
+            pass
         breakdown.append({"step": "pre_audit", "ok": audit_ok, "issues": audit_issues})
         if not audit_ok:
             return DecisionResult(
@@ -619,13 +634,38 @@ class ReasoningEngine:
         valid_configs = ar.all_solutions(limit=32) if variable_domains else [{}]
         breakdown.append({"step": "algebraic", "valid_configs": len(valid_configs)})
 
-        # ── Step 2: BM25 — rank skills by relevance to task ──────────────
+        # ── Step 2: Skill ranking (semantic → BM25) ─────────────────────
         task_text = task.get("raw", task.get("task", ""))
-        # BM25 vastly outperforms raw TF cosine with many candidates
-        bm25 = BM25Ranker()
-        ranked_skills = bm25.rank_texts(task_text, skill_candidates)
-        breakdown.append({"step": "bm25", "top_skill": ranked_skills[0][0] if ranked_skills else None,
-                          "candidates": len(skill_candidates)})
+
+        # If shorthand matched, use it directly — no ranking needed
+        if shorthand_skill:
+            ranked_skills = [(shorthand_skill, 0.95)]
+            breakdown.append({"step": "shorthand_resolved", "skill": shorthand_skill})
+        else:
+            # Try semantic index first (MiniLM embeddings)
+            semantic_hit = None
+            try:
+                from reasoning.semantic_ranker import FlatEmbeddingIndex
+                import os
+                if os.path.exists("skill_index.npy"):
+                    idx = FlatEmbeddingIndex()
+                    if idx.load("skill_index.npy"):
+                        hit = idx.find(task_text)
+                        if hit:
+                            semantic_hit = hit
+                            breakdown.append({"step": "semantic", "top_skill": hit[0],
+                                              "score": round(hit[1], 4)})
+            except ImportError:
+                pass
+
+            if semantic_hit:
+                ranked_skills = [semantic_hit]
+            else:
+                # Fall back to BM25
+                bm25 = BM25Ranker()
+                ranked_skills = bm25.rank_texts(task_text, skill_candidates)
+                breakdown.append({"step": "bm25", "top_skill": ranked_skills[0][0] if ranked_skills else None,
+                                  "candidates": len(skill_candidates)})
 
         # ── Step 3: Quantum — collapse to final skill choice ───────────────
         # Quantum collapse runs over top-8 linear candidates only, so
