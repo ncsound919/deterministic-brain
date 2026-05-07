@@ -69,6 +69,16 @@ class BrainConfig:
     mcts_branch_factor: int = field(default_factory=lambda: int(os.getenv('MCTS_BRANCH_FACTOR', '3')))
     mcts_max_depth:     int = field(default_factory=lambda: int(os.getenv('MCTS_MAX_DEPTH', '4')))
 
+    # --- autoDream ---
+    autodream_enabled:      bool = field(default_factory=lambda: os.getenv('AUTODREAM_ENABLED', 'true').lower() != 'false')
+    autodream_schedule:     str  = field(default_factory=lambda: os.getenv('AUTODREAM_SCHEDULE', '0 3 * * *'))
+    trace_retention_days:    int  = field(default_factory=lambda: int(os.getenv('TRACE_RETENTION_DAYS', '30')))
+
+    # --- KAIROS ---
+    kairos_enabled:            bool = field(default_factory=lambda: os.getenv('KAIROS_ENABLED', 'true').lower() != 'false')
+    kairos_idle_threshold_minutes: int = field(default_factory=lambda: int(os.getenv('KAIROS_IDLE_THRESHOLD', '5')))
+    kairos_dir:               Path = field(default_factory=lambda: Path(os.getenv('KAIROS_DIR', '.kairos')))
+
     def summary(self) -> dict:
         return {
             'qdrant_url':          self.qdrant_url or '(not set)',

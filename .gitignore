@@ -35,3 +35,17 @@ Desktop.ini
 # Temporary
 tmp/
 temp/
+.kairos/
+.aether_prime_cache/
+.aether_prime_memory/
+
+# autoDream
+.autodream_last_run.json
+.autodream_corrections.jsonl
+
+# pytest
+.pytest_cache/
+
+# Logs
+*.log
+logs/

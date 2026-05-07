@@ -8,6 +8,8 @@ from typing import Any, Dict, Optional
 
 from orchestration.dca_engine import DeterministicCodingAgent
 from orchestration.swarm_dispatcher import SwarmDispatcher
+from orchestration.kairos_daemon import get_daemon, start_kairos, stop_kairos, kairos_status
+from brain.autodream import run_autodream
 from tools.forge import Forge, forge_diff
 from tools.dashboard import Dashboard
 from tools.web_fetcher import web_fetch
@@ -138,6 +140,49 @@ def audit() -> Dict:
 @app.get("/dashboard/stats")
 def stats() -> Dict:
     return {"bundles": dash.bundle_stats(), "skills": dash.skill_stats()}
+
+# ── autoDream ────────────────────────────────────────────────
+@app.post("/autodream/run")
+def autodream_run() -> Dict:
+    return run_autodream(dry_run=False)
+
+@app.get("/autodream/status")
+def autodream_status() -> Dict:
+    import os
+    path = ".autodream_last_run.json"
+    if os.path.exists(path):
+        import json
+        return json.loads(open(path).read())
+    return {"status": "never_run"}
+
+
+# ── KAIROS ───────────────────────────────────────────────────
+@app.post("/kairos/start")
+def kairos_start() -> Dict:
+    return start_kairos()
+
+@app.post("/kairos/stop")
+def kairos_stop() -> Dict:
+    return stop_kairos()
+
+@app.get("/kairos/status")
+def kairos_status_endpoint() -> Dict:
+    return kairos_status()
+
+@app.get("/kairos/today")
+def kairos_today() -> Dict:
+    from features.kairos import get_today
+    return get_today()
+
+@app.get("/kairos/{date}")
+def kairos_date(date: str) -> Dict:
+    from features.kairos import get_date
+    return get_date(date)
+
+@app.get("/kairos/stats")
+def kairos_stats() -> Dict:
+    from features.kairos import get_stats
+    return get_stats()
 
 @app.get("/health")
 def health() -> Dict:

@@ -26,6 +26,9 @@ def main() -> None:
     parser.add_argument("--inputs", "-i",       help="JSON inputs for bundle", default="{}")
     parser.add_argument("--skills",             action="store_true", help="List indexed skills")
     parser.add_argument("--serve",              action="store_true", help="Start FastAPI server")
+    parser.add_argument("--autodream",          action="store_true", help="Run autoDream memory consolidation")
+    parser.add_argument("--kairos",             action="store_true", help="Start KAIROS daemon mode")
+    parser.add_argument("--kairos-status",     action="store_true", help="Show KAIROS daemon status")
     parser.add_argument("--verbose", "-v",      action="store_true")
     args = parser.parse_args()
 
@@ -65,6 +68,35 @@ def main() -> None:
         else:
             print(f"Status : {result.get('status')}")
             print(f"Output : {result.get('final_output')}")
+        return
+
+    if args.autodream:
+        from brain.autodream import run_autodream
+        print("Running autoDream memory consolidation...")
+        results = run_autodream(dry_run=False)
+        print(json.dumps(results, indent=2, default=str))
+        return
+
+    if args.kairos:
+        from orchestration.kairos_daemon import start_kairos
+        print("Starting KAIROS daemon (Ctrl+C to stop)...")
+        import signal
+        import sys
+        def signal_handler(sig, frame):
+            print("\nStopping KAIROS daemon...")
+            from orchestration.kairos_daemon import stop_kairos
+            stop_kairos()
+            sys.exit(0)
+        signal.signal(signal.SIGINT, signal_handler)
+        result = start_kairos()
+        print(f"Daemon started: {json.dumps(result, indent=2)}")
+        signal.pause()
+        return
+
+    if args.kairos_status:
+        from orchestration.kairos_daemon import kairos_status
+        result = kairos_status()
+        print(json.dumps(result, indent=2, default=str))
         return
 
     parser.print_help()
