@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import glob
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -20,6 +20,25 @@ from tools.dashboard import Dashboard
 from tools.web_fetcher import web_fetch
 from tools.relay import relay
 from api.middleware import RequestLoggingMiddleware, get_route_stats
+import numpy as np
+import struct
+
+# Voice mode (lazy-loads STT/TTS models on first use)
+_voice_mode = None
+
+def _get_voice():
+    global _voice_mode
+    if _voice_mode is None:
+        from dialogue.voice_mode import VoiceMode
+        _voice_mode = VoiceMode(seed=42)
+        # Register backend handlers
+        _voice_mode.register_backend("run_task",
+            lambda text, **kw: agent.handle(text))
+        _voice_mode.register_backend("run_bundle",
+            lambda text, **kw: swarm.dispatch(
+                kw.get("slots", {}).get("bundle", "scaffold-rest-api"),
+                kw.get("slots", {})))
+    return _voice_mode
 
 app   = FastAPI(title="Deterministic Brain", version="2.4.0")
 agent = DeterministicCodingAgent()
@@ -348,20 +367,86 @@ def middleware_stats_route() -> Dict:
     return {"routes": get_route_stats()}
 
 
-# ── Voice (stubs — full implementation requires Whisper/TTS) ──
+# ── Voice (faster-whisper STT + piper-tts) ──────────────────
 @app.get("/voice/status")
 def voice_status() -> Dict:
-    return {"status": "ready", "stt": "browser_required", "tts": "browser_required", "note": "Full voice stack requires Whisper + TTS engine"}
+    return {
+        "status": "ready",
+        "stt": "faster-whisper (tiny.en)",
+        "tts": "piper-tts (en_US-lessac-medium)",
+        "stream": "ws://localhost:8000/voice/stream",
+    }
 
 
 @app.post("/voice/transcribe")
-def voice_transcribe() -> Dict:
-    return {"text": "", "confidence": 0.0, "note": "STT stub — use browser MediaRecorder + Whisper API"}
+async def voice_transcribe(body: Dict) -> Dict:
+    """Transcribe base64 PCM audio to text using faster-whisper."""
+    import base64
+    vm = _get_voice()
+    raw = body.get("audio", "")
+    if not raw:
+        return {"text": "", "error": "No audio data"}
+    try:
+        audio_bytes = base64.b64decode(raw)
+        audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+        text = vm.transcriber.transcribe(audio_np, sample_rate=16000)
+        return {"text": text, "confidence": 0.9 if text else 0.0}
+    except Exception as e:
+        return {"text": "", "error": str(e)}
 
 
 @app.post("/voice/speak")
-def voice_speak(body: Dict) -> Dict:
-    return {"audio": "", "format": "wav", "note": "TTS stub — use browser SpeechSynthesis or ElevenLabs"}
+async def voice_speak(body: Dict) -> bytes:
+    """Synthesize text to WAV audio using piper-tts."""
+    from fastapi.responses import Response
+    vm = _get_voice()
+    text = body.get("text", "")
+    if not text:
+        return Response(content=vm.synthesizer.synthesize("No text provided."),
+                        media_type="audio/wav")
+    audio = vm.synthesizer.synthesize(text)
+    return Response(content=audio, media_type="audio/wav")
+
+
+@app.websocket("/voice/stream")
+async def voice_stream(websocket):
+    """Real-time voice streaming — mic → STT → pipeline → TTS → speaker."""
+    from fastapi import WebSocket
+    await websocket.accept()
+    vm = _get_voice()
+    vm.reset()
+
+    try:
+        while True:
+            # Receive binary audio chunk (PCM 16-bit, 16kHz, mono)
+            data = await websocket.receive()
+            if data["type"] == "websocket.disconnect":
+                break
+
+            if "bytes" in data:
+                audio_bytes = data["bytes"]
+                audio_np = (np.frombuffer(audio_bytes, dtype=np.int16)
+                             .astype(np.float32) / 32768.0)
+                text = vm.add_audio_chunk(audio_np)
+
+                if text:
+                    # Process through dialogue pipeline
+                    result = vm.process(text)
+
+                    # Send transcription + dialogue back
+                    await websocket.send_json({
+                        "type": "transcription",
+                        "text": text,
+                        "dialogue": result.get("dialogue", {}),
+                    })
+
+                    # Synthesize and send audio response
+                    audio_wav = vm.synthesizer.synthesize(result["response"])
+                    await websocket.send_bytes(audio_wav)
+    except Exception:
+        pass
+    finally:
+        vm.close()
 
 
 # ── KAIROS ───────────────────────────────────────────────────

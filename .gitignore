@@ -40,6 +40,8 @@ temp/
 .aether_prime_cache/
 .aether_prime_memory/
 .scheduler_tasks.json
+piper_voices/
+devpets/
 
 # autoDream
 .autodream_last_run.json
