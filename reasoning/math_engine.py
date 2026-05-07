@@ -412,7 +412,7 @@ class QuantumProbabilistic:
 
 def _check_injection(text: str) -> bool:
     """Check for injection patterns in user input.
-    
+
     Detects:
     - Shell metacharacters: ; | & $ `
     - Command chaining: && ||
@@ -423,7 +423,7 @@ def _check_injection(text: str) -> bool:
     """
     if not text:
         return False
-    
+
     patterns = [
         # Shell metacharacters and command injection
         r'[;|&`$]',            # any of ; | & ` $
@@ -446,32 +446,6 @@ def _check_injection(text: str) -> bool:
 
     for p in patterns:
         if re.search(p, text, flags=re.IGNORECASE):
-            return True
-    return False
-    patterns = [
-        r'[;|&`$\\]',
-        r'\.\./',
-        r'\n',
-        r'%24',
-        r'\{\{.*\}\}',
-        r'&{2}',
-        r'|{2}',
-        r'\$\(',
-        r'`[^`]*`',
-    ]
-    for p in patterns:
-        if re.search(p, text):
-            return True
-    return False
-    patterns = [
-        r'[;|`$\\]',
-        r'\.\./',
-        r'\n',
-        r'%24',
-        r'\{\{.*\}\}',
-    ]
-    for p in patterns:
-        if re.search(p, text):
             return True
     return False
 
@@ -587,6 +561,9 @@ class ReasoningEngine:
         breakdown.append({"step": "linear", "top_skill": ranked_skills[0][0] if ranked_skills else None})
 
         # ── Step 3: Quantum — collapse to final skill choice ───────────────
+        # Quantum collapse runs over top-8 linear candidates only, so
+        # q_confidence is properly normalised over a small set rather than
+        # being diluted by the full 89-skill candidate pool.
         evidence      = task_text.split()
         top_skills    = [s for s, _ in ranked_skills[:8]]
         chosen_skill, q_probs = self.quantum.collapse(top_skills, evidence) if top_skills else (None, [])
@@ -596,8 +573,6 @@ class ReasoningEngine:
                           "top3": q_probs[:3]})
 
         # ── Step 4: Config selection — pick best from exhaustive search ──────────
-        # AlgebraicReasoner.all_solutions() already enumerated all valid configs.
-        # No need for DifferentialReasoner's redundant neighbor search.
         best_config = valid_configs[0] if valid_configs else {}
         if scorer_fn and len(valid_configs) > 1:
             try:
@@ -609,16 +584,18 @@ class ReasoningEngine:
                 breakdown.append({"step": "config_select", "final_config": best_config,
                                   "score": round(final_score, 4), "method": "scored_max"})
             except Exception:
-                # scorer_fn failed — use first valid config
                 breakdown.append({"step": "config_select", "skipped": True,
                                   "reason": "scorer_fn error"})
         else:
             breakdown.append({"step": "config_select", "skipped": True})
 
         # ── Composite confidence ───────────────────────────────────────────
-        linear_conf   = ranked_skills[0][1] if ranked_skills else 0.0
-        # composite = geometric mean of linear and quantum confidence
-        confidence = math.sqrt(max(0.0, linear_conf) * max(0.0, q_confidence))
+        # Weighted blend: 60% linear cosine + 40% quantum probability.
+        # Previously a geometric mean — that formula collapses to ~0.10 when
+        # there are many candidates (q_confidence ≈ 1/N for large N).
+        # The weighted blend is independent of candidate pool size.
+        linear_conf = ranked_skills[0][1] if ranked_skills else 0.0
+        confidence  = 0.6 * max(0.0, linear_conf) + 0.4 * max(0.0, q_confidence)
 
         return DecisionResult(
             chosen_skill  = chosen_skill,

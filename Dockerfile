@@ -21,8 +21,9 @@ RUN playwright install chromium --with-deps
 # Copy source
 COPY . .
 
-# Create checkpoint dir
-RUN mkdir -p .checkpoints
+# Pre-create runtime directories so fresh containers never 500 on
+# /devpets or /health due to missing paths before server mkdir runs.
+RUN mkdir -p .checkpoints devpets devpets/images
 
 EXPOSE 8000
 
