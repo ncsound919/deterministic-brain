@@ -98,14 +98,21 @@ def run_task(req: TaskRequest) -> Dict:
 
 @app.post("/reason")
 def reason_only(req: TaskRequest) -> Dict:
+    """Run ONLY the reasoning pipeline — no skill execution."""
     task = agent.parser.parse(req.query)
+    enriched = agent.router.enriched_candidates()
+    text_to_id = {t: sid for sid, t in enriched}
+    enriched_texts = [t for _, t in enriched]
+
     decision = agent.reasoner.decide(
         task=task,
-        skill_candidates=list(agent.skills.keys()),
+        skill_candidates=enriched_texts,
         scorer_fn=agent._decision_scorer,
         constraints=agent._build_constraints(task),
         variable_domains=agent._variable_domains(task),
     )
+    if decision.chosen_skill and decision.chosen_skill in text_to_id:
+        decision.chosen_skill = text_to_id[decision.chosen_skill]
     return {"query": req.query, "task": task, "decision": decision.to_dict()}
 
 

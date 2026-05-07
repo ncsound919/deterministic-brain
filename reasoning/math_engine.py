@@ -308,6 +308,70 @@ class LinearReasoner:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# BM25 RANKER — TF saturation + IDF + doc length normalization.
+# Far better than raw TF cosine for short skill ID matching against
+# natural language queries with many candidates (>10).
+# ═══════════════════════════════════════════════════════════════════════
+
+class BM25Ranker:
+    """Pure-Python BM25 scorer for routing queries to skill IDs.
+
+    k1: term frequency saturation (default 1.5)
+    b:  document length normalization (default 0.75)
+    """
+
+    STOP = {'a','an','the','is','are','was','were','in','of','to',
+            'and','or','for','with','on','at','by','this','that',
+            'it','as','be','not','from','into','if','then','do'}
+
+    def __init__(self, k1: float = 1.5, b: float = 0.75):
+        self.k1 = k1
+        self.b  = b
+
+    def _tokenize(self, text: str) -> list[str]:
+        words = re.findall(r'[a-z0-9_-]+', text.lower())
+        return [w for w in words if w not in self.STOP and len(w) > 1]
+
+    def rank(self, query: str, docs: list[tuple[str, str]]) -> list[tuple[str, float]]:
+        """Rank docs against query. Each doc = (skill_id, enriched_text)."""
+        tokenized = [(sid, self._tokenize(txt)) for sid, txt in docs]
+        if not tokenized:
+            return []
+
+        avg_len = sum(len(t) for _, t in tokenized) / len(tokenized)
+        q_terms = self._tokenize(query)
+        N = len(tokenized)
+
+        # IDF
+        idf = {}
+        for term in set(q_terms):
+            df = sum(1 for _, tokens in tokenized if term in tokens)
+            idf[term] = math.log((N - df + 0.5) / (df + 0.5) + 1.0)
+
+        # Score
+        scores = []
+        for sid, tokens in tokenized:
+            tf_counts = {}
+            for t in tokens: tf_counts[t] = tf_counts.get(t, 0) + 1
+            dl = len(tokens) or 1
+            score = 0.0
+            for term in q_terms:
+                tf = tf_counts.get(term, 0)
+                if tf == 0:
+                    continue
+                num = tf * (self.k1 + 1)
+                den = tf + self.k1 * (1 - self.b + self.b * dl / avg_len)
+                score += idf.get(term, 0.0) * num / den
+            scores.append((sid, score))
+        return sorted(scores, key=lambda x: x[1], reverse=True)
+
+    def rank_texts(self, query_text: str, candidate_texts: list[str]) -> list[tuple[str, float]]:
+        """Convenience: rank bare text strings against a query."""
+        docs = [(t, t) for t in candidate_texts]
+        return self.rank(query_text, docs)
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # 4. QUANTUM PROBABILISTIC REASONER
 #    Superposition → amplitude assignment → collapse.
 #
@@ -555,10 +619,13 @@ class ReasoningEngine:
         valid_configs = ar.all_solutions(limit=32) if variable_domains else [{}]
         breakdown.append({"step": "algebraic", "valid_configs": len(valid_configs)})
 
-        # ── Step 2: Linear — rank skills by cosine to task ────────────────
-        task_text    = task.get("raw", task.get("task", ""))
-        ranked_skills = self.linear.rank_texts(task_text, skill_candidates)
-        breakdown.append({"step": "linear", "top_skill": ranked_skills[0][0] if ranked_skills else None})
+        # ── Step 2: BM25 — rank skills by relevance to task ──────────────
+        task_text = task.get("raw", task.get("task", ""))
+        # BM25 vastly outperforms raw TF cosine with many candidates
+        bm25 = BM25Ranker()
+        ranked_skills = bm25.rank_texts(task_text, skill_candidates)
+        breakdown.append({"step": "bm25", "top_skill": ranked_skills[0][0] if ranked_skills else None,
+                          "candidates": len(skill_candidates)})
 
         # ── Step 3: Quantum — collapse to final skill choice ───────────────
         # Quantum collapse runs over top-8 linear candidates only, so
@@ -590,12 +657,11 @@ class ReasoningEngine:
             breakdown.append({"step": "config_select", "skipped": True})
 
         # ── Composite confidence ───────────────────────────────────────────
-        # Weighted blend: 60% linear cosine + 40% quantum probability.
-        # Previously a geometric mean — that formula collapses to ~0.10 when
-        # there are many candidates (q_confidence ≈ 1/N for large N).
-        # The weighted blend is independent of candidate pool size.
-        linear_conf = ranked_skills[0][1] if ranked_skills else 0.0
-        confidence  = 0.6 * max(0.0, linear_conf) + 0.4 * max(0.0, q_confidence)
+        # BM25 returns unnormalized scores. Map to [0,1] via sigmoid-like normalisation.
+        linear_conf_raw = ranked_skills[0][1] if ranked_skills else 0.0
+        linear_conf = linear_conf_raw / (abs(linear_conf_raw) + 1.0) if linear_conf_raw else 0.0
+        # Weighted blend: 60% linear + 40% quantum
+        confidence = 0.6 * max(0.0, linear_conf) + 0.4 * max(0.0, q_confidence)
 
         return DecisionResult(
             chosen_skill  = chosen_skill,

@@ -98,7 +98,7 @@ class DeterministicCodingAgent:
 
     def __init__(self, skills_root: str = "skill_packs", routes_path: Optional[str] = None):
         self.parser     = TaskParser()
-        self.router     = MoERouter(routes_path)
+        self.router     = MoERouter(routes_path or "swarm.yaml")
         self.tools      = ToolRegistry()
         self.executor   = SkillExecutor(self.tools)
         self.auditor    = DeterministicAuditor()
@@ -166,20 +166,27 @@ class DeterministicCodingAgent:
         task  = self.parser.parse(user_input)
         state = init_state(user_input, task)
 
-        # ---- Unknown task fast-exit -----------------------------------
-        if task["task"] == "unknown":
-            state["status"]       = "failed"
-            state["final_output"] = {"error": "Unrecognized task", "raw": user_input}
-            return state
+        # For unknown tasks, still run reasoning — the reasoner may find a match
+        # via cosine similarity to available skills and NLU aliases.
+        # Low-confidence guard below blocks execution if match is weak.
 
         # ---- Reasoning pipeline --------------------------------------
+        # Build enriched candidates (skill_id → enriched text with aliases)
+        enriched = self.router.enriched_candidates()
+        text_to_id = {t: sid for sid, t in enriched}
+        enriched_texts = [t for _, t in enriched]
+
         decision = self.reasoner.decide(
             task             = task,
-            skill_candidates = list(self.skills.keys()),
+            skill_candidates = enriched_texts,
             scorer_fn        = self._decision_scorer,
             constraints      = self._build_constraints(task),
             variable_domains = self._variable_domains(task),
         )
+        # Map enriched text back to skill_id after ranking
+        if decision.chosen_skill and decision.chosen_skill in text_to_id:
+            decision.chosen_skill = text_to_id[decision.chosen_skill]
+
         state["reasoning"] = decision.to_dict()
 
         log_event("reasoning", {
@@ -202,8 +209,14 @@ class DeterministicCodingAgent:
             }
             return state
 
-        # ---- Low confidence ------------------------------------------
-        if decision.confidence < self.CONFIDENCE_THRESHOLD:
+        # ---- Low confidence — dynamic threshold ---------------------
+        # When many candidates exist, cosine scores naturally dilute.
+        # Scale threshold down logarithmically: log2(92) ≈ 6.5 → 0.30/6.5 ≈ 0.046
+        import math as _math
+        n = len(enriched) if enriched else 1
+        divisor = max(1, _math.log(n, 2)) if n > 1 else 1
+        effective_threshold = max(0.05, self.CONFIDENCE_THRESHOLD / divisor)
+        if decision.confidence < effective_threshold:
             state["status"]       = "low_confidence"
             state["final_output"] = {
                 "error":      f"Confidence {decision.confidence:.2f} below threshold "
@@ -212,15 +225,24 @@ class DeterministicCodingAgent:
             }
             return state
 
-        # ---- No skill found ------------------------------------------
+        # ---- No skill found — try path-based resolution --------
         skill_id = decision.chosen_skill
         if not skill_id or not self.skills_registry.get(skill_id):
-            state["status"]       = "failed"
-            state["final_output"] = {
-                "error":     f"No skill.md for '{skill_id}'",
-                "reasoning": decision.to_dict(),
-            }
-            return state
+            # Resolve route key → registry ID via path matching
+            resolved = None
+            for meta in self.skills_registry.list_all():
+                if meta.path and skill_id in meta.path:
+                    resolved = meta.skill_id
+                    break
+            if resolved:
+                skill_id = resolved
+            else:
+                state["status"]       = "failed"
+                state["final_output"] = {
+                    "error":     f"No skill.md for '{skill_id}'",
+                    "reasoning": decision.to_dict(),
+                }
+                return state
 
         # ---- Execute via new orchestration --------------------------------
         skill_meta = self.skills_registry.get(skill_id)

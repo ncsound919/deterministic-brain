@@ -174,9 +174,9 @@ class SkillRegistry:
         self._discovered = True
 
     def _discover_from_dir(self, root_dir: str) -> None:
-        """Discover skills from a directory.
-        
-        Supports two levels of nesting:
+        """Discover skills from a directory with 2-level nesting support.
+
+        Supports:
         - skill_packs/<skill_name>/skill.md (flat structure)
         - skill_packs/<category>/<skill_name>/SKILL.md (imported structure)
         """
@@ -188,33 +188,31 @@ class SkillRegistry:
             if not os.path.isdir(item_path):
                 continue
 
-            skill_md, skill_id = self._find_skill_file(item_path, item)
-            
-            if skill_md:
-                metadata = SkillMetadata.from_file(skill_md, skill_id)
+            # Check if this dir has its own skill file (flat structure)
+            direct = self._find_direct_skill_file(item_path, item)
+            if direct[0]:
+                metadata = SkillMetadata.from_file(direct[0], direct[1])
                 if metadata:
-                    self._skills[skill_id] = metadata
-                    logger.info(f"Discovered skill: {skill_id} (backend: {metadata.backend}, format: {metadata.source_format})")
+                    self._skills[direct[1]] = metadata
+            else:
+                # Category dir — iterate all children (imported structure)
+                for subitem in os.listdir(item_path):
+                    subpath = os.path.join(item_path, subitem)
+                    if not os.path.isdir(subpath):
+                        continue
+                    child = self._find_direct_skill_file(subpath, subitem)
+                    if child[0]:
+                        metadata = SkillMetadata.from_file(child[0], child[1])
+                        if metadata:
+                            self._skills[child[1]] = metadata
 
-    def _find_skill_file(self, dir_path: str, dir_name: str) -> tuple:
-        """Find skill.md or SKILL.md in a directory, with nested support."""
-        files_in_dir = os.listdir(dir_path)
-        
-        has_skill_md = "skill.md" in files_in_dir
-        has_skill_md_upper = "SKILL.md" in files_in_dir
-        
-        if has_skill_md_upper:
+    def _find_direct_skill_file(self, dir_path: str, dir_name: str) -> tuple:
+        """Check only the immediate directory for SKILL.md or skill.md (no recursion)."""
+        files = os.listdir(dir_path)
+        if "SKILL.md" in files:
             return os.path.join(dir_path, "SKILL.md"), dir_name
-        elif has_skill_md:
+        if "skill.md" in files:
             return os.path.join(dir_path, "skill.md"), dir_name
-        
-        for subitem in files_in_dir:
-            subpath = os.path.join(dir_path, subitem)
-            if os.path.isdir(subpath):
-                nested = self._find_skill_file(subpath, subitem)
-                if nested[0]:
-                    return nested
-        
         return None, dir_name
 
     def register(self, metadata: SkillMetadata) -> None:

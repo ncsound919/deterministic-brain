@@ -37,10 +37,12 @@ def route_lane(query: str) -> str:
 class MoERouter:
     def __init__(self, routes_path: Optional[str] = None, warn_on_missing: bool = True):
         self.routes = dict(_DEFAULT_ROUTES)
+        self.aliases: Dict[str, list] = {}
         if routes_path and os.path.exists(routes_path):
             with open(routes_path) as f:
-                overrides = yaml.safe_load(f) or {}
-            self.routes.update(overrides.get("routes", {}))
+                config = yaml.safe_load(f) or {}
+            self.routes.update(config.get("routes", {}))
+            self.aliases = config.get("aliases", {})
         if warn_on_missing:
             issues = self.validate_routes()
             if issues:
@@ -73,3 +75,21 @@ class MoERouter:
     def register(self, task_name: str, expert_path: str) -> None:
         """Dynamically register a new route at runtime."""
         self.routes[task_name] = expert_path
+
+    def enriched_candidates(self) -> list[tuple[str, str]]:
+        """Return (skill_id, enriched_text) pairs for BM25 ranking.
+
+        Each enriched_text = readable skill name + aliases, so BM25
+        has meaningful tokens to match against the query.
+        """
+        results = []
+        for skill_id in self.routes:
+            alias_phrases = self.aliases.get(skill_id, [])
+            readable_id = skill_id.replace("-", " ").replace("_", " ")
+            enriched = f"{readable_id} {' '.join(alias_phrases)}"
+            results.append((skill_id, enriched.strip()))
+        return results
+
+    def enriched_texts(self) -> list[str]:
+        """Return just the enriched text strings (for legacy TF cosine compatibility)."""
+        return [t for _, t in self.enriched_candidates()]
