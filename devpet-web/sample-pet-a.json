@@ -1,0 +1,103 @@
+{
+  "spec_version": "1.0",
+  "identity": {
+    "developer_id": "a1b2c3d4e5f6g7h8",
+    "display_name": "Alice Chen",
+    "pet_name": "RebaseRaven",
+    "pet_species": "VoltSprite",
+    "created_at": "2026-01-15T10:30:00Z",
+    "last_updated": "2026-05-07T11:00:00Z"
+  },
+  "battle_stats": {
+    "velocity": 14,
+    "precision": 19,
+    "breadth": 12,
+    "depth": 21,
+    "resilience": 16,
+    "ingenuity": 11
+  },
+  "work_fingerprint": {
+    "session_count": 247,
+    "total_coding_minutes": 18420,
+    "avg_task_completion_seconds": 2820,
+    "ci_pass_rate": 0.94,
+    "tools_used_distinct": 8,
+    "primary_language": "TypeScript",
+    "languages": [
+      {"name": "TypeScript", "percentage": 0.62},
+      {"name": "Python", "percentage": 0.24},
+      {"name": "Rust", "percentage": 0.14}
+    ],
+    "environments": ["Docker", "AWS", "Vercel"],
+    "problem_patterns": ["refactor-first", "test-driven", "docs-last"]
+  },
+  "tool_branches": {
+    "version_control": {
+      "tier": "Master",
+      "tier_score": 4,
+      "xp": 8400,
+      "events": {
+        "commits": 1240,
+        "pull_requests": 89,
+        "merge_conflicts_resolved": 12,
+        "rebases": 340,
+        "clean_histories": 67
+      },
+      "signature_moves": ["CleanHistory", "BisectBlitz"],
+      "cooldown": 2
+    },
+    "ci_cd": {
+      "tier": "Expert",
+      "tier_score": 3,
+      "xp": 5200,
+      "events": {
+        "pipelines_configured": 14,
+        "green_builds": 892,
+        "failed_builds_recovered": 23,
+        "deployments": 156
+      },
+      "signature_moves": ["PipelineParry", "GreenBuildGuard"],
+      "cooldown": 3
+    },
+    "testing": {
+      "tier": "Practitioner",
+      "tier_score": 2,
+      "xp": 3100,
+      "events": {
+        "tests_written": 340,
+        "coverage_percentage": 0.78,
+        "e2e_tests": 12,
+        "mock_setups": 45
+      },
+      "signature_moves": ["CoverageCloak"],
+      "cooldown": 4
+    },
+    "containers": {
+      "tier": "Novice",
+      "tier_score": 1,
+      "xp": 400,
+      "events": {
+        "dockerfiles_edited": 3,
+        "compose_files": 1,
+        "containers_built": 8
+      },
+      "signature_moves": [],
+      "cooldown": 5
+    }
+  },
+  "level": 18,
+  "xp_total": 17100,
+  "evolution_stage": 2,
+  "visual_traits": {
+    "type": "electric",
+    "primary_color": "#FFD700",
+    "evolution_stage": 2,
+    "level": 18,
+    "body_shape": "tall",
+    "aura_effects": ["speed_lines"],
+    "size": 94
+  },
+  "pet_type": "electric",
+  "history_hash": "sha256_placeholder",
+  "signature": null
+}

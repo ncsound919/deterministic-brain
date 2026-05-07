@@ -1,0 +1,101 @@
+{
+  "spec_version": "1.0",
+  "identity": {
+    "developer_id": "x9y8z7w6v5u4t3s2",
+    "display_name": "Bob Smith",
+    "pet_name": "DockerWhale",
+    "pet_species": "WaveWraith",
+    "created_at": "2026-02-01T09:00:00Z",
+    "last_updated": "2026-05-07T11:00:00Z"
+  },
+  "battle_stats": {
+    "velocity": 11,
+    "precision": 16,
+    "breadth": 15,
+    "depth": 18,
+    "resilience": 13,
+    "ingenuity": 9
+  },
+  "work_fingerprint": {
+    "session_count": 189,
+    "total_coding_minutes": 22100,
+    "avg_task_completion_seconds": 3540,
+    "ci_pass_rate": 0.88,
+    "tools_used_distinct": 10,
+    "primary_language": "Python",
+    "languages": [
+      {"name": "Python", "percentage": 0.55},
+      {"name": "Go", "percentage": 0.25},
+      {"name": "JavaScript", "percentage": 0.20}
+    ],
+    "environments": ["Docker", "Kubernetes", "AWS", "GCP"],
+    "problem_patterns": ["clean-code", "debug-heavy"]
+  },
+  "tool_branches": {
+    "containers": {
+      "tier": "Expert",
+      "tier_score": 3,
+      "xp": 7800,
+      "events": {
+        "dockerfiles_edited": 45,
+        "compose_files": 12,
+        "containers_built": 230,
+        "k8s_deployments": 34
+      },
+      "signature_moves": ["ContainerSwarm", "ComposeShield"],
+      "cooldown": 3
+    },
+    "databases": {
+      "tier": "Master",
+      "tier_score": 4,
+      "xp": 9200,
+      "events": {
+        "queries_optimized": 156,
+        "migrations_written": 34,
+        "indexes_created": 23
+      },
+      "signature_moves": ["QueryQuake", "MigrationMold"],
+      "cooldown": 2
+    },
+    "ci_cd": {
+      "tier": "Practitioner",
+      "tier_score": 2,
+      "xp": 3800,
+      "events": {
+        "pipelines_configured": 8,
+        "green_builds": 445,
+        "failed_builds_recovered": 12,
+        "deployments": 89
+      },
+      "signature_moves": ["PipelineParry"],
+      "cooldown": 4
+    },
+    "testing": {
+      "tier": "Practitioner",
+      "tier_score": 2,
+      "xp": 2900,
+      "events": {
+        "tests_written": 280,
+        "coverage_percentage": 0.72,
+        "e2e_tests": 8
+      },
+      "signature_moves": ["CoverageCloak"],
+      "cooldown": 4
+    }
+  },
+  "level": 22,
+  "xp_total": 23700,
+  "evolution_stage": 3,
+  "visual_traits": {
+    "type": "water",
+    "primary_color": "#6493EA",
+    "evolution_stage": 3,
+    "level": 22,
+    "body_shape": "wide",
+    "aura_effects": [],
+    "size": 106
+  },
+  "pet_type": "water",
+  "history_hash": "sha256_placeholder",
+  "signature": null
+}

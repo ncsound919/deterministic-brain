@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevPet Battle Arena</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <h1>⚔️ DevPet Battle Arena</h1>
+            <p class="subtitle">Your coding skills, personified in battle</p>
+        </header>
+
+        <!-- Upload Section -->
+        <section class="upload-section">
+            <div class="upload-box" id="upload-a">
+                <h3>Pet A</h3>
+                <input type="file" id="file-a" accept=".json,.devpet" onchange="handleFileUpload('a', this)">
+                <div class="pet-preview" id="preview-a"></div>
+                <div class="pet-info" id="info-a"></div>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="upload-box" id="upload-b">
+                <h3>Pet B</h3>
+                <input type="file" id="file-b" accept=".json,.devpet" onchange="handleFileUpload('b', this)">
+                <div class="pet-preview" id="preview-b"></div>
+                <div class="pet-info" id="info-b"></div>
+            </div>
+        </section>
+
+        <!-- Battle Controls -->
+        <section class="battle-controls">
+            <input type="text" id="match-id" placeholder="Match ID (optional)" value="">
+            <button id="battle-btn" onclick="startBattle()" disabled>Battle!</button>
+            <button id="reset-btn" onclick="resetBattle()">Reset</button>
+        </section>
+
+        <!-- Battle Arena -->
+        <section class="arena-section" id="arena-section" style="display:none;">
+            <div class="arena">
+                <div class="pet-container" id="arena-pet-a">
+                    <canvas id="canvas-a" width="200" height="200"></canvas>
+                    <div class="hp-bar">
+                        <div class="hp-fill" id="hp-a"></div>
+                        <span class="hp-text" id="hp-text-a"></span>
+                    </div>
+                    <div class="pet-name" id="arena-name-a"></div>
+                </div>
+                <div class="battle-log-container">
+                    <h3>Battle Log</h3>
+                    <div class="battle-log" id="battle-log"></div>
+                </div>
+                <div class="pet-container" id="arena-pet-b">
+                    <canvas id="canvas-b" width="200" height="200"></canvas>
+                    <div class="hp-bar">
+                        <div class="hp-fill" id="hp-b"></div>
+                        <span class="hp-text" id="hp-text-b"></span>
+                    </div>
+                    <div class="pet-name" id="arena-name-b"></div>
+                </div>
+            </div>
+            <div class="battle-result" id="battle-result"></div>
+        </section>
+
+        <!-- Pet Stats Modal -->
+        <div class="modal" id="stats-modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <div id="modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/battle.js"></script>
+    <script src="js/pet-renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
