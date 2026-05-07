@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deterministic Brain — Control Center</title>
+  <style>
+    /* ── Reset & base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #090c10;
+      --surface:   #0d1117;
+      --surface2:  #161b22;
+      --border:    #21262d;
+      --neon-cyan: #00ffe7;
+      --neon-green:#39ff14;
+      --neon-pink: #ff2d78;
+      --neon-blue: #4d9fff;
+      --neon-yel:  #ffe600;
+      --text:      #c9d1d9;
+      --text-dim:  #6e7681;
+      --radius:    8px;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --font-ui:   'Inter', system-ui, sans-serif;
+    }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+    a { color: var(--neon-cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ::-webkit-scrollbar { width: 6px; background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    #app {
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      grid-template-columns: 220px 1fr;
+      grid-template-areas:
+        "topbar topbar"
+        "sidebar main";
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Topbar ─────────────────────────────────────────────────── */
+    #topbar {
+      grid-area: topbar;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 10;
+    }
+    #topbar .logo {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px var(--neon-cyan);
+    }
+    #topbar .logo span { color: var(--neon-pink); }
+    .status-pill {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .status-pill .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--neon-green);
+      box-shadow: 0 0 8px var(--neon-green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: .4; }
+    }
+    .badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+    .badge.green  { border-color: var(--neon-green); color: var(--neon-green); }
+    .badge.cyan   { border-color: var(--neon-cyan);  color: var(--neon-cyan);  }
+    .badge.pink   { border-color: var(--neon-pink);  color: var(--neon-pink);  }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    #sidebar {
+      grid-area: sidebar;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+      overflow-y: auto;
+    }
+    .nav-section {
+      padding: 4px 16px 8px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-dim);
+      border-left: 2px solid transparent;
+      transition: all .15s;
+    }
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-left-color: var(--neon-cyan);
+    }
+    .nav-item.active {
+      background: var(--surface2);
+      color: var(--neon-cyan);
+      border-left-color: var(--neon-cyan);
+    }
+    .nav-item .icon { width: 16px; text-align: center; opacity: .7; }
+    .nav-item.active .icon { opacity: 1; }
+
+    /* ── Main area ──────────────────────────────────────────────── */
+    #main {
+      grid-area: main;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Section title ──────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .section-header h2 {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: .5px;
+    }
+    .section-header .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .card:hover {
+      border-color: #30363d;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-card .label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .stat-card .value {
+      font-size: 28px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 16px rgba(0,255,231,.35);
+    }
+    .stat-card .sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .stat-card.green .value { color: var(--neon-green); text-shadow: 0 0 16px rgba(57,255,20,.3); }
+    .stat-card.pink  .value { color: var(--neon-pink);  text-shadow: 0 0 16px rgba(255,45,120,.3); }
+    .stat-card.blue  .value { color: var(--neon-blue);  text-shadow: 0 0 16px rgba(77,159,255,.3); }
+    .stat-card.yel   .value { color: var(--neon-yel);   text-shadow: 0 0 16px rgba(255,230,0,.3); }
+
+    /* ── Task input ─────────────────────────────────────────────── */
+    .task-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .task-bar input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .task-bar input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(0,255,231,.1);
+    }
+    .task-bar input::placeholder { color: var(--text-dim); }
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: .5px;
+    }
+    .btn-cyan {
+      background: var(--neon-cyan);
+      color: #000;
+      box-shadow: 0 0 12px rgba(0,255,231,.4);
+    }
+    .btn-cyan:hover {
+      box-shadow: 0 0 24px rgba(0,255,231,.7);
+      transform: translateY(-1px);
+    }
+    .btn-pink {
+      background: transparent;
+      color: var(--neon-pink);
+      border: 1px solid var(--neon-pink);
+    }
+    .btn-pink:hover {
+      background: rgba(255,45,120,.1);
+      box-shadow: 0 0 12px rgba(255,45,120,.3);
+    }
+    .btn-green {
+      background: transparent;
+      color: var(--neon-green);
+      border: 1px solid var(--neon-green);
+    }
+    .btn-green:hover {
+      background: rgba(57,255,20,.1);
+      box-shadow: 0 0 12px rgba(57,255,20,.3);
+    }
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    select.select-dark {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 9px 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    select.select-dark:focus { border-color: var(--neon-cyan); }
+
+    /* ── Output / code panel ────────────────────────────────────── */
+    .code-panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 320px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .code-panel .status-line {
+      position: absolute;
+      top: 10px; right: 14px;
+      font-size: 10px;
+    }
+
+    /* ── Event feed ─────────────────────────────────────────────── */
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      transition: border-color .15s;
+    }
+    .feed-item:hover { border-color: #30363d; }
+    .feed-item .ts   { color: var(--text-dim); min-width: 80px; }
+    .feed-item .ev   { min-width: 96px; }
+    .feed-item .ev.ok     { color: var(--neon-green); }
+    .feed-item .ev.failed { color: var(--neon-pink); }
+    .feed-item .ev.step   { color: var(--neon-cyan); }
+    .feed-item .ev.audit  { color: var(--neon-yel); }
+    .feed-item .msg  { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Skill table ────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: var(--font-mono);
+    }
+    th {
+      text-align: left;
+      padding: 8px 12px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+    .mc-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      background: rgba(0,255,231,.1);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0,255,231,.2);
+    }
+
+    /* ── Diff viewer ────────────────────────────────────────────── */
+    .diff-view {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      border-radius: var(--radius);
+      overflow: auto;
+      max-height: 340px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 12px;
+    }
+    .diff-add { color: var(--neon-green); background: rgba(57,255,20,.05); }
+    .diff-rem { color: var(--neon-pink);  background: rgba(255,45,120,.05); }
+    .diff-meta { color: var(--neon-blue); }
+
+    /* ── Tabs ───────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 8px 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-dim);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all .15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
+
+    /* ── Loading bar ─────────────────────────────────────────────── */
+    #loading-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+      transition: width .3s;
+      z-index: 999;
+      width: 0;
+    }
+    /* ── Section visibility ──────────────────────────────────────── */
+    .page { display: none; flex-direction: column; gap: 24px; }
+    .page.active { display: flex; }
+  </style>
+</head>
+<body>
+<div id="loading-bar"></div>
+<div id="app">
+
+  <!-- ── Topbar ──────────────────────────────────────────────── -->
+  <header id="topbar">
+    <div class="logo">deterministic<span>-brain</span></div>
+    <span class="badge cyan" id="api-status">connecting...</span>
+    <span class="badge green">LLM: OFF</span>
+    <span class="badge" id="event-count">0 events</span>
+    <div class="status-pill">
+      <div class="dot"></div>
+      <span id="uptime">--</span>
+    </div>
+  </header>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <nav id="sidebar">
+    <div class="nav-section">Control</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="icon">⬡</span> Dashboard
+    </div>
+    <div class="nav-item" data-page="task">
+      <span class="icon">▶</span> Run Task
+    </div>
+    <div class="nav-item" data-page="bundles">
+      <span class="icon">⟳</span> Bundles
+    </div>
+    <div class="nav-section">Skills</div>
+    <div class="nav-item" data-page="skills">
+      <span class="icon">◈</span> Skill Packs
+    </div>
+    <div class="nav-item" data-page="forge">
+      <span class="icon">⬢</span> Forge / Diff
+    </div>
+    <div class="nav-section">Observability</div>
+    <div class="nav-item" data-page="feed">
+      <span class="icon">◉</span> Event Feed
+    </div>
+    <div class="nav-item" data-page="audit">
+      <span class="icon">✓</span> Audit Log
+    </div>
+  </nav>
+
+  <!-- ── Main ────────────────────────────────────────────────── -->
+  <main id="main">
+
+    <!-- PAGE: Dashboard -->
+    <section class="page active" id="page-dashboard">
+      <div class="section-header">
+        <h2>⬡ Overview</h2><div class="line"></div>
+      </div>
+      <div class="card-grid" id="stat-cards">
+        <div class="stat-card">
+          <div class="label">Total Events</div>
+          <div class="value" id="stat-events">—</div>
+          <div class="sub">all time</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">Tasks OK</div>
+          <div class="value" id="stat-ok">—</div>
+          <div class="sub">last 500</div>
+        </div>
+        <div class="stat-card pink">
+          <div class="label">Tasks Failed</div>
+          <div class="value" id="stat-fail">—</div>
+          <div class="sub">last 500</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="label">Skills Loaded</div>
+          <div class="value" id="stat-skills">—</div>
+          <div class="sub">indexed</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <h2>◉ Live Feed</h2><div class="line"></div>
+      </div>
+      <div class="card">
+        <div class="feed" id="mini-feed"></div>
+      </div>
+    </section>
+
+    <!-- PAGE: Run Task -->
+    <section class="page" id="page-task">
+      <div class="section-header">
+        <h2>▶ Run Task</h2><div class="line"></div>
+      </div>
+      <div class="card">
+        <div class="task-bar">
+          <input id="task-input" type="text"
+            placeholder="create a react component named UserCard with props name, email" />
+          <button class="btn btn-cyan" id="task-run">RUN</button>
+        </div>
+      </div>
+      <div class="section-header">
+        <h2>◈ Output</h2><div class="line"></div>
+      </div>
+      <div class="code-panel" id="task-output">
+        <span style="color:var(--text-dim)">// output will appear here</span>
+      </div>
+    </section>
+
+    <!-- PAGE: Bundles -->
+    <section class="page" id="page-bundles">
+      <div class="section-header">
+        <h2>⟳ Swarm Bundles</h2><div class="line"></div>
+      </div>
+      <div class="card">
+        <div class="task-bar">
+          <select class="select-dark" id="bundle-select">
+            <option value="scaffold-rest-api">scaffold-rest-api</option>
+            <option value="live-docs-to-skill">live-docs-to-skill</option>
+            <option value="audit-repo">audit-repo</option>
+          </select>
+          <input id="bundle-inputs" type="text"
+            placeholder='{"resource": "User"}'
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-mono);font-size:12px;color:var(--text);outline:none;" />
+          <button class="btn btn-green" id="bundle-run">FIRE BUNDLE</button>
+        </div>
+      </div>
+      <div class="code-panel" id="bundle-output">
+        <span style="color:var(--text-dim)">// bundle result will appear here</span>
+      </div>
+    </section>
+
+    <!-- PAGE: Skill Packs -->
+    <section class="page" id="page-skills">
+      <div class="section-header">
+        <h2>◈ Skill Packs</h2><div class="line"></div>
+        <button class="btn btn-cyan" style="margin-left:auto;font-size:11px;padding:6px 14px" id="skills-refresh">REFRESH</button>
+      </div>
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Skill</th><th>Version</th><th>Monte Carlo</th><th>Path</th><th>Valid</th>
+            </tr>
+          </thead>
+          <tbody id="skills-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PAGE: Forge / Diff -->
+    <section class="page" id="page-forge">
+      <div class="section-header">
+        <h2>⬢ Forge — Diff Viewer</h2><div class="line"></div>
+      </div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-mono);margin-bottom:6px;">BEFORE</div>
+            <textarea id="diff-old"
+              style="width:100%;height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:10px;font-family:var(--font-mono);font-size:12px;outline:none;resize:vertical;"
+              placeholder="paste old content here..."></textarea>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-mono);margin-bottom:6px;">AFTER</div>
+            <textarea id="diff-new"
+              style="width:100%;height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:10px;font-family:var(--font-mono);font-size:12px;outline:none;resize:vertical;"
+              placeholder="paste new content here..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-cyan" id="diff-run" style="font-size:11px;padding:7px 16px;">GENERATE DIFF</button>
+      </div>
+      <div class="diff-view" id="diff-output"><span style="color:var(--text-dim)">// diff will appear here</span></div>
+    </section>
+
+    <!-- PAGE: Event Feed -->
+    <section class="page" id="page-feed">
+      <div class="section-header">
+        <h2>◉ Event Feed</h2><div class="line"></div>
+        <button class="btn btn-cyan" style="margin-left:auto;font-size:11px;padding:6px 14px" id="feed-refresh">REFRESH</button>
+      </div>
+      <div class="card">
+        <div class="feed" id="full-feed"></div>
+      </div>
+    </section>
+
+    <!-- PAGE: Audit Log -->
+    <section class="page" id="page-audit">
+      <div class="section-header">
+        <h2>✓ Audit Log</h2><div class="line"></div>
+      </div>
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr><th>Time</th><th>Event</th><th>Task / Skill</th><th>Status</th><th>Score</th></tr>
+          </thead>
+          <tbody id="audit-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+const API = window.DCA_API || 'http://localhost:8000';
+const $ = id => document.getElementById(id);
+
+// ── Loading bar ───────────────────────────────────────────────────
+let _loading = 0;
+function loadStart() { _loading++; $('loading-bar').style.width = '60%'; }
+function loadEnd()   { _loading = Math.max(0,_loading-1); if(!_loading){$('loading-bar').style.width='100%'; setTimeout(()=>{$('loading-bar').style.width='0';},300);} }
+
+// ── Fetch helpers ─────────────────────────────────────────────────
+async function api(path, method='GET', body=null) {
+  loadStart();
+  try {
+    const opts = { method, headers: {'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API + path, opts);
+    loadEnd();
+    return await r.json();
+  } catch(e) { loadEnd(); return {error: String(e)}; }
+}
+
+// ── Navigation ────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    const page = 'page-' + el.dataset.page;
+    document.getElementById(page)?.classList.add('active');
+    if (el.dataset.page === 'feed')  loadFeed();
+    if (el.dataset.page === 'audit') loadAudit();
+    if (el.dataset.page === 'skills') loadSkills();
+    if (el.dataset.page === 'dashboard') loadDashboard();
+  });
+});
+
+// ── Health / top bar ──────────────────────────────────────────────
+async function pollHealth() {
+  const h = await api('/health');
+  if (h.status === 'ok') {
+    $('api-status').textContent = 'API: online';
+    $('api-status').className = 'badge cyan';
+    $('event-count').textContent = h.event_count + ' events';
+    const up = new Date(h.uptime_ts * 1000).toLocaleTimeString();
+    $('uptime').textContent = 'last: ' + up;
+  } else {
+    $('api-status').textContent = 'API: offline';
+    $('api-status').className = 'badge pink';
+  }
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────
+async function loadDashboard() {
+  const [health, skills, feed] = await Promise.all([
+    api('/health'),
+    api('/skills'),
+    api('/dashboard/feed'),
+  ]);
+  $('stat-events').textContent = health.event_count ?? '—';
+  $('stat-skills').textContent = (skills.skills ?? []).length;
+  let ok = 0, fail = 0;
+  (feed.events ?? []).forEach(e => {
+    if (e.data?.status === 'ok') ok++;
+    else fail++;
+  });
+  $('stat-ok').textContent   = ok;
+  $('stat-fail').textContent = fail;
+  renderFeed($('mini-feed'), (feed.events ?? []).slice(0,15));
+}
+
+// ── Feed ──────────────────────────────────────────────────────────
+async function loadFeed() {
+  const r = await api('/dashboard/feed');
+  renderFeed($('full-feed'), r.events ?? []);
+}
+
+function renderFeed(el, events) {
+  el.innerHTML = '';
+  if (!events.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-family:var(--font-mono);padding:12px;">No events yet. Run a task to see activity.</div>';
+    return;
+  }
+  events.forEach(e => {
+    const ts   = new Date(e.ts * 1000).toLocaleTimeString();
+    const evt  = e.event;
+    const cls  = evt.includes('fail') ? 'failed' : evt === 'step' ? 'step' : evt.includes('audit') ? 'audit' : 'ok';
+    const msg  = JSON.stringify(e.data).slice(0,80);
+    el.innerHTML += `<div class="feed-item">
+      <span class="ts">${ts}</span>
+      <span class="ev ${cls}">${evt}</span>
+      <span class="msg">${msg}</span>
+    </div>`;
+  });
+}
+
+// ── Run Task ──────────────────────────────────────────────────────
+$('task-run').addEventListener('click', async () => {
+  const q = $('task-input').value.trim();
+  if (!q) return;
+  $('task-run').disabled = true;
+  $('task-output').textContent = 'running...';
+  const r = await api('/task', 'POST', { query: q });
+  $('task-output').textContent = JSON.stringify(r, null, 2);
+  $('task-run').disabled = false;
+  loadDashboard();
+});
+$('task-input').addEventListener('keydown', e => { if(e.key==='Enter') $('task-run').click(); });
+
+// ── Fire Bundle ───────────────────────────────────────────────────
+$('bundle-run').addEventListener('click', async () => {
+  const bundle = $('bundle-select').value;
+  let inputs = {};
+  try { inputs = JSON.parse($('bundle-inputs').value || '{}'); } catch{}
+  $('bundle-run').disabled = true;
+  $('bundle-output').textContent = 'firing bundle...';
+  const r = await api('/bundle', 'POST', { bundle, inputs });
+  $('bundle-output').textContent = JSON.stringify(r, null, 2);
+  $('bundle-run').disabled = false;
+  loadDashboard();
+});
+
+// ── Skills ────────────────────────────────────────────────────────
+async function loadSkills() {
+  const r = await api('/skills');
+  const tbody = $('skills-tbody');
+  tbody.innerHTML = '';
+  (r.skills ?? []).forEach(s => {
+    tbody.innerHTML += `<tr>
+      <td style="color:var(--neon-cyan)">${s.skill ?? s}</td>
+      <td>${(s.version ?? '?')}</td>
+      <td>${s.mc ? '<span class="mc-badge">MC</span>' : '—'}</td>
+      <td style="color:var(--text-dim);font-size:11px">${s.path ?? ''}</td>
+      <td><span class="badge green">✓</span></td>
+    </tr>`;
+  });
+}
+$('skills-refresh').addEventListener('click', loadSkills);
+
+// ── Diff ──────────────────────────────────────────────────────────
+$('diff-run').addEventListener('click', async () => {
+  const old_c = $('diff-old').value;
+  const new_c = $('diff-new').value;
+  const r = await api('/forge/diff', 'POST', { old: old_c, new: new_c, filename: 'file' });
+  const diff = r.diff || '';
+  const el = $('diff-output');
+  if (!diff) { el.textContent = '// No differences'; return; }
+  el.innerHTML = diff.split('\n').map(line => {
+    if (line.startsWith('+') && !line.startsWith('+++'))
+      return `<div class="diff-add">${esc(line)}</div>`;
+    if (line.startsWith('-') && !line.startsWith('---'))
+      return `<div class="diff-rem">${esc(line)}</div>`;
+    if (line.startsWith('@@'))
+      return `<div class="diff-meta">${esc(line)}</div>`;
+    return `<div>${esc(line)}</div>`;
+  }).join('');
+});
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ── Audit Log ─────────────────────────────────────────────────────
+async function loadAudit() {
+  const r = await api('/dashboard/audit');
+  const tbody = $('audit-tbody');
+  tbody.innerHTML = '';
+  (r.events ?? []).forEach(e => {
+    const ts    = new Date(e.ts * 1000).toLocaleTimeString();
+    const task  = e.data?.task || e.data?.skill || e.data?.bundle || '—';
+    const stat  = e.data?.status || (e.data?.passed ? 'ok' : 'failed');
+    const score = e.data?.score ?? e.data?.avg_score ?? '—';
+    const cls   = stat === 'ok' ? 'var(--neon-green)' : 'var(--neon-pink)';
+    tbody.innerHTML += `<tr>
+      <td style="color:var(--text-dim)">${ts}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--neon-blue)">${e.event}</td>
+      <td style="color:var(--neon-cyan)">${task}</td>
+      <td style="color:${cls}">${stat}</td>
+      <td style="color:var(--neon-yel)">${score}</td>
+    </tr>`;
+  });
+}
+$('feed-refresh').addEventListener('click', loadFeed);
+
+// ── Boot ──────────────────────────────────────────────────────────
+pollHealth();
+setInterval(pollHealth, 8000);
+loadDashboard();
+setInterval(loadDashboard, 15000);
+</script>
+</body>
+</html>
