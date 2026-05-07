@@ -59,8 +59,22 @@ class LocalSkillBackend(SkillBackend):
     def run(self, skill_id: str, task: Dict, context: Dict) -> Dict[str, Any]:
         from tools.file_io import file_write, file_read
         from jinja2 import Template
+        import re
 
         skill_path = os.path.join(self.skill_packs_root, skill_id, "skill.md")
+        alt_path = os.path.join(self.skill_packs_root, skill_id, "SKILL.md")
+        if not os.path.exists(skill_path) and os.path.exists(alt_path):
+            skill_path = alt_path
+        if not os.path.exists(skill_path):
+            # Try nested path lookup
+            for root, dirs, files in os.walk(self.skill_packs_root):
+                for d in dirs:
+                    for ext in ("skill.md", "SKILL.md"):
+                        candidate = os.path.join(root, d, ext)
+                        if os.path.exists(candidate) and skill_id in candidate:
+                            skill_path = candidate
+                            break
+
         if not os.path.exists(skill_path):
             return {
                 "success": False,
@@ -69,16 +83,36 @@ class LocalSkillBackend(SkillBackend):
                 "logs": [f"ERROR: skill.md not found at {skill_path}"],
             }
 
-        with open(skill_path, 'r', encoding='utf-8') as f:
+        with open(skill_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         front_matter, steps = self._parse_skill_md(content)
+
+        # If no executable ## Step blocks, extract code blocks as artifacts
         if not steps:
+            code_blocks = re.findall(
+                r"```(\w+)?\n(.*?)```", content, re.DOTALL
+            )
+            if code_blocks:
+                artifacts = [
+                    {"lang": lang or "text", "content": code.strip()}
+                    for lang, code in code_blocks
+                ]
+                return {
+                    "success": True,
+                    "output": f"Skill: {skill_id} — extracted {len(artifacts)} code blocks",
+                    "artifacts": artifacts,
+                    "logs": [
+                        f"Extracted {len(artifacts)} code blocks from SKILL.md",
+                        *[f"  [{a['lang']}] {len(a['content'])} chars" for a in artifacts],
+                    ],
+                }
+
             return {
-                "success": False,
-                "output": "No executable steps found in skill",
-                "artifacts": [],
-                "logs": [],
+                "success": True,
+                "output": f"Skill: {skill_id} — documentation (no code blocks)",
+                "artifacts": [{"lang": "text", "content": content[:2000]}],
+                "logs": ["No executable steps or code blocks — returning raw documentation"],
             }
 
         artifacts = []
