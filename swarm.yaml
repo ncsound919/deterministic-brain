@@ -142,6 +142,9 @@ routes:
   betting-analysis:                   skill_packs/business/betting-analysis
   github-manage:                      skill_packs/business/github-manage
   deploy-web:                         skill_packs/business/deploy-web
+  webhook-notify:                     skill_packs/business/webhook-notify
+  gitlab-manage:                      skill_packs/business/gitlab-manage
+  linear-sync:                        skill_packs/business/linear-sync
 
 # ── Skill aliases ─────────────────────────────────────────────────────
 # Used by the NLU route loader to expand cosine candidate text so that
@@ -179,6 +182,9 @@ aliases:
   betting-analysis:      ["bet", "odds", "betting", "sports bet", "prizepicks", "draftkings", "kelly"]
   github-manage:         ["github issue", "create issue", "PR", "pull request", "CI status"]
   deploy-web:            ["deploy to cloudflare", "ship website", "publish", "go live"]
+  webhook-notify:         ["slack alert", "discord message", "team notification", "post to channel"]
+  gitlab-manage:          ["gitlab issue", "gitlab MR", "gitlab pipeline", "merge request"]
+  linear-sync:            ["linear task", "jira ticket", "sync issue", "track task"]
   screenshot:                   ["take screenshot", "capture page", "page screenshot"]
   systematic-debugging:         ["debug", "fix bug", "root cause", "traceback"]
   create-react-component:       ["react component", "create component", "react hook", "JSX"]

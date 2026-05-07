@@ -86,6 +86,36 @@ class ToolRegistry:
             logger.debug(f"monte_carlo_bettor not available: {e}")
 
         try:
+            from tools.webhook_dispatcher import WebhookDispatcher
+            wh = WebhookDispatcher()
+            self.register("slack_notify", wh.slack)
+            self.register("discord_notify", wh.discord)
+            self.register("notify_skill_result", wh.notify_skill_result)
+            logger.info("Registered tools: slack_notify, discord_notify, notify_skill_result")
+        except ImportError as e:
+            logger.debug(f"webhook_dispatcher not available: {e}")
+
+        try:
+            from tools.gitlab_client import GitLabClient
+            gl = GitLabClient()
+            self.register("gitlab_list_issues", gl.list_issues)
+            self.register("gitlab_create_issue", gl.create_issue)
+            self.register("gitlab_list_mrs", gl.list_merge_requests)
+            logger.info("Registered tools: gitlab_*")
+        except ImportError as e:
+            logger.debug(f"gitlab_client not available: {e}")
+
+        try:
+            from tools.linear_jira_client import LinearClient
+            lc = LinearClient()
+            self.register("linear_list_issues", lc.list_issues)
+            self.register("linear_create_issue", lc.create_issue)
+            self.register("linear_search", lc.search_issues)
+            logger.info("Registered tools: linear_*")
+        except ImportError as e:
+            logger.debug(f"linear_client not available: {e}")
+
+        try:
             from tools.web_fetcher import web_fetch
             self.register("web_fetch", web_fetch)
             logger.info("Registered tool: web_fetch")
