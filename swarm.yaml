@@ -1,9 +1,11 @@
 # swarm.yaml — DCA Swarm Bundle Config
 # Each bundle maps to a set of parallel lanes.
-# Agents are external repos participating via tap919-middleman REST bridge.
+# Agents listed under `agents` are external repos that participate
+# via the tap919-middleman REST bridge.
 #
-# Routes map task keywords → skill_pack paths for the MoE Router.
-# Aliases improve cosine matching when user queries don't match skill names exactly.
+# Routes map task-name → skill_pack path for the MoE Router.
+# Aliases improve NLU cosine matching when user phrasing doesn't
+# match the skill directory name exactly.
 
 bundles:
 
@@ -31,15 +33,15 @@ bundles:
       - lanes.audit_repo
 
 routes:
-  # ── Existing skills ──────────────────────────────────────
-  create-react-component: skill_packs/react
-  scaffold-rest-api:      skill_packs/rest_api
-  add-auth:               skill_packs/auth
-  generate-dockerfile:    skill_packs/docker
-  audit-repo:             lanes/audit_repo
-  live-docs-to-skill:     lanes/live_docs_to_skill
+  # ── Existing skills ──────────────────────────────────────────────────
+  create-react-component:   skill_packs/react
+  scaffold-rest-api:        skill_packs/rest_api
+  add-auth:                 skill_packs/auth
+  generate-dockerfile:      skill_packs/docker
+  audit-repo:               lanes/audit_repo
+  live-docs-to-skill:       lanes/live_docs_to_skill
 
-  # ── Anthropic skills (17) ────────────────────────────────
+  # ── Anthropic skills (17) ────────────────────────────────────────────
   algorithmic-art:              skill_packs/anthropic/algorithmic-art
   brand-guidelines:             skill_packs/anthropic/brand-guidelines
   canvas-design:                skill_packs/anthropic/canvas-design
@@ -49,102 +51,118 @@ routes:
   frontend-design:              skill_packs/anthropic/frontend-design
   internal-comms:               skill_packs/anthropic/internal-comms
   mcp-builder:                  skill_packs/anthropic/mcp-builder
-  pdf:                          skill_packs/anthropic/pdf
+  anthropic-pdf:                skill_packs/anthropic/pdf
   pptx:                         skill_packs/anthropic/pptx
-  skill-creator:                skill_packs/anthropic/skill-creator
+  anthropic-skill-creator:      skill_packs/anthropic/skill-creator
   slack-gif-creator:            skill_packs/anthropic/slack-gif-creator
   theme-factory:                skill_packs/anthropic/theme-factory
   web-artifacts-builder:        skill_packs/anthropic/web-artifacts-builder
   webapp-testing:               skill_packs/anthropic/webapp-testing
   xlsx:                         skill_packs/anthropic/xlsx
 
-  # ── OpenAI / Codex skills (43) ───────────────────────────
-  figma:                        skill_packs/openai/figma
-  figma-generate-design:        skill_packs/openai/figma-generate-design
-  figma-implement-design:       skill_packs/openai/figma-implement-design
-  figma-code-connect-components: skill_packs/openai/figma-code-connect-components
-  figma-create-design-system:   skill_packs/openai/figma-create-design-system-rules
-  figma-generate-library:       skill_packs/openai/figma-generate-library
-  figma-create-new-file:        skill_packs/openai/figma-create-new-file
-  figma-use:                    skill_packs/openai/figma-use
-  playwright:                   skill_packs/openai/playwright
-  playwright-interactive:       skill_packs/openai/playwright-interactive
-  security-best-practices:      skill_packs/openai/security-best-practices
-  security-threat-model:        skill_packs/openai/security-threat-model
-  security-ownership-map:       skill_packs/openai/security-ownership-map
-  sentry:                       skill_packs/openai/sentry
-  notion-knowledge-capture:     skill_packs/openai/notion-knowledge-capture
-  notion-meeting-intelligence:  skill_packs/openai/notion-meeting-intelligence
-  notion-research-documentation: skill_packs/openai/notion-research-documentation
-  notion-spec-to-implementation: skill_packs/openai/notion-spec-to-implementation
-  vercel-deploy:                skill_packs/openai/vercel-deploy
-  netlify-deploy:               skill_packs/openai/netlify-deploy
-  cloudflare-deploy:            skill_packs/openai/cloudflare-deploy
-  render-deploy:                skill_packs/openai/render-deploy
-  jupyter-notebook:             skill_packs/openai/jupyter-notebook
-  screenshot:                   skill_packs/openai/screenshot
-  imagegen:                     skill_packs/openai/imagegen
-  speech:                       skill_packs/openai/speech
-  transcribe:                   skill_packs/openai/transcribe
-  openai-pdf:                   skill_packs/openai/pdf
-  linear:                       skill_packs/openai/linear
-  cli-creator:                  skill_packs/openai/cli-creator
-  plugin-creator:               skill_packs/openai/plugin-creator
-  openai-skill-creator:         skill_packs/openai/skill-creator
-  skill-installer:              skill_packs/openai/skill-installer
-  gh-fix-ci:                    skill_packs/openai/gh-fix-ci
-  gh-address-comments:          skill_packs/openai/gh-address-comments
-  migrate-to-codex:             skill_packs/openai/migrate-to-codex
-  aspnet-core:                  skill_packs/openai/aspnet-core
-  winui-app:                    skill_packs/openai/winui-app
-  chatgpt-apps:                 skill_packs/openai/chatgpt-apps
-  openai-docs:                  skill_packs/openai/openai-docs
-  hatch-pet:                    skill_packs/openai/hatch-pet
-  yeet:                         skill_packs/openai/yeet
+  # ── OpenAI / Codex skills (43) ───────────────────────────────────────
+  figma:                              skill_packs/openai/figma
+  figma-generate-design:              skill_packs/openai/figma-generate-design
+  figma-implement-design:             skill_packs/openai/figma-implement-design
+  figma-code-connect-components:      skill_packs/openai/figma-code-connect-components
+  figma-create-design-system:         skill_packs/openai/figma-create-design-system-rules
+  figma-generate-library:             skill_packs/openai/figma-generate-library
+  figma-create-new-file:              skill_packs/openai/figma-create-new-file
+  figma-use:                          skill_packs/openai/figma-use
+  playwright:                         skill_packs/openai/playwright
+  playwright-interactive:             skill_packs/openai/playwright-interactive
+  security-best-practices:            skill_packs/openai/security-best-practices
+  security-threat-model:              skill_packs/openai/security-threat-model
+  security-ownership-map:             skill_packs/openai/security-ownership-map
+  sentry:                             skill_packs/openai/sentry
+  notion-knowledge-capture:           skill_packs/openai/notion-knowledge-capture
+  notion-meeting-intelligence:        skill_packs/openai/notion-meeting-intelligence
+  notion-research-documentation:      skill_packs/openai/notion-research-documentation
+  notion-spec-to-implementation:      skill_packs/openai/notion-spec-to-implementation
+  vercel-deploy:                      skill_packs/openai/vercel-deploy
+  netlify-deploy:                     skill_packs/openai/netlify-deploy
+  cloudflare-deploy:                  skill_packs/openai/cloudflare-deploy
+  render-deploy:                      skill_packs/openai/render-deploy
+  jupyter-notebook:                   skill_packs/openai/jupyter-notebook
+  screenshot:                         skill_packs/openai/screenshot
+  imagegen:                           skill_packs/openai/imagegen
+  speech:                             skill_packs/openai/speech
+  transcribe:                         skill_packs/openai/transcribe
+  openai-pdf:                         skill_packs/openai/pdf
+  linear:                             skill_packs/openai/linear
+  cli-creator:                        skill_packs/openai/cli-creator
+  plugin-creator:                     skill_packs/openai/plugin-creator
+  openai-skill-creator:               skill_packs/openai/skill-creator
+  skill-installer:                    skill_packs/openai/skill-installer
+  gh-fix-ci:                          skill_packs/openai/gh-fix-ci
+  gh-address-comments:                skill_packs/openai/gh-address-comments
+  migrate-to-codex:                   skill_packs/openai/migrate-to-codex
+  aspnet-core:                        skill_packs/openai/aspnet-core
+  winui-app:                          skill_packs/openai/winui-app
+  chatgpt-apps:                       skill_packs/openai/chatgpt-apps
+  openai-docs:                        skill_packs/openai/openai-docs
+  hatch-pet:                          skill_packs/openai/hatch-pet
+  yeet:                               skill_packs/openai/yeet
+  aspnet-core-app:                    skill_packs/openai/aspnet-core
 
-  # ── Superpowers / obra skills (14) ───────────────────────
-  brainstorming:                skill_packs/superpowers/brainstorming
-  dispatching-parallel-agents:  skill_packs/superpowers/dispatching-parallel-agents
-  executing-plans:              skill_packs/superpowers/executing-plans
-  finishing-development-branch: skill_packs/superpowers/finishing-a-development-branch
-  receiving-code-review:        skill_packs/superpowers/receiving-code-review
-  requesting-code-review:       skill_packs/superpowers/requesting-code-review
-  subagent-driven-development:  skill_packs/superpowers/subagent-driven-development
-  systematic-debugging:         skill_packs/superpowers/systematic-debugging
-  test-driven-development:      skill_packs/superpowers/test-driven-development
-  using-git-worktrees:          skill_packs/superpowers/using-git-worktrees
-  using-superpowers:            skill_packs/superpowers/using-superpowers
-  verification-before-completion: skill_packs/superpowers/verification-before-completion
-  writing-plans:                skill_packs/superpowers/writing-plans
-  writing-skills:               skill_packs/superpowers/writing-skills
+  # ── Superpowers / obra skills (14) ───────────────────────────────────
+  brainstorming:                      skill_packs/superpowers/brainstorming
+  dispatching-parallel-agents:        skill_packs/superpowers/dispatching-parallel-agents
+  executing-plans:                    skill_packs/superpowers/executing-plans
+  finishing-development-branch:       skill_packs/superpowers/finishing-a-development-branch
+  receiving-code-review:              skill_packs/superpowers/receiving-code-review
+  requesting-code-review:             skill_packs/superpowers/requesting-code-review
+  subagent-driven-development:        skill_packs/superpowers/subagent-driven-development
+  systematic-debugging:               skill_packs/superpowers/systematic-debugging
+  test-driven-development:            skill_packs/superpowers/test-driven-development
+  using-git-worktrees:                skill_packs/superpowers/using-git-worktrees
+  using-superpowers:                  skill_packs/superpowers/using-superpowers
+  verification-before-completion:     skill_packs/superpowers/verification-before-completion
+  writing-plans:                      skill_packs/superpowers/writing-plans
+  writing-skills:                     skill_packs/superpowers/writing-skills
 
-  # ── OpenClaw skills (7) ──────────────────────────────────
-  intent-router:                skill_packs/openclaw/intent-router
-  memory-engine:                skill_packs/openclaw/memory-engine
-  meta-social:                  skill_packs/openclaw/meta-social
-  ms-graph-email:               skill_packs/openclaw/ms-graph-email
-  prompt-injection-defense:     skill_packs/openclaw/prompt-injection-defense
-  thought-leadership-video:     skill_packs/openclaw/thought-leadership-video
-  wordpress:                    skill_packs/openclaw/wordpress
+  # ── OpenClaw skills (7) ──────────────────────────────────────────────
+  intent-router:                      skill_packs/openclaw/intent-router
+  memory-engine:                      skill_packs/openclaw/memory-engine
+  meta-social:                        skill_packs/openclaw/meta-social
+  ms-graph-email:                     skill_packs/openclaw/ms-graph-email
+  prompt-injection-defense:           skill_packs/openclaw/prompt-injection-defense
+  thought-leadership-video:           skill_packs/openclaw/thought-leadership-video
+  wordpress:                          skill_packs/openclaw/wordpress
 
-# ── Skill aliases — improves NLU when user queries don't match skill names ──
+
+# ── Skill aliases ─────────────────────────────────────────────────────
+# Used by the NLU route loader to expand cosine candidate text so that
+# natural-language user queries match skill names they don't literally contain.
 aliases:
-  figma-implement-design: ["figma component", "design to code", "figma to react", "implement figma"]
-  canvas-design:         ["draw canvas", "canvas drawing", "creative coding", "generate art"]
-  frontend-design:       ["website design", "UI design", "design a page", "beautiful website"]
-  systematic-debugging:  ["debug", "fix bug", "debugging", "find bug", "root cause"]
-  test-driven-development: ["tdd", "write tests", "unit test", "test first"]
-  brainstorm:            ["brainstorm", "idea", "ideate", "think of ideas"]
-  writing-plans:         ["plan", "roadmap", "write a plan", "implementation plan"]
-  vercel-deploy:         ["deploy to vercel", "ship", "deploy website", "host"]
-  netlify-deploy:        ["deploy to netlify", "netlify"]
-  cloudflare-deploy:     ["deploy to cloudflare", "cloudflare pages"]
-  render-deploy:         ["deploy to render"]
-  jupyter-notebook:      ["notebook", "jupyter", "data science notebook"]
-  security-best-practices: ["security", "secure code", "vulnerability", "audit security"]
-  security-threat-model: ["threat model", "STRIDE", "attack surface"]
-  playwright:            ["e2e test", "browser test", "end to end", "automated testing"]
-  playwright-interactive: ["interactive test", "playwright debug", "browser automation"]
-  speech:                ["text to speech", "TTS", "synthesize speech"]
-  transcribe:            ["speech to text", "STT", "transcribe audio", "whisper"]
-  imagegen:              ["generate image", "create image", "AI image", "DALL-E"]
+  figma-implement-design:       ["figma component", "design to code", "figma to react", "implement figma"]
+  figma-generate-design:        ["generate ui", "create design", "figma design", "design a screen"]
+  canvas-design:                ["draw canvas", "canvas drawing", "creative coding", "generate art"]
+  frontend-design:              ["website design", "UI design", "design a page", "beautiful website"]
+  systematic-debugging:         ["debug", "fix bug", "debugging", "find bug", "root cause"]
+  test-driven-development:      ["tdd", "write tests", "unit test", "test first", "pytest"]
+  brainstorming:                ["brainstorm", "idea", "ideate", "think of ideas"]
+  writing-plans:                ["plan", "roadmap", "write a plan", "implementation plan"]
+  vercel-deploy:                ["deploy to vercel", "ship", "deploy website", "host"]
+  netlify-deploy:               ["deploy to netlify", "netlify"]
+  cloudflare-deploy:            ["deploy to cloudflare", "cloudflare pages"]
+  render-deploy:                ["deploy to render"]
+  jupyter-notebook:             ["notebook", "jupyter", "data science notebook", "ipynb"]
+  security-best-practices:      ["security", "secure code", "vulnerability", "audit security"]
+  security-threat-model:        ["threat model", "STRIDE", "attack surface"]
+  playwright:                   ["e2e test", "browser test", "end to end", "automated testing"]
+  playwright-interactive:       ["interactive test", "playwright debug", "browser automation"]
+  speech:                       ["text to speech", "TTS", "synthesize speech"]
+  transcribe:                   ["speech to text", "STT", "transcribe audio", "whisper"]
+  imagegen:                     ["generate image", "create image", "AI image", "DALL-E"]
+  screenshot:                   ["take screenshot", "capture page", "page screenshot"]
+  systematic-debugging:         ["debug", "fix bug", "root cause", "traceback"]
+  create-react-component:       ["react component", "create component", "react hook", "JSX"]
+  scaffold-rest-api:            ["rest api", "CRUD endpoint", "FastAPI", "Express route"]
+  add-auth:                     ["authentication", "JWT", "OAuth", "login", "auth middleware"]
+  generate-dockerfile:          ["dockerfile", "docker", "containerize", "docker image"]
+  writing-skills:               ["write", "document", "readme", "technical writing"]
+  requesting-code-review:       ["code review", "review my code", "PR review"]
+  prompt-injection-defense:     ["prompt injection", "injection defense", "sanitize input"]
+  memory-engine:                ["memory", "remember", "store context", "retrieve memory"]
+  intent-router:                ["route intent", "classify intent", "NLU routing"]
