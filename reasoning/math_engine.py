@@ -617,8 +617,9 @@ class ReasoningEngine:
 
         # ── Composite confidence ───────────────────────────────────────────
         linear_conf   = ranked_skills[0][1] if ranked_skills else 0.0
-        # composite = geometric mean of linear and quantum confidence
-        confidence = math.sqrt(max(0.0, linear_conf) * max(0.0, q_confidence))
+        # Weighted blend: 60% linear cosine + 40% quantum probability over top-8
+        # Avoids geometric-mean collapse when candidate count is high
+        confidence = 0.6 * linear_conf + 0.4 * q_confidence
 
         return DecisionResult(
             chosen_skill  = chosen_skill,

@@ -578,10 +578,12 @@ $('event-modal').addEventListener('click', e => { if(e.target === $('event-modal
 // ─── nav ─────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-item').forEach(el=>{
   el.addEventListener('click',()=>{
+    const target = document.getElementById('page-'+el.dataset.page);
+    if (!target) return;
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     el.classList.add('active');
-    document.getElementById('page-'+el.dataset.page)?.classList.add('active');
+    target.classList.add('active');
     const p = el.dataset.page;
     if(p==='feed')      loadFeed();
     if(p==='audit')     loadAudit();
