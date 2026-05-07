@@ -25,6 +25,14 @@ class ToolRegistry:
         self._register_optional_tools()
 
     def _register_optional_tools(self):
+        # Email sender
+        try:
+            from tools.email_sender import send_email
+            self.register("send_email", send_email)
+            logger.info("Registered tool: send_email")
+        except ImportError as e:
+            logger.debug(f"send_email not available: {e}")
+
         try:
             from tools.web_fetcher import web_fetch
             self.register("web_fetch", web_fetch)

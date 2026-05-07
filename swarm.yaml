@@ -130,6 +130,13 @@ routes:
   thought-leadership-video:           skill_packs/openclaw/thought-leadership-video
   wordpress:                          skill_packs/openclaw/wordpress
 
+  # ── Business skills ─────────────────────────────────────
+  email-send:                         skill_packs/business/email-send
+  email-notify:                       skill_packs/business/email-notify
+  crm-contact:                        skill_packs/business/crm-contact
+  crm-pipeline:                       skill_packs/business/crm-pipeline
+  content-schedule:                   skill_packs/business/content-schedule
+  agent-orchestrate:                  skill_packs/business/agent-orchestrate
 
 # ── Skill aliases ─────────────────────────────────────────────────────
 # Used by the NLU route loader to expand cosine candidate text so that
@@ -156,6 +163,12 @@ aliases:
   transcribe:                   ["speech to text", "STT", "transcribe audio", "whisper"]
   imagegen:              ["generate image", "create image", "AI image", "DALL-E"]
   hatch-pet:             ["devpet", "battle pet", "virtual pet", "pet battle", "digital pet"]
+  email-send:            ["send email", "send mail", "notify by email", "email notification"]
+  email-notify:          ["alert", "notification", "skill alert", "status email"]
+  crm-contact:           ["contact management", "customer", "lead", "contact list", "CRM"]
+  crm-pipeline:          ["sales pipeline", "deal flow", "opportunity", "stages", "forecast"]
+  content-schedule:      ["blog post", "social media", "content calendar", "schedule post"]
+  agent-orchestrate:     ["orchestrate agent", "supervise agent", "openclaw", "hermes", "agent relay"]
   screenshot:                   ["take screenshot", "capture page", "page screenshot"]
   systematic-debugging:         ["debug", "fix bug", "root cause", "traceback"]
   create-react-component:       ["react component", "create component", "react hook", "JSX"]
