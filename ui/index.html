@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deterministic Brain — Control Center</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#090c10; --surface:#0d1117; --surface2:#161b22; --border:#21262d;
+      --cyan:#00ffe7; --green:#39ff14; --pink:#ff2d78; --blue:#4d9fff;
+      --yel:#ffe600; --purple:#bf5fff;
+      --text:#c9d1d9; --dim:#6e7681;
+      --r:8px;
+      --mono:'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+      --ui:'Inter',system-ui,sans-serif;
+    }
+    html,body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:14px;min-height:100vh;}
+    a{color:var(--cyan);text-decoration:none;}
+    ::-webkit-scrollbar{width:5px;background:var(--surface);}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    #app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:220px 1fr;grid-template-areas:"topbar topbar" "sidebar main";height:100vh;overflow:hidden;}
+
+    /* topbar */
+    #topbar{grid-area:topbar;display:flex;align-items:center;gap:14px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border);z-index:10;}
+    .logo{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan);letter-spacing:1px;text-shadow:0 0 12px var(--cyan);}
+    .logo span{color:var(--pink);}
+    .status-pill{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .badge{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px;font-family:var(--mono);color:var(--dim);}
+    .badge.cyan{border-color:var(--cyan);color:var(--cyan);}
+    .badge.green{border-color:var(--green);color:var(--green);}
+    .badge.pink{border-color:var(--pink);color:var(--pink);}
+    .badge.yel{border-color:var(--yel);color:var(--yel);}
+
+    /* sidebar */
+    #sidebar{grid-area:sidebar;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0;overflow-y:auto;}
+    .nav-sec{padding:4px 16px 8px;font-size:10px;font-family:var(--mono);letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--dim);border-left:2px solid transparent;transition:all .15s;}
+    .nav-item:hover{background:var(--surface2);color:var(--text);border-left-color:var(--cyan);}
+    .nav-item.active{background:var(--surface2);color:var(--cyan);border-left-color:var(--cyan);}
+
+    /* main */
+    #main{grid-area:main;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:24px;}
+    .page{display:none;flex-direction:column;gap:20px;}
+    .page.active{display:flex;}
+
+    /* section header */
+    .sh{display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+    .sh h2{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);letter-spacing:.5px;}
+    .sh .line{flex:1;height:1px;background:var(--border);}
+
+    /* cards */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+    .stat{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:6px;}
+    .stat .lbl{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+    .stat .val{font-size:26px;font-family:var(--mono);font-weight:700;color:var(--cyan);text-shadow:0 0 14px rgba(0,255,231,.3);}
+    .stat.green .val{color:var(--green);text-shadow:0 0 14px rgba(57,255,20,.3);}
+    .stat.pink  .val{color:var(--pink); text-shadow:0 0 14px rgba(255,45,120,.3);}
+    .stat.blue  .val{color:var(--blue); text-shadow:0 0 14px rgba(77,159,255,.3);}
+    .stat.yel   .val{color:var(--yel);  text-shadow:0 0 14px rgba(255,230,0,.3);}
+    .stat.pur   .val{color:var(--purple);text-shadow:0 0 14px rgba(191,95,255,.3);}
+    .stat .sub{font-size:11px;color:var(--dim);}
+
+    /* inputs */
+    .row{display:flex;gap:10px;align-items:center;}
+    input.inp,textarea.inp{
+      flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
+      padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;
+      transition:border-color .15s;
+    }
+    input.inp:focus,textarea.inp:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,255,231,.08);}
+    input.inp::placeholder,textarea.inp::placeholder{color:var(--dim);}
+    .btn{padding:9px 18px;border:none;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+    .btn-c{background:var(--cyan);color:#000;box-shadow:0 0 10px rgba(0,255,231,.35);}
+    .btn-c:hover{box-shadow:0 0 22px rgba(0,255,231,.7);transform:translateY(-1px);}
+    .btn-g{background:transparent;color:var(--green);border:1px solid var(--green);}
+    .btn-g:hover{background:rgba(57,255,20,.08);box-shadow:0 0 10px rgba(57,255,20,.3);}
+    .btn-p{background:transparent;color:var(--purple);border:1px solid var(--purple);}
+    .btn-p:hover{background:rgba(191,95,255,.08);box-shadow:0 0 10px rgba(191,95,255,.3);}
+    .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+    select.sel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:9px 12px;font-family:var(--mono);font-size:12px;outline:none;cursor:pointer;}
+    select.sel:focus{border-color:var(--cyan);}
+
+    /* code panel */
+    .code{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap;max-height:320px;overflow-y:auto;}
+
+    /* feed */
+    .feed{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;}
+    .fi{display:flex;align-items:flex-start;gap:12px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:11px;}
+    .fi .ts{color:var(--dim);min-width:78px;}
+    .fi .ev{min-width:96px;}
+    .fi .ev.ok{color:var(--green);} .fi .ev.failed{color:var(--pink);} .fi .ev.step{color:var(--cyan);} .fi .ev.reasoning{color:var(--purple);} .fi .ev.audit{color:var(--yel);}
+    .fi .msg{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    /* tables */
+    .tw{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono);}
+    th{text-align:left;padding:8px 12px;color:var(--dim);border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+    td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;} tr:hover td{background:var(--surface2);}
+
+    /* diff */
+    .diff{font-family:var(--mono);font-size:12px;line-height:1.6;border-radius:var(--r);overflow:auto;max-height:320px;background:var(--surface2);border:1px solid var(--border);padding:12px;}
+    .diff-add{color:var(--green);background:rgba(57,255,20,.05);}
+    .diff-rem{color:var(--pink);background:rgba(255,45,120,.05);}
+    .diff-meta{color:var(--blue);}
+
+    /* loading bar */
+    #lb{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--pink));transition:width .3s;z-index:999;width:0;}
+
+    /* reasoning panel */
+    .reason-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .reason-step{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
+    .reason-step .step-name{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:8px;}
+    .reason-step .step-val{font-family:var(--mono);font-size:12px;color:var(--text);}
+    .conf-bar{height:6px;border-radius:3px;background:var(--border);margin-top:6px;overflow:hidden;}
+    .conf-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .4s;}
+    .pre-audit-item{font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;margin-bottom:4px;}
+    .pre-audit-item.warn{color:var(--yel);background:rgba(255,230,0,.07);border:1px solid rgba(255,230,0,.2);}
+    .pre-audit-item.ok{color:var(--green);background:rgba(57,255,20,.07);border:1px solid rgba(57,255,20,.2);}
+    .qprob-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-family:var(--mono);font-size:11px;}
+    .qprob-bar{flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden;}
+    .qprob-fill{height:100%;border-radius:2px;background:var(--purple);}
+    .breakdown-step{border-left:2px solid var(--border);padding-left:12px;margin-bottom:10px;}
+    .breakdown-step.done{border-left-color:var(--cyan);}
+    .breakdown-step .bname{font-family:var(--mono);font-size:11px;color:var(--cyan);margin-bottom:3px;}
+    .breakdown-step .bdata{font-family:var(--mono);font-size:11px;color:var(--dim);}
+  </style>
+</head>
+<body>
+<div id="lb"></div>
+<div id="app">
+
+  <header id="topbar">
+    <div class="logo">deterministic<span>-brain</span></div>
+    <span class="badge cyan" id="api-status">connecting...</span>
+    <span class="badge green">LLM: OFF</span>
+    <span class="badge" id="event-count">0 events</span>
+    <div class="status-pill"><div class="dot"></div><span id="uptime">--</span></div>
+  </header>
+
+  <nav id="sidebar">
+    <div class="nav-sec">Control</div>
+    <div class="nav-item active" data-page="dashboard"><span>&#x2B21;</span> Dashboard</div>
+    <div class="nav-item" data-page="task"><span>&#x25B6;</span> Run Task</div>
+    <div class="nav-item" data-page="reason"><span>&#x2B22;</span> Reasoner</div>
+    <div class="nav-item" data-page="bundles"><span>&#x27F3;</span> Bundles</div>
+    <div class="nav-sec">Skills</div>
+    <div class="nav-item" data-page="skills"><span>&#x25C8;</span> Skill Packs</div>
+    <div class="nav-item" data-page="forge"><span>&#x2B06;</span> Forge / Diff</div>
+    <div class="nav-sec">Observability</div>
+    <div class="nav-item" data-page="feed"><span>&#x25C9;</span> Event Feed</div>
+    <div class="nav-item" data-page="audit"><span>&#x2713;</span> Audit Log</div>
+  </nav>
+
+  <main id="main">
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="sh"><h2>&#x2B21; Overview</h2><div class="line"></div></div>
+      <div class="card-grid">
+        <div class="stat">           <div class="lbl">Total Events</div><div class="val" id="s-events">&mdash;</div><div class="sub">all time</div></div>
+        <div class="stat green">     <div class="lbl">Tasks OK</div>    <div class="val" id="s-ok">&mdash;</div>    <div class="sub">last 500</div></div>
+        <div class="stat pink">      <div class="lbl">Failed</div>      <div class="val" id="s-fail">&mdash;</div>  <div class="sub">last 500</div></div>
+        <div class="stat blue">      <div class="lbl">Skills</div>      <div class="val" id="s-skills">&mdash;</div><div class="sub">indexed</div></div>
+        <div class="stat pur">       <div class="lbl">Avg Confidence</div><div class="val" id="s-conf">&mdash;</div><div class="sub">reasoning</div></div>
+      </div>
+      <div class="sh"><h2>&#x25C9; Live Feed</h2><div class="line"></div></div>
+      <div class="card"><div class="feed" id="mini-feed"></div></div>
+    </section>
+
+    <!-- RUN TASK -->
+    <section class="page" id="page-task">
+      <div class="sh"><h2>&#x25B6; Run Task</h2><div class="line"></div></div>
+      <div class="card">
+        <div class="row">
+          <input class="inp" id="task-input" type="text" placeholder="create a react component named UserCard with props name, email" />
+          <button class="btn btn-c" id="task-run">RUN</button>
+        </div>
+      </div>
+      <div class="sh"><h2>&#x2B22; Reasoning Trace</h2><div class="line"></div></div>
+      <div id="task-reason-panel"></div>
+      <div class="sh"><h2>&#x25C8; Output</h2><div class="line"></div></div>
+      <div class="code" id="task-output"><span style="color:var(--dim)">// output will appear here</span></div>
+    </section>
+
+    <!-- REASONER (dry-run) -->
+    <section class="page" id="page-reason">
+      <div class="sh"><h2>&#x2B22; Reasoning Engine — Dry Run</h2><div class="line"></div></div>
+      <div class="card">
+        <div class="row">
+          <input class="inp" id="reason-input" type="text" placeholder="scaffold a REST API for User with auth, async, typescript" />
+          <button class="btn btn-p" id="reason-run">ANALYSE</button>
+        </div>
+      </div>
+      <div id="reason-panel"></div>
+    </section>
+
+    <!-- BUNDLES -->
+    <section class="page" id="page-bundles">
+      <div class="sh"><h2>&#x27F3; Swarm Bundles</h2><div class="line"></div></div>
+      <div class="card">
+        <div class="row">
+          <select class="sel" id="bundle-sel">
+            <option value="scaffold-rest-api">scaffold-rest-api</option>
+            <option value="live-docs-to-skill">live-docs-to-skill</option>
+            <option value="audit-repo">audit-repo</option>
+          </select>
+          <input class="inp" id="bundle-inputs" type="text" placeholder='{"resource": "User"}' />
+          <button class="btn btn-g" id="bundle-run">FIRE</button>
+        </div>
+      </div>
+      <div class="code" id="bundle-out"><span style="color:var(--dim)">// result will appear here</span></div>
+    </section>
+
+    <!-- SKILLS -->
+    <section class="page" id="page-skills">
+      <div class="sh"><h2>&#x25C8; Skill Packs</h2><div class="line"></div>
+        <button class="btn btn-c" style="margin-left:auto;font-size:11px;padding:6px 14px" id="skills-refresh">REFRESH</button>
+      </div>
+      <div class="card tw">
+        <table><thead><tr><th>Skill</th><th>Version</th><th>MC</th><th>Path</th></tr></thead>
+        <tbody id="skills-tbody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- FORGE -->
+    <section class="page" id="page-forge">
+      <div class="sh"><h2>&#x2B06; Forge — Diff Viewer</h2><div class="line"></div></div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div><div style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-bottom:6px;">BEFORE</div>
+            <textarea class="inp" id="diff-old" style="height:150px;resize:vertical;width:100%;" placeholder="paste old content..."></textarea></div>
+          <div><div style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-bottom:6px;">AFTER</div>
+            <textarea class="inp" id="diff-new" style="height:150px;resize:vertical;width:100%;" placeholder="paste new content..."></textarea></div>
+        </div>
+        <button class="btn btn-c" id="diff-run" style="font-size:11px;padding:7px 16px;">DIFF</button>
+      </div>
+      <div class="diff" id="diff-out"><span style="color:var(--dim)">// diff will appear here</span></div>
+    </section>
+
+    <!-- FEED -->
+    <section class="page" id="page-feed">
+      <div class="sh"><h2>&#x25C9; Event Feed</h2><div class="line"></div>
+        <button class="btn btn-c" style="margin-left:auto;font-size:11px;padding:6px 14px" id="feed-refresh">REFRESH</button>
+      </div>
+      <div class="card"><div class="feed" id="full-feed"></div></div>
+    </section>
+
+    <!-- AUDIT -->
+    <section class="page" id="page-audit">
+      <div class="sh"><h2>&#x2713; Audit Log</h2><div class="line"></div></div>
+      <div class="card tw">
+        <table><thead><tr><th>Time</th><th>Event</th><th>Task/Skill</th><th>Status</th><th>Confidence</th></tr></thead>
+        <tbody id="audit-tbody"></tbody></table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+const API = window.DCA_API || 'http://localhost:8000';
+const $   = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// loading bar
+let _l=0;
+function ls(){_l++;$('lb').style.width='60%';}
+function le(){_l=Math.max(0,_l-1);if(!_l){$('lb').style.width='100%';setTimeout(()=>{$('lb').style.width='0';},300);}}
+async function api(path,method='GET',body=null){
+  ls();
+  try{
+    const o={method,headers:{'Content-Type':'application/json'}};
+    if(body)o.body=JSON.stringify(body);
+    const r=await fetch(API+path,o);le();return await r.json();
+  }catch(e){le();return{error:String(e)};}
+}
+
+// nav
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-'+el.dataset.page)?.classList.add('active');
+    const p=el.dataset.page;
+    if(p==='feed')   loadFeed();
+    if(p==='audit')  loadAudit();
+    if(p==='skills') loadSkills();
+    if(p==='dashboard') loadDashboard();
+  });
+});
+
+// health
+async function pollHealth(){
+  const h=await api('/health');
+  if(h.status==='ok'){
+    $('api-status').textContent='API: online';$('api-status').className='badge cyan';
+    $('event-count').textContent=h.event_count+' events';
+    $('uptime').textContent='last: '+new Date(h.uptime_ts*1000).toLocaleTimeString();
+  }else{$('api-status').textContent='API: offline';$('api-status').className='badge pink';}
+}
+
+// dashboard
+async function loadDashboard(){
+  const [health,skills,feed]=await Promise.all([api('/health'),api('/skills'),api('/dashboard/feed')]);
+  $('s-events').textContent=health.event_count??'--';
+  $('s-skills').textContent=(skills.skills??[]).length;
+  let ok=0,fail=0,confs=[];
+  (feed.events??[]).forEach(e=>{
+    if(e.event==='reasoning'&&e.data?.confidence!=null)confs.push(e.data.confidence);
+    if(e.data?.status==='ok')ok++; else fail++;
+  });
+  $('s-ok').textContent=ok;
+  $('s-fail').textContent=fail;
+  $('s-conf').textContent=confs.length?( confs.reduce((a,b)=>a+b,0)/confs.length ).toFixed(2):'--';
+  renderFeed($('mini-feed'),(feed.events??[]).slice(0,15));
+}
+
+// feed render
+function renderFeed(el,events){
+  el.innerHTML='';
+  if(!events.length){el.innerHTML='<div style="color:var(--dim);font-family:var(--mono);padding:12px;">No events yet.</div>';return;}
+  events.forEach(e=>{
+    const ts=new Date(e.ts*1000).toLocaleTimeString();
+    const ev=e.event;
+    const cls=ev==='reasoning'?'reasoning':ev.includes('fail')||e.data?.status==='failed'?'failed':ev==='step'?'step':ev.includes('audit')?'audit':'ok';
+    const msg=esc(JSON.stringify(e.data).slice(0,90));
+    el.innerHTML+=`<div class="fi"><span class="ts">${ts}</span><span class="ev ${cls}">${esc(ev)}</span><span class="msg">${msg}</span></div>`;
+  });
+}
+
+// ---- reasoning panel renderer ----------------------------------------
+function renderReasonPanel(container, data) {
+  const d = data.decision || data.reasoning || data;
+  if (!d) { container.innerHTML = '<div style="color:var(--dim);font-family:var(--mono);padding:12px;">No reasoning data.</div>'; return; }
+
+  const conf     = d.confidence ?? 0;
+  const confPct  = Math.round(conf * 100);
+  const confColor= conf >= 0.6 ? 'var(--green)' : conf >= 0.3 ? 'var(--yel)' : 'var(--pink)';
+  const auditOk  = d.audit_ok;
+  const chosen   = d.chosen_skill || '--';
+  const config   = d.chosen_config || {};
+  const preAudit = d.pre_audit || [];
+  const breakdown= d.breakdown || [];
+
+  // quantum top-3
+  let qHtml = '';
+  const qStep = breakdown.find(s => s.step === 'quantum');
+  if (qStep?.top3) {
+    qStep.top3.forEach(([skill, prob]) => {
+      const pct = Math.round(prob * 100);
+      qHtml += `<div class="qprob-row">
+        <span style="min-width:160px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(skill)}</span>
+        <div class="qprob-bar"><div class="qprob-fill" style="width:${pct}%"></div></div>
+        <span style="color:var(--purple);min-width:40px;text-align:right">${pct}%</span>
+      </div>`;
+    });
+  }
+
+  // breakdown steps
+  let bdHtml = '';
+  breakdown.forEach(s => {
+    const detail = Object.entries(s).filter(([k])=>k!=='step')
+      .map(([k,v])=>`<span style="color:var(--dim)">${esc(k)}</span>: <span style="color:var(--text)">${esc(JSON.stringify(v))}</span>`)
+      .join('  &nbsp; ');
+    bdHtml += `<div class="breakdown-step done">
+      <div class="bname">${esc(s.step)}</div>
+      <div class="bdata">${detail}</div>
+    </div>`;
+  });
+
+  // pre-audit items
+  let paHtml = preAudit.length
+    ? preAudit.map(i=>`<div class="pre-audit-item warn">&#x26A0; ${esc(i)}</div>`).join('')
+    : '<div class="pre-audit-item ok">&#x2713; All pre-audit checks passed</div>';
+
+  container.innerHTML = `
+  <div class="reason-grid">
+    <div class="reason-step">
+      <div class="step-name">Chosen Skill</div>
+      <div class="step-val" style="color:var(--cyan);font-size:15px">${esc(chosen)}</div>
+      <div style="margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--dim)">
+        ${Object.entries(config).map(([k,v])=>`${esc(k)}: <span style="color:var(--text)">${esc(String(v))}</span>`).join(' &nbsp; ') || 'default config'}
+      </div>
+    </div>
+    <div class="reason-step">
+      <div class="step-name">Confidence</div>
+      <div class="step-val" style="color:${confColor};font-size:22px">${confPct}%</div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${confPct}%;background:${confColor}"></div></div>
+      <div style="margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--dim)">
+        threshold: 30% &nbsp;&bull;&nbsp; status: <span style="color:${auditOk?'var(--green)':'var(--pink)'}">${auditOk?'CLEAR':'BLOCKED'}</span>
+      </div>
+    </div>
+    <div class="reason-step">
+      <div class="step-name">Pre-Audit</div>
+      ${paHtml}
+    </div>
+    <div class="reason-step">
+      <div class="step-name">Quantum Collapse — Top 3</div>
+      ${qHtml || '<span style="color:var(--dim);font-size:11px">No candidates</span>'}
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div style="font-size:10px;font-family:var(--mono);color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Step-by-Step Breakdown</div>
+    ${bdHtml}
+  </div>`;
+}
+
+// run task
+$('task-run').addEventListener('click', async () => {
+  const q=$('task-input').value.trim(); if(!q)return;
+  $('task-run').disabled=true;
+  $('task-output').textContent='running...';
+  $('task-reason-panel').innerHTML='';
+  const r=await api('/task','POST',{query:q});
+  if(r.reasoning) renderReasonPanel($('task-reason-panel'),r);
+  $('task-output').textContent=JSON.stringify(r.final_output??r,null,2);
+  $('task-run').disabled=false;
+  loadDashboard();
+});
+$('task-input').addEventListener('keydown',e=>{if(e.key==='Enter')$('task-run').click();});
+
+// reason dry-run
+$('reason-run').addEventListener('click', async () => {
+  const q=$('reason-input').value.trim(); if(!q)return;
+  $('reason-run').disabled=true;
+  $('reason-panel').innerHTML='<div style="color:var(--dim);font-family:var(--mono);padding:12px;">analysing...</div>';
+  const r=await api('/reason','POST',{query:q});
+  renderReasonPanel($('reason-panel'),r);
+  $('reason-run').disabled=false;
+});
+$('reason-input').addEventListener('keydown',e=>{if(e.key==='Enter')$('reason-run').click();});
+
+// bundles
+$('bundle-run').addEventListener('click', async () => {
+  const bundle=$('bundle-sel').value;
+  let inputs={}; try{inputs=JSON.parse($('bundle-inputs').value||'{}');}catch{}
+  $('bundle-run').disabled=true;
+  $('bundle-out').textContent='firing...';
+  const r=await api('/bundle','POST',{bundle,inputs});
+  $('bundle-out').textContent=JSON.stringify(r,null,2);
+  $('bundle-run').disabled=false;
+  loadDashboard();
+});
+
+// skills
+async function loadSkills(){
+  const r=await api('/skills');
+  const tb=$('skills-tbody'); tb.innerHTML='';
+  (r.skills??[]).forEach(s=>{
+    tb.innerHTML+=`<tr>
+      <td style="color:var(--cyan)">${esc(s.skill??s)}</td>
+      <td>${esc(s.version??'?')}</td>
+      <td>${s.mc?'<span style="color:var(--cyan);font-size:10px">MC</span>':'&mdash;'}</td>
+      <td style="color:var(--dim);font-size:11px">${esc(s.path??'')}</td>
+    </tr>`;
+  });
+}
+$('skills-refresh').addEventListener('click',loadSkills);
+
+// diff
+$('diff-run').addEventListener('click', async () => {
+  const r=await api('/forge/diff','POST',{old:$('diff-old').value,new:$('diff-new').value,filename:'file'});
+  const diff=r.diff||'';
+  const el=$('diff-out');
+  if(!diff){el.textContent='// No differences';return;}
+  el.innerHTML=diff.split('\n').map(l=>{
+    if(l.startsWith('+')&&!l.startsWith('+++'))return`<div class="diff-add">${esc(l)}</div>`;
+    if(l.startsWith('-')&&!l.startsWith('---'))return`<div class="diff-rem">${esc(l)}</div>`;
+    if(l.startsWith('@@'))return`<div class="diff-meta">${esc(l)}</div>`;
+    return`<div>${esc(l)}</div>`;
+  }).join('');
+});
+
+// feed
+async function loadFeed(){const r=await api('/dashboard/feed');renderFeed($('full-feed'),r.events??[]);}
+$('feed-refresh').addEventListener('click',loadFeed);
+
+// audit
+async function loadAudit(){
+  const r=await api('/dashboard/audit');
+  const tb=$('audit-tbody'); tb.innerHTML='';
+  (r.events??[]).forEach(e=>{
+    const ts=new Date(e.ts*1000).toLocaleTimeString();
+    const task=e.data?.task||e.data?.skill||e.data?.bundle||'--';
+    const stat=e.data?.status||(e.data?.passed?'ok':'--');
+    const conf=e.data?.confidence??e.data?.score??'--';
+    const sc=stat==='ok'?'var(--green)':stat==='blocked'?'var(--yel)':'var(--pink)';
+    tb.innerHTML+=`<tr>
+      <td style="color:var(--dim)">${ts}</td>
+      <td style="color:var(--blue);font-size:11px">${esc(e.event)}</td>
+      <td style="color:var(--cyan)">${esc(task)}</td>
+      <td style="color:${sc}">${esc(stat)}</td>
+      <td style="color:var(--purple)">${typeof conf==='number'?conf.toFixed(2):esc(String(conf))}</td>
+    </tr>`;
+  });
+}
+
+// boot
+pollHealth();
+setInterval(pollHealth,8000);
+loadDashboard();
+setInterval(loadDashboard,15000);
+</script>
+</body>
+</html>

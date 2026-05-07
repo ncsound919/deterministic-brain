@@ -1,0 +1,24 @@
+import React from 'react';
+
+interface {{ component_name }}Props {
+{% for prop in props %}
+  {{ prop }}: string;
+{% endfor %}
+}
+
+export const {{ component_name }}: React.FC<{{ component_name }}Props> = ({
+{% for prop in props %}
+  {{ prop }},
+{% endfor %}
+}) => {
+  return (
+    <div className="{{ component_name | lower }}">
+      {/* TODO: implement {{ component_name }} */}
+{% for prop in props %}
+      <span>{{{ prop }}}</span>
+{% endfor %}
+    </div>
+  );
+};
+
+export default {{ component_name }};

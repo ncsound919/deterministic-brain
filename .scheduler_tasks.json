@@ -1,0 +1,16 @@
+{
+  "test-task": {
+    "name": "test-task",
+    "skill": "audit-repo",
+    "trigger": {
+      "type": "interval",
+      "config": {
+        "seconds": 60
+      }
+    },
+    "inputs": {
+      "repo_path": "./test"
+    },
+    "enabled": true
+  }
+}

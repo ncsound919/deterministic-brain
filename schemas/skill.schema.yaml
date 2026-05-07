@@ -1,0 +1,32 @@
+# JSON Schema (YAML format) for skill.md frontmatter validation
+$schema: "http://json-schema.org/draft-07/schema#"
+title: SkillFrontmatter
+type: object
+required: [skill, version, inputs, tools, audit]
+properties:
+  skill:
+    type: string
+    description: Unique skill identifier (kebab-case)
+  version:
+    type: string
+    pattern: '^\d+\.\d+$'
+  inputs:
+    type: object
+    additionalProperties:
+      type: string
+      enum: [string, list, integer, boolean]
+  tools:
+    type: array
+    items:
+      type: string
+  audit:
+    type: array
+    items:
+      type: string
+  monte_carlo:
+    type: boolean
+    default: false
+  choices:
+    type: object
+    description: Only used when monte_carlo is true
+additionalProperties: false

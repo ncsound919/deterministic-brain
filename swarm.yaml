@@ -1,0 +1,37 @@
+# swarm.yaml — DCA Swarm Bundle Config
+# Each bundle maps to a set of parallel lanes.
+# Agents listed under `agents` are external repos that participate
+# via the tap919-middleman REST bridge.
+
+bundles:
+
+  scaffold-rest-api:
+    description: "Scaffold a full REST API resource with audit"
+    agents:
+      - tap919-middleman
+      - deterministic-brain
+    lanes:
+      - lanes.scaffold_rest_api
+
+  live-docs-to-skill:
+    description: "Scrape a docs URL and generate a skill.md stub"
+    agents:
+      - browser-harness
+      - deterministic-brain
+    lanes:
+      - lanes.live_docs_to_skill
+
+  audit-repo:
+    description: "Walk a local repo, lint every file, score and report"
+    agents:
+      - deterministic-brain
+    lanes:
+      - lanes.audit_repo
+
+routes:
+  create-react-component: skill_packs/react
+  scaffold-rest-api:      skill_packs/rest_api
+  add-auth:               skill_packs/auth
+  generate-dockerfile:    skill_packs/docker
+  audit-repo:             lanes/audit_repo
+  live-docs-to-skill:     lanes/live_docs_to_skill
