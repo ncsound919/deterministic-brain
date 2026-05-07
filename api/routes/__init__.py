@@ -1,1 +1,1 @@
-"""API route modules."""
+"""API route modules — organized by domain."""

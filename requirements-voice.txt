@@ -1,0 +1,8 @@
+# Voice dependencies — optional, heavy model files (~75MB+)
+-r requirements.txt
+faster-whisper>=1.0.0
+numpy>=1.26.0
+soundfile>=0.12.0
+# piper-tts: install varies by platform — see docs/voice-setup.md
+# CPU-only torch (avoid 2GB CUDA download):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
