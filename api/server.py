@@ -11,10 +11,6 @@ from typing import Any, Dict, List, Optional
 
 from orchestration.dca_engine import DeterministicCodingAgent
 from orchestration.swarm_dispatcher import SwarmDispatcher
-from orchestration.kairos_daemon import (
-    get_daemon, start_kairos, stop_kairos,
-    kairos_status as _kairos_status,
-)
 from orchestration.event_bus import event_bus
 from brain.autodream import run_autodream, consolidate_knowledge_bank
 from tools.forge import Forge, forge_diff
@@ -510,28 +506,41 @@ def soul_update(req: SoulUpdateRequest) -> Dict:
     s = get_soul()
     if req.identity:
         for k, v in req.identity.items():
-            if hasattr(s, k): setattr(s, k, v)
+            if hasattr(s, k):
+                setattr(s, k, v)
     if req.agenda:
-        if "mission" in req.agenda: s.mission = req.agenda["mission"]
-        if "goals" in req.agenda: s.goals = req.agenda["goals"] or s.goals
-        if "anti_goals" in req.agenda: s.anti_goals = req.agenda["anti_goals"] or s.anti_goals
-        if "autonomous_directives" in req.agenda: s.autonomous_directives = req.agenda["autonomous_directives"] or s.autonomous_directives
+        if "mission" in req.agenda:
+            s.mission = req.agenda["mission"]
+        if "goals" in req.agenda:
+            s.goals = req.agenda["goals"] or s.goals
+        if "anti_goals" in req.agenda:
+            s.anti_goals = req.agenda["anti_goals"] or s.anti_goals
+        if "autonomous_directives" in req.agenda:
+            s.autonomous_directives = req.agenda["autonomous_directives"] or s.autonomous_directives
     if req.context:
         ctx = req.context
-        if "expertise" in ctx: s.expertise = ctx["expertise"] or s.expertise
-        if "learning" in ctx: s.learning = ctx["learning"] or s.learning
-        if "notes" in ctx: s.notes = ctx.get("notes", s.notes)
+        if "expertise" in ctx:
+            s.expertise = ctx["expertise"] or s.expertise
+        if "learning" in ctx:
+            s.learning = ctx["learning"] or s.learning
+        if "notes" in ctx:
+            s.notes = ctx.get("notes", s.notes)
         if "stack" in ctx:
             stack = ctx["stack"]
-            if "languages" in stack: s.stack_languages = stack["languages"] or s.stack_languages
-            if "frameworks" in stack: s.stack_frameworks = stack["frameworks"] or s.stack_frameworks
-            if "tools" in stack: s.stack_tools = stack["tools"] or s.stack_tools
+            if "languages" in stack:
+                s.stack_languages = stack["languages"] or s.stack_languages
+            if "frameworks" in stack:
+                s.stack_frameworks = stack["frameworks"] or s.stack_frameworks
+            if "tools" in stack:
+                s.stack_tools = stack["tools"] or s.stack_tools
     if req.preferences:
         pref = req.preferences
         for k, v in pref.items():
             if k == "communication":
-                if "verbosity" in v: s.verbosity = v["verbosity"]
-                if "tone" in v: s.tone = v["tone"]
+                if "verbosity" in v:
+                    s.verbosity = v["verbosity"]
+                if "tone" in v:
+                    s.tone = v["tone"]
             elif hasattr(s, k):
                 setattr(s, k, v)
     if req.knowledge_sources is not None:
@@ -677,7 +686,7 @@ def betting_sheet(sport: str = "basketball_nba", bankroll: float = 1000.0, min_e
 def betting_odds(sport: str = "basketball_nba") -> Dict:
     from features.finance_modules import get_odds
     lines = get_odds().fetch_odds(sport)
-    return {"lines": [l.to_dict() for l in lines], "count": len(lines)}
+    return {"lines": [line.to_dict() for line in lines], "count": len(lines)}
 
 
 @app.get("/betting/kelly")
@@ -687,6 +696,63 @@ def betting_kelly(sport: str = "basketball_nba", bankroll: float = 1000.0) -> Di
     lines = engine.fetch_odds(sport)
     kelly = engine.calculate_kelly(lines, bankroll)
     return {"bankroll": bankroll, "recommendations": kelly}
+
+
+@app.get("/betting/backtest")
+def betting_backtest(
+    kelly_frac: float = 0.25,
+    min_edge: float = 0.0,
+    market: str = "ml",
+    starting_bankroll: float = 10000.0,
+    n_sims: int = 100,
+    use_synthetic: int = 0,
+) -> Dict:
+    from backtesting.backtest_engine import BacktestEngine
+    import os
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "datasets")
+    engine = BacktestEngine(data_dir=data_dir)
+    result = engine.backtest_kelly(
+        kelly_frac=kelly_frac,
+        min_edge=min_edge,
+        market=market,
+        starting_bankroll=starting_bankroll,
+        use_synthetic=bool(use_synthetic),
+    )
+    if n_sims > 0:
+        mc = engine.monte_carlo(
+            lambda: engine.backtest_kelly(kelly_frac, min_edge, market, starting_bankroll, bool(use_synthetic)),
+            n_sims=n_sims,
+        )
+        result.sims.update(mc)
+    report = engine.report(result)
+    return {
+        "result": result.to_dict(),
+        "report": report,
+        "monte_carlo": result.sims,
+    }
+
+
+@app.get("/betting/prizepicks")
+def betting_prizepicks(market: str = "all", min_line: float = 0) -> Dict:
+    from features.prizepicks_scraper import get_prizepicks_scraper
+    scraper = get_prizepicks_scraper()
+    props = scraper.fetch()
+    if market != "all":
+        props = [p for p in props if p.market.lower() == market.lower()]
+    if min_line > 0:
+        props = [p for p in props if p.line >= min_line]
+    by_market = {}
+    for p in props:
+        if p.market not in by_market:
+            by_market[p.market] = []
+        by_market[p.market].append(p.to_dict())
+    return {
+        "mode": scraper.mode,
+        "total_props": len(props),
+        "markets": list(by_market.keys()),
+        "by_market": {k: len(v) for k, v in by_market.items()},
+        "props": [p.to_dict() for p in props],
+    }
 
 
 # ── Integrations status ────────────────────────────────────────────
@@ -855,7 +921,7 @@ def news_feed() -> Dict:
 def odds_feed(sport: str = "basketball_nba") -> Dict:
     from features.finance_modules import get_odds
     lines = get_odds().fetch_odds(sport)
-    return {"lines": [l.to_dict() for l in lines], "count": len(lines)}
+    return {"lines": [line.to_dict() for line in lines], "count": len(lines)}
 
 
 @app.post("/odds/value")
@@ -1062,15 +1128,20 @@ def save_settings_keys(req: SettingsKeysRequest) -> Dict:
     from config import persist_setting
     saved = []
     if req.anthropic:
-        persist_setting("ANTHROPIC_API_KEY", req.anthropic); saved.append("anthropic")
+        persist_setting("ANTHROPIC_API_KEY", req.anthropic)
+        saved.append("anthropic")
     if req.openai:
-        persist_setting("OPENAI_API_KEY", req.openai); saved.append("openai")
+        persist_setting("OPENAI_API_KEY", req.openai)
+        saved.append("openai")
     if req.deepseek:
-        persist_setting("DEEPSEEK_API_KEY", req.deepseek); saved.append("deepseek")
+        persist_setting("DEEPSEEK_API_KEY", req.deepseek)
+        saved.append("deepseek")
     if req.openrouter:
-        persist_setting("OPENROUTER_API_KEY", req.openrouter); saved.append("openrouter")
+        persist_setting("OPENROUTER_API_KEY", req.openrouter)
+        saved.append("openrouter")
     if req.gemini:
-        persist_setting("GEMINI_API_KEY", req.gemini); saved.append("gemini")
+        persist_setting("GEMINI_API_KEY", req.gemini)
+        saved.append("gemini")
     return {"saved": saved, "count": len(saved)}
 
 

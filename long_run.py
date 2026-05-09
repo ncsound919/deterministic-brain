@@ -304,7 +304,7 @@ def boot_system() -> Dict:
         print_step("WARN", f"Soul: {e}")
 
     try:
-        from orchestration.event_bus import connect_all_learning, event_bus
+        from orchestration.event_bus import connect_all_learning
         connect_all_learning()
         print_step("OK", "Learning loop wired (bandit <-> tracker <-> evolver <-> healer)")
         boot["learning_loop"] = "connected"
@@ -338,7 +338,6 @@ def boot_system() -> Dict:
         print_step("WARN", f"Swarm: {e}")
 
     try:
-        from evolution.nightly_scorer import NightlyScorer
         print_step("OK", "Skill evolver + nightly scorer online")
         boot["evolver"] = "online"
     except Exception as e:
@@ -511,7 +510,7 @@ def run_long_test(hours: float = 0.5):
 
     print_banner(f"LONG-RUN BENCHMARK: {hours}h ({total_cycles} cycles)")
     print(f"  Start: {datetime.now(timezone.utc).isoformat()}")
-    print(f"  Phases per cycle: ACTIVE -> PASSIVE -> HEALING -> LEARNING")
+    print("  Phases per cycle: ACTIVE -> PASSIVE -> HEALING -> LEARNING")
     print(f"  Cycle duration: ~{cycle_duration_s}s\n")
 
     # Boot
