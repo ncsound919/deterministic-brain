@@ -1,0 +1,45 @@
+import React from 'react';
+
+interface {{ component_name or "Component" }}Props {
+  className?: string;
+  title?: string;
+}
+
+export const {{ component_name or "Component" }}: React.FC<{{ component_name or "Component" }}Props> = ({
+  className = '',
+  title = '{{ component_name or "Component" }}',
+}) => {
+  return (
+    <div className={`card ${className}`}>
+      <h2 className="card-title">{title}</h2>
+      <p className="card-body">This is the {{ component_name or "Component" }} component.</p>
+      <button
+        className="card-btn"
+        onClick={() => console.log('{{ component_name or "Component" }} clicked')}
+      >
+        Click Me
+      </button>
+      <style>{`
+        .card {
+          background: #13131a; border: 1px solid #1e1e2e; border-radius: 12px;
+          padding: 24px; max-width: 400px;
+          font-family: system-ui, sans-serif;
+          transition: all 0.2s;
+        }
+        .card:hover { border-color: #00ffe7; box-shadow: 0 0 16px rgba(0,255,231,0.08); }
+        .card-title { color: #00ffe7; font-size: 18px; margin: 0 0 8px; }
+        .card-body { color: #9090a8; font-size: 14px; margin: 0 0 16px; line-height: 1.5; }
+        .card-btn {
+          background: linear-gradient(135deg, #00d4b8, #00ffe7); color: #000;
+          border: none; padding: 10px 20px; border-radius: 8px;
+          font-weight: 600; cursor: pointer; font-size: 14px;
+          transition: all 0.2s;
+        }
+        .card-btn:hover { box-shadow: 0 0 16px rgba(0,255,231,0.3); transform: translateY(-1px); }
+        .card-btn:active { transform: scale(0.97); }
+      `}</style>
+    </div>
+  );
+};
+
+export default {{ component_name or "Component" }};

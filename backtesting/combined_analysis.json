@@ -1,0 +1,61 @@
+{
+  "prizepicks": {
+    "mode": "api_direct",
+    "total_props": 2397,
+    "by_market": {
+      "PRA": 367,
+      "PA": 273,
+      "PR": 337,
+      "points": 504,
+      "RA": 295,
+      "rebounds": 365,
+      "assists": 256
+    }
+  },
+  "h2h_odds": {
+    "mode": "live_h2h",
+    "games": 4,
+    "outcomes": {
+      "Cleveland Cavaliers": {
+        "price": -175,
+        "prob": 0.6363636363636364
+      },
+      "Detroit Pistons": {
+        "price": 163,
+        "prob": 0.38022813688212925
+      },
+      "Los Angeles Lakers": {
+        "price": 310,
+        "prob": 0.24390243902439024
+      },
+      "Oklahoma City Thunder": {
+        "price": -356,
+        "prob": 0.7807017543859649
+      },
+      "New York Knicks": {
+        "price": -115,
+        "prob": 0.5348837209302325
+      },
+      "Philadelphia 76ers": {
+        "price": 102,
+        "prob": 0.49504950495049505
+      },
+      "Minnesota Timberwolves": {
+        "price": 162,
+        "prob": 0.3816793893129771
+      },
+      "San Antonio Spurs": {
+        "price": -185,
+        "prob": 0.6491228070175439
+      }
+    }
+  },
+  "backtest": {
+    "roi": 0.46753578577284644,
+    "win_rate": 0.8048780487804879,
+    "sharpe": 10.733580153884885,
+    "edge_per_bet": 0.08194124998730241,
+    "max_dd": 0.021128909229615418
+  },
+  "timestamp": "2026-05-09 12:43:20.895545"
+}

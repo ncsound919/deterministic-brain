@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{{ title or "Landing Page" }}</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <div class="logo">{{ title or "Brand" }}</div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <button class="btn-primary">Get Started</button>
+</nav>
+
+<header class="hero">
+  <h1>{{ title or "Build Something Great" }}</h1>
+  <p>{{ subtitle or "The fastest way to go from idea to production. No complexity, just results." }}</p>
+  <div class="hero-actions">
+    <button class="btn-primary btn-lg">Start Free</button>
+    <button class="btn-outline btn-lg">Learn More</button>
+  </div>
+</header>
+
+<section id="features">
+  <h2>Features</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">&#x26A1;</div>
+      <h3>Lightning Fast</h3>
+      <p>Built for speed. Your users will notice the difference from the first click.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#x1F6E1;</div>
+      <h3>Secure by Default</h3>
+      <p>Enterprise-grade security baked into every layer of the stack.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#x1F4C8;</div>
+      <h3>Scales With You</h3>
+      <p>From zero to millions of users without changing a line of code.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#x1F3A8;</div>
+      <h3>Beautiful Design</h3>
+      <p>Pixel-perfect components that make your product stand out.</p>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <h2>Simple Pricing</h2>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <h3>Starter</h3>
+      <div class="price">$0<span>/mo</span></div>
+      <ul>
+        <li>1 Project</li>
+        <li>Basic Analytics</li>
+        <li>Community Support</li>
+      </ul>
+      <button class="btn-outline">Get Started</button>
+    </div>
+    <div class="pricing-card featured">
+      <div class="badge">Most Popular</div>
+      <h3>Pro</h3>
+      <div class="price">$29<span>/mo</span></div>
+      <ul>
+        <li>Unlimited Projects</li>
+        <li>Advanced Analytics</li>
+        <li>Priority Support</li>
+        <li>Custom Domain</li>
+      </ul>
+      <button class="btn-primary">Get Started</button>
+    </div>
+    <div class="pricing-card">
+      <h3>Enterprise</h3>
+      <div class="price">$99<span>/mo</span></div>
+      <ul>
+        <li>Everything in Pro</li>
+        <li>SSO & SAML</li>
+        <li>Dedicated Support</li>
+        <li>Custom SLA</li>
+      </ul>
+      <button class="btn-outline">Contact Sales</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2024 {{ title or "Brand" }}. All rights reserved.</p>
+</footer>
+</body>
+</html>

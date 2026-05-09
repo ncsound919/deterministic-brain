@@ -1,0 +1,9 @@
+{
+  "44f179db": {
+    "name": "pts_over_line",
+    "expression": "pts-line*2 trend*5",
+    "description": "Score points above line weighted",
+    "created": "2026-05-07 23:47",
+    "runs": 0
+  }
+}

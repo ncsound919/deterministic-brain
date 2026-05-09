@@ -1,0 +1,16 @@
+{
+  "posts": [
+    {
+      "id": "d22bab0d7336",
+      "platform": "twitter",
+      "content": "Hello World",
+      "scheduled_for": 1778199365.5036922,
+      "status": "queued",
+      "media_url": "",
+      "tags": [],
+      "created_at": 1778195765.5036922,
+      "posted_at": 0
+    }
+  ],
+  "webhooks": {}
+}

@@ -1,0 +1,32 @@
+{
+  "kelly_result": {
+    "strategy": "kelly_0.25_edge_0.00_ml",
+    "starting_bankroll": 10000,
+    "ending_bankroll": 14675.36,
+    "total_return": 4675.3579,
+    "roi": 0.4675,
+    "win_rate": 0.8049,
+    "total_bets": 41,
+    "wins": 33,
+    "losses": 8,
+    "pushes": 0,
+    "avg_odds": 0.0,
+    "avg_edge": 0.0819,
+    "kelly_fraction": 0.25,
+    "sharpe": 10.7336,
+    "max_drawdown": 211.29,
+    "max_drawdown_pct": 0.0211,
+    "roi_per_season": {},
+    "monte_carlo_95ci": {}
+  },
+  "monte_carlo": {
+    "n_sims": 50,
+    "mean_roi": 0.4675,
+    "median_roi": 0.4675,
+    "p5_roi": 0.4675,
+    "p95_roi": 0.4675,
+    "win_rate": 1.0,
+    "best_roi": 0.4675,
+    "worst_roi": 0.4675
+  }
+}

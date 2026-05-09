@@ -1,0 +1,735 @@
+date,player,team,opponent,market,line,over_odds,under_odds,actual,over_hit,over_profit,under_profit,book
+2022-01-03,Stephen Curry,Golden State Warriors,Memphis Grizzlies,rebounds,8.2,-104.0,-104.0,10.0,True,0.9615384615384616,-1.0,PrizePicks
+2022-01-03,Stephen Curry,Golden State Warriors,Memphis Grizzlies,points,27.3,-120.0,110.0,30.1,True,0.8333333333333334,-1.0,PrizePicks
+2022-01-03,Draymond Green,Golden State Warriors,Memphis Grizzlies,points,23.8,122.0,-132.0,27.8,True,0.819672131147541,-1.0,PrizePicks
+2022-01-03,Stephen Curry,Golden State Warriors,Memphis Grizzlies,points,22.5,140.0,-152.0,18.1,False,-1.0,0.6578947368421053,PrizePicks
+2022-01-03,Stephen Curry,Golden State Warriors,Memphis Grizzlies,rebounds,8.7,-126.0,116.0,12.9,True,0.7936507936507936,-1.0,PrizePicks
+2022-01-03,Jimmy Butler,Golden State Warriors,Memphis Grizzlies,assists,14.0,-136.0,125.0,10.6,False,-1.0,0.8,PrizePicks
+2022-01-03,Draymond Green,Golden State Warriors,Memphis Grizzlies,assists,13.9,124.0,-135.0,19.3,True,0.8064516129032258,-1.0,PrizePicks
+2022-01-03,Kawhi Leonard,LA Clippers,Orlando Magic,points,28.4,-133.0,122.0,28.7,True,0.7518796992481203,-1.0,PrizePicks
+2022-01-03,James Harden,LA Clippers,Orlando Magic,points,27.5,-147.0,135.0,27.7,True,0.6802721088435374,-1.0,PrizePicks
+2022-01-03,Kawhi Leonard,LA Clippers,Orlando Magic,points,22.5,156.0,-170.0,25.0,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-03,James Harden,LA Clippers,Orlando Magic,points,27.9,101.0,-110.0,21.9,False,-1.0,0.9090909090909091,PrizePicks
+2022-01-03,Kawhi Leonard,LA Clippers,Orlando Magic,rebounds,9.8,-101.0,-107.0,6.7,False,-1.0,0.9345794392523364,PrizePicks
+2022-01-03,Kawhi Leonard,LA Clippers,Orlando Magic,points,25.9,121.0,-131.0,26.5,True,0.8264462809917356,-1.0,PrizePicks
+2022-01-03,Kawhi Leonard,LA Clippers,Orlando Magic,PRA,36.6,109.0,-119.0,47.4,True,0.9174311926605505,-1.0,PrizePicks
+2022-01-03,Norman Powell,LA Clippers,Orlando Magic,rebounds,8.1,107.0,-116.0,5.3,False,-1.0,0.8620689655172413,PrizePicks
+2022-01-03,Jalen Green,Houston Rockets,Milwaukee Bucks,PRA,28.3,124.0,-135.0,26.9,False,-1.0,0.7407407407407407,PrizePicks
+2022-01-03,Fred VanVleet,Houston Rockets,Milwaukee Bucks,assists,7.2,131.0,-143.0,5.0,False,-1.0,0.6993006993006993,PrizePicks
+2022-01-03,Fred VanVleet,Houston Rockets,Milwaukee Bucks,points,34.0,156.0,-170.0,35.5,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-03,Fred VanVleet,Houston Rockets,Milwaukee Bucks,rebounds,6.7,-114.0,105.0,9.1,True,0.8771929824561403,-1.0,PrizePicks
+2022-01-03,Shai Gilgeous-Alexander,Oklahoma City Thunder,Toronto Raptors,rebounds,6.8,120.0,-130.0,14.1,True,0.8333333333333334,-1.0,PrizePicks
+2022-01-03,Shai Gilgeous-Alexander,Oklahoma City Thunder,Toronto Raptors,points,22.2,-106.0,-102.0,21.4,False,-1.0,0.9803921568627451,PrizePicks
+2022-01-03,Chet Holmgren,Oklahoma City Thunder,Toronto Raptors,points,32.3,-100.0,-108.0,38.9,True,1.0,-1.0,PrizePicks
+2022-01-03,Shai Gilgeous-Alexander,Oklahoma City Thunder,Toronto Raptors,points,28.7,-138.0,127.0,28.9,True,0.7246376811594203,-1.0,PrizePicks
+2022-01-03,Chet Holmgren,Oklahoma City Thunder,Orlando Magic,rebounds,7.7,-117.0,108.0,4.7,False,-1.0,0.9259259259259259,PrizePicks
+2022-01-03,Jalen Williams,Oklahoma City Thunder,Orlando Magic,points,27.8,-121.0,112.0,30.1,True,0.8264462809917356,-1.0,PrizePicks
+2022-01-03,Chet Holmgren,Oklahoma City Thunder,Orlando Magic,points,28.6,130.0,-141.0,22.0,False,-1.0,0.7092198581560284,PrizePicks
+2022-01-03,Chet Holmgren,Oklahoma City Thunder,Orlando Magic,points,16.1,-170.0,156.0,13.1,False,-1.0,0.6410256410256411,PrizePicks
+2022-01-04,Paul George,Philadelphia 76ers,Houston Rockets,assists,5.1,-170.0,156.0,4.7,False,-1.0,0.6410256410256411,PrizePicks
+2022-01-04,Fred VanVleet,Houston Rockets,Philadelphia 76ers,rebounds,5.1,-109.0,101.0,4.1,False,-1.0,0.9900990099009901,PrizePicks
+2022-01-04,Fred VanVleet,Houston Rockets,Philadelphia 76ers,rebounds,8.9,-124.0,115.0,15.1,True,0.8064516129032258,-1.0,PrizePicks
+2022-01-04,Jalen Green,Houston Rockets,Philadelphia 76ers,points,22.7,132.0,-144.0,14.4,False,-1.0,0.6944444444444444,PrizePicks
+2022-01-04,Paul George,Philadelphia 76ers,Houston Rockets,points,30.3,156.0,-170.0,30.0,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-04,Paul George,Philadelphia 76ers,Houston Rockets,rebounds,10.3,-116.0,107.0,9.0,False,-1.0,0.9345794392523364,PrizePicks
+2022-01-04,Caleb Martin,Philadelphia 76ers,Houston Rockets,points,25.1,134.0,-145.0,23.2,False,-1.0,0.6896551724137931,PrizePicks
+2022-01-04,Fred VanVleet,Houston Rockets,Philadelphia 76ers,points,25.4,-107.0,-101.0,21.5,False,-1.0,0.9900990099009901,PrizePicks
+2022-01-04,Caleb Martin,Philadelphia 76ers,New Orleans Pelicans,rebounds,7.4,-157.0,144.0,6.5,False,-1.0,0.6944444444444444,PrizePicks
+2022-01-04,Caleb Martin,Philadelphia 76ers,New Orleans Pelicans,rebounds,11.4,156.0,-170.0,8.3,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-04,Tyrese Maxey,Philadelphia 76ers,New Orleans Pelicans,points,21.5,148.0,-161.0,21.7,True,0.6756756756756757,-1.0,PrizePicks
+2022-01-04,Paul George,Philadelphia 76ers,New Orleans Pelicans,points,28.2,101.0,-110.0,32.8,True,0.9900990099009901,-1.0,PrizePicks
+2022-01-04,Paul George,Philadelphia 76ers,New Orleans Pelicans,points,24.2,115.0,-124.0,21.9,False,-1.0,0.8064516129032258,PrizePicks
+2022-01-04,Chet Holmgren,Oklahoma City Thunder,San Antonio Spurs,points,29.4,109.0,-118.0,32.4,True,0.9174311926605505,-1.0,PrizePicks
+2022-01-04,Shai Gilgeous-Alexander,Oklahoma City Thunder,San Antonio Spurs,PRA,35.4,-121.0,111.0,29.1,False,-1.0,0.9009009009009009,PrizePicks
+2022-01-04,Shai Gilgeous-Alexander,Oklahoma City Thunder,San Antonio Spurs,rebounds,12.2,110.0,-119.0,8.4,False,-1.0,0.8403361344537815,PrizePicks
+2022-01-04,Chet Holmgren,Oklahoma City Thunder,San Antonio Spurs,points,24.5,-125.0,115.0,16.2,False,-1.0,0.8695652173913043,PrizePicks
+2022-01-04,Shai Gilgeous-Alexander,Oklahoma City Thunder,San Antonio Spurs,points,20.0,106.0,-115.0,18.1,False,-1.0,0.8695652173913043,PrizePicks
+2022-01-04,Shai Gilgeous-Alexander,Oklahoma City Thunder,San Antonio Spurs,rebounds,13.5,144.0,-157.0,15.6,True,0.6944444444444444,-1.0,PrizePicks
+2022-01-04,Shai Gilgeous-Alexander,Oklahoma City Thunder,San Antonio Spurs,assists,6.2,156.0,-170.0,3.1,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-04,Chet Holmgren,Oklahoma City Thunder,San Antonio Spurs,rebounds,6.0,-138.0,127.0,8.3,True,0.7246376811594203,-1.0,PrizePicks
+2022-01-05,Kevin Durant,Phoenix Suns,Boston Celtics,assists,8.2,156.0,-170.0,7.6,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-05,Kristaps Porzingis,Boston Celtics,Phoenix Suns,rebounds,9.9,-116.0,107.0,6.1,False,-1.0,0.9345794392523364,PrizePicks
+2022-01-05,Devin Booker,Phoenix Suns,Boston Celtics,assists,6.8,-116.0,107.0,7.0,True,0.8620689655172413,-1.0,PrizePicks
+2022-01-05,Derrick White,Boston Celtics,Phoenix Suns,points,31.9,138.0,-150.0,25.5,False,-1.0,0.6666666666666666,PrizePicks
+2022-01-05,Jaylen Brown,Boston Celtics,Phoenix Suns,PRA,47.1,116.0,-126.0,47.4,True,0.8620689655172413,-1.0,PrizePicks
+2022-01-05,Aaron Gordon,Denver Nuggets,San Antonio Spurs,assists,6.3,105.0,-113.0,2.4,False,-1.0,0.8849557522123894,PrizePicks
+2022-01-05,Jamal Murray,Denver Nuggets,San Antonio Spurs,points,15.7,156.0,-170.0,15.4,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-05,Aaron Gordon,Denver Nuggets,San Antonio Spurs,points,20.0,-139.0,128.0,18.7,False,-1.0,0.78125,PrizePicks
+2022-01-05,Aaron Gordon,Denver Nuggets,San Antonio Spurs,rebounds,9.4,-115.0,106.0,12.5,True,0.8695652173913043,-1.0,PrizePicks
+2022-01-05,Jamal Murray,Denver Nuggets,San Antonio Spurs,rebounds,9.4,154.0,-167.0,9.9,True,0.6493506493506493,-1.0,PrizePicks
+2022-01-05,Nikola Jokic,Denver Nuggets,San Antonio Spurs,rebounds,9.9,-133.0,122.0,11.8,True,0.7518796992481203,-1.0,PrizePicks
+2022-01-05,Nikola Jokic,Denver Nuggets,San Antonio Spurs,points,23.6,114.0,-123.0,24.5,True,0.8771929824561403,-1.0,PrizePicks
+2022-01-05,Jamal Murray,Denver Nuggets,San Antonio Spurs,rebounds,4.5,115.0,-125.0,1.8,False,-1.0,0.8,PrizePicks
+2022-01-05,Donovan Mitchell,Cleveland Cavaliers,Boston Celtics,assists,5.7,156.0,-170.0,4.6,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-05,Donovan Mitchell,Cleveland Cavaliers,Boston Celtics,assists,6.9,124.0,-135.0,8.7,True,0.8064516129032258,-1.0,PrizePicks
+2022-01-05,Jarrett Allen,Cleveland Cavaliers,Boston Celtics,assists,7.7,-121.0,112.0,6.4,False,-1.0,0.8928571428571429,PrizePicks
+2022-01-05,Jarrett Allen,Cleveland Cavaliers,Boston Celtics,points,29.2,122.0,-132.0,27.4,False,-1.0,0.7575757575757576,PrizePicks
+2022-01-06,LeBron James,Los Angeles Lakers,San Antonio Spurs,points,19.2,115.0,-125.0,23.1,True,0.8695652173913043,-1.0,PrizePicks
+2022-01-06,Anthony Davis,Los Angeles Lakers,San Antonio Spurs,assists,10.1,110.0,-119.0,9.2,False,-1.0,0.8403361344537815,PrizePicks
+2022-01-06,LeBron James,Los Angeles Lakers,San Antonio Spurs,assists,7.1,-107.0,-102.0,5.1,False,-1.0,0.9803921568627451,PrizePicks
+2022-01-06,Rui Hachimura,Los Angeles Lakers,San Antonio Spurs,points,25.2,-116.0,107.0,19.7,False,-1.0,0.9345794392523364,PrizePicks
+2022-01-06,Anthony Davis,Los Angeles Lakers,San Antonio Spurs,rebounds,14.2,112.0,-121.0,7.4,False,-1.0,0.8264462809917356,PrizePicks
+2022-01-06,Anthony Davis,Los Angeles Lakers,San Antonio Spurs,PRA,38.6,-120.0,110.0,35.1,False,-1.0,0.9090909090909091,PrizePicks
+2022-01-06,Rui Hachimura,Los Angeles Lakers,San Antonio Spurs,assists,4.8,-137.0,126.0,4.2,False,-1.0,0.7936507936507936,PrizePicks
+2022-01-06,LeBron James,Los Angeles Lakers,San Antonio Spurs,assists,5.9,101.0,-109.0,5.1,False,-1.0,0.9174311926605505,PrizePicks
+2022-01-06,Derrick White,Boston Celtics,Dallas Mavericks,PRA,33.1,-131.0,120.0,46.7,True,0.7633587786259542,-1.0,PrizePicks
+2022-01-06,Kyrie Irving,Dallas Mavericks,Boston Celtics,assists,4.9,-121.0,112.0,3.1,False,-1.0,0.8928571428571429,PrizePicks
+2022-01-06,Kristaps Porzingis,Boston Celtics,Dallas Mavericks,points,25.0,113.0,-123.0,29.1,True,0.8849557522123894,-1.0,PrizePicks
+2022-01-06,P.J. Washington,Dallas Mavericks,Boston Celtics,points,21.9,119.0,-129.0,24.2,True,0.8403361344537815,-1.0,PrizePicks
+2022-01-06,Kyrie Irving,Dallas Mavericks,Boston Celtics,points,24.4,-145.0,133.0,30.0,True,0.6896551724137931,-1.0,PrizePicks
+2022-01-06,P.J. Washington,Dallas Mavericks,Boston Celtics,rebounds,11.6,117.0,-126.0,24.5,True,0.8547008547008547,-1.0,PrizePicks
+2022-01-06,Devin Booker,Phoenix Suns,Memphis Grizzlies,PRA,36.7,105.0,-113.0,38.3,True,0.9523809523809523,-1.0,PrizePicks
+2022-01-06,Bradley Beal,Phoenix Suns,Memphis Grizzlies,points,19.4,-101.0,-108.0,20.9,True,0.9900990099009901,-1.0,PrizePicks
+2022-01-06,Devin Booker,Phoenix Suns,Memphis Grizzlies,points,27.1,106.0,-114.0,21.1,False,-1.0,0.8771929824561403,PrizePicks
+2022-01-06,Bradley Beal,Phoenix Suns,Memphis Grizzlies,assists,7.0,-103.0,-105.0,3.7,False,-1.0,0.9523809523809523,PrizePicks
+2022-01-06,Bradley Beal,Phoenix Suns,Memphis Grizzlies,points,25.8,-165.0,152.0,25.8,False,-1.0,0.6578947368421053,PrizePicks
+2022-01-06,Kevin Durant,Phoenix Suns,Memphis Grizzlies,rebounds,7.1,131.0,-142.0,7.0,False,-1.0,0.704225352112676,PrizePicks
+2022-01-06,Bradley Beal,Phoenix Suns,Memphis Grizzlies,assists,6.9,156.0,-170.0,5.5,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-06,Pascal Siakam,Indiana Pacers,LA Clippers,points,22.8,-145.0,133.0,24.3,True,0.6896551724137931,-1.0,PrizePicks
+2022-01-06,Andrew Nembhard,Indiana Pacers,LA Clippers,PRA,32.0,124.0,-135.0,29.3,False,-1.0,0.7407407407407407,PrizePicks
+2022-01-06,Norman Powell,LA Clippers,Indiana Pacers,rebounds,4.5,-101.0,-107.0,5.1,True,0.9900990099009901,-1.0,PrizePicks
+2022-01-06,James Harden,LA Clippers,Indiana Pacers,rebounds,5.3,144.0,-157.0,5.6,True,0.6944444444444444,-1.0,PrizePicks
+2022-01-06,James Harden,LA Clippers,Indiana Pacers,points,26.2,108.0,-117.0,27.8,True,0.9259259259259259,-1.0,PrizePicks
+2022-01-06,Kawhi Leonard,LA Clippers,Indiana Pacers,points,27.9,-102.0,-106.0,22.9,False,-1.0,0.9433962264150944,PrizePicks
+2022-01-06,Ivica Zubac,LA Clippers,Indiana Pacers,points,20.7,116.0,-126.0,16.4,False,-1.0,0.7936507936507936,PrizePicks
+2022-01-06,Ivica Zubac,LA Clippers,Indiana Pacers,PRA,45.6,126.0,-137.0,49.3,True,0.7936507936507936,-1.0,PrizePicks
+2022-01-06,Kevin Huerter,Sacramento Kings,Toronto Raptors,PRA,31.0,-119.0,110.0,30.9,False,-1.0,0.9090909090909091,PrizePicks
+2022-01-06,Keegan Murray,Sacramento Kings,Toronto Raptors,points,15.4,-140.0,129.0,19.8,True,0.7142857142857143,-1.0,PrizePicks
+2022-01-06,Domantas Sabonis,Sacramento Kings,Toronto Raptors,PRA,36.9,-110.0,102.0,38.1,True,0.9090909090909091,-1.0,PrizePicks
+2022-01-06,Kevin Huerter,Sacramento Kings,Toronto Raptors,points,17.3,146.0,-159.0,13.8,False,-1.0,0.6289308176100629,PrizePicks
+2022-01-06,Domantas Sabonis,Sacramento Kings,Toronto Raptors,PRA,37.1,125.0,-136.0,32.2,False,-1.0,0.7352941176470589,PrizePicks
+2022-01-06,Keegan Murray,Sacramento Kings,Toronto Raptors,assists,10.8,109.0,-118.0,8.8,False,-1.0,0.847457627118644,PrizePicks
+2022-01-10,Jonathan Kuminga,Golden State Warriors,Portland Trail Blazers,assists,8.7,-111.0,103.0,9.6,True,0.9009009009009009,-1.0,PrizePicks
+2022-01-10,Jimmy Butler,Golden State Warriors,Portland Trail Blazers,rebounds,10.8,133.0,-144.0,11.4,True,0.7518796992481203,-1.0,PrizePicks
+2022-01-10,Jimmy Butler,Golden State Warriors,Portland Trail Blazers,rebounds,9.7,-121.0,112.0,14.0,True,0.8264462809917356,-1.0,PrizePicks
+2022-01-10,Stephen Curry,Golden State Warriors,Portland Trail Blazers,points,26.7,135.0,-147.0,41.9,True,0.7407407407407407,-1.0,PrizePicks
+2022-01-10,Luka Doncic,Dallas Mavericks,Brooklyn Nets,points,23.6,156.0,-170.0,22.3,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-10,Kyrie Irving,Dallas Mavericks,Brooklyn Nets,PRA,35.4,139.0,-151.0,31.6,False,-1.0,0.6622516556291391,PrizePicks
+2022-01-10,P.J. Washington,Dallas Mavericks,Brooklyn Nets,points,31.4,-102.0,-106.0,35.5,True,0.9803921568627451,-1.0,PrizePicks
+2022-01-10,Daniel Gafford,Dallas Mavericks,Brooklyn Nets,rebounds,4.5,-170.0,156.0,4.6,True,0.5882352941176471,-1.0,PrizePicks
+2022-01-10,P.J. Washington,Dallas Mavericks,Brooklyn Nets,assists,8.9,-139.0,128.0,6.5,False,-1.0,0.78125,PrizePicks
+2022-01-10,P.J. Washington,Dallas Mavericks,Brooklyn Nets,assists,7.4,156.0,-170.0,10.6,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-10,Kyrie Irving,Dallas Mavericks,Brooklyn Nets,points,23.4,135.0,-146.0,19.9,False,-1.0,0.684931506849315,PrizePicks
+2022-01-10,Caleb Martin,Philadelphia 76ers,Minnesota Timberwolves,PRA,33.6,109.0,-118.0,35.2,True,0.9174311926605505,-1.0,PrizePicks
+2022-01-10,Rudy Gobert,Minnesota Timberwolves,Philadelphia 76ers,points,35.6,105.0,-113.0,37.9,True,0.9523809523809523,-1.0,PrizePicks
+2022-01-10,Rudy Gobert,Minnesota Timberwolves,Philadelphia 76ers,rebounds,13.2,156.0,-170.0,17.8,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-10,Julius Randle,Minnesota Timberwolves,Philadelphia 76ers,points,16.0,-132.0,122.0,15.3,False,-1.0,0.819672131147541,PrizePicks
+2022-01-10,Rudy Gobert,Minnesota Timberwolves,Philadelphia 76ers,points,22.9,105.0,-114.0,23.8,True,0.9523809523809523,-1.0,PrizePicks
+2022-01-11,Bam Adebayo,Miami Heat,Orlando Magic,PRA,27.3,-122.0,113.0,36.5,True,0.819672131147541,-1.0,PrizePicks
+2022-01-11,Bam Adebayo,Miami Heat,Orlando Magic,points,23.0,156.0,-170.0,24.4,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-11,Jimmy Butler,Miami Heat,Orlando Magic,points,19.4,156.0,-170.0,21.5,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-11,Bam Adebayo,Miami Heat,Orlando Magic,rebounds,13.6,-117.0,108.0,15.0,True,0.8547008547008547,-1.0,PrizePicks
+2022-01-11,Tyler Herro,Miami Heat,Orlando Magic,points,29.3,156.0,-170.0,27.1,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-11,Nikola Jovic,Miami Heat,Orlando Magic,PRA,31.2,-114.0,106.0,30.2,False,-1.0,0.9433962264150944,PrizePicks
+2022-01-11,Tyler Herro,Miami Heat,Orlando Magic,points,31.4,-156.0,144.0,34.5,True,0.6410256410256411,-1.0,PrizePicks
+2022-01-11,Darius Garland,Cleveland Cavaliers,Atlanta Hawks,points,18.5,111.0,-121.0,17.5,False,-1.0,0.8264462809917356,PrizePicks
+2022-01-11,Darius Garland,Cleveland Cavaliers,Atlanta Hawks,points,15.1,156.0,-170.0,10.2,False,-1.0,0.5882352941176471,PrizePicks
+2022-01-11,Donovan Mitchell,Cleveland Cavaliers,Atlanta Hawks,rebounds,12.1,103.0,-112.0,11.1,False,-1.0,0.8928571428571429,PrizePicks
+2022-01-11,Donovan Mitchell,Cleveland Cavaliers,Atlanta Hawks,assists,9.7,-101.0,-107.0,12.5,True,0.9900990099009901,-1.0,PrizePicks
+2022-01-11,Donovan Mitchell,Cleveland Cavaliers,Atlanta Hawks,PRA,32.9,-110.0,102.0,35.9,True,0.9090909090909091,-1.0,PrizePicks
+2022-01-11,Darius Garland,Cleveland Cavaliers,Atlanta Hawks,points,13.5,-108.0,-100.0,5.7,False,-1.0,1.0,PrizePicks
+2022-01-11,Jarrett Allen,Cleveland Cavaliers,Atlanta Hawks,points,28.5,-101.0,-107.0,30.1,True,0.9900990099009901,-1.0,PrizePicks
+2022-01-11,Evan Mobley,Cleveland Cavaliers,Atlanta Hawks,points,22.0,-119.0,110.0,22.5,True,0.8403361344537815,-1.0,PrizePicks
+2022-01-11,Luka Doncic,Dallas Mavericks,Denver Nuggets,points,25.2,140.0,-152.0,14.9,False,-1.0,0.6578947368421053,PrizePicks
+2022-01-11,Michael Porter Jr.,Denver Nuggets,Dallas Mavericks,points,17.0,117.0,-127.0,24.5,True,0.8547008547008547,-1.0,PrizePicks
+2022-01-11,Nikola Jokic,Denver Nuggets,Dallas Mavericks,rebounds,5.5,-111.0,103.0,13.0,True,0.9009009009009009,-1.0,PrizePicks
+2022-01-11,Jamal Murray,Denver Nuggets,Dallas Mavericks,rebounds,13.7,-129.0,119.0,12.9,False,-1.0,0.8403361344537815,PrizePicks
+2022-01-11,Karl-Anthony Towns,New York Knicks,Indiana Pacers,rebounds,7.9,113.0,-122.0,10.3,True,0.8849557522123894,-1.0,PrizePicks
+2022-01-11,Pascal Siakam,Indiana Pacers,New York Knicks,points,23.6,100.0,-108.0,34.9,True,1.0,-1.0,PrizePicks
+2022-01-11,Pascal Siakam,Indiana Pacers,New York Knicks,points,30.5,-170.0,156.0,30.7,True,0.5882352941176471,-1.0,PrizePicks
+2022-01-11,Myles Turner,Indiana Pacers,New York Knicks,assists,8.3,-170.0,156.0,7.1,False,-1.0,0.6410256410256411,PrizePicks
+2022-01-11,Mikal Bridges,New York Knicks,Indiana Pacers,points,23.6,111.0,-121.0,25.2,True,0.9009009009009009,-1.0,PrizePicks
+2022-01-11,Andrew Nembhard,Indiana Pacers,New York Knicks,points,27.1,104.0,-113.0,30.1,True,0.9615384615384616,-1.0,PrizePicks
+2023-01-03,Caleb Martin,Philadelphia 76ers,Cleveland Cavaliers,PRA,41.5,141.0,-153.0,45.0,True,0.7092198581560284,-1.0,PrizePicks
+2023-01-03,Donovan Mitchell,Cleveland Cavaliers,Philadelphia 76ers,points,30.0,121.0,-132.0,37.3,True,0.8264462809917356,-1.0,PrizePicks
+2023-01-03,Tyrese Maxey,Philadelphia 76ers,Cleveland Cavaliers,PRA,34.1,130.0,-141.0,35.2,True,0.7692307692307693,-1.0,PrizePicks
+2023-01-03,Joel Embiid,Philadelphia 76ers,Cleveland Cavaliers,points,26.8,100.0,-109.0,23.3,False,-1.0,0.9174311926605505,PrizePicks
+2023-01-03,Donovan Mitchell,Cleveland Cavaliers,Philadelphia 76ers,points,28.8,102.0,-111.0,24.4,False,-1.0,0.9009009009009009,PrizePicks
+2023-01-03,Caleb Martin,Philadelphia 76ers,Cleveland Cavaliers,points,20.7,-116.0,107.0,24.3,True,0.8620689655172413,-1.0,PrizePicks
+2023-01-03,Evan Mobley,Cleveland Cavaliers,Philadelphia 76ers,rebounds,11.7,-105.0,-104.0,14.8,True,0.9523809523809523,-1.0,PrizePicks
+2023-01-03,Damian Lillard,Milwaukee Bucks,Los Angeles Lakers,rebounds,8.4,-127.0,117.0,18.2,True,0.7874015748031497,-1.0,PrizePicks
+2023-01-03,Rui Hachimura,Los Angeles Lakers,Milwaukee Bucks,rebounds,4.5,156.0,-170.0,3.7,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-03,LeBron James,Los Angeles Lakers,Milwaukee Bucks,rebounds,13.0,150.0,-163.0,16.6,True,0.6666666666666666,-1.0,PrizePicks
+2023-01-03,Rui Hachimura,Los Angeles Lakers,Milwaukee Bucks,points,17.8,127.0,-138.0,22.5,True,0.7874015748031497,-1.0,PrizePicks
+2023-01-03,Rui Hachimura,Los Angeles Lakers,Milwaukee Bucks,rebounds,9.0,156.0,-170.0,8.0,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-03,Brook Lopez,Milwaukee Bucks,Los Angeles Lakers,PRA,40.0,111.0,-120.0,44.2,True,0.9009009009009009,-1.0,PrizePicks
+2023-01-03,Kevin Huerter,Sacramento Kings,Utah Jazz,PRA,32.8,156.0,-170.0,30.6,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-03,DeMar DeRozan,Sacramento Kings,Utah Jazz,rebounds,13.4,-155.0,142.0,17.8,True,0.6451612903225806,-1.0,PrizePicks
+2023-01-03,Kevin Huerter,Sacramento Kings,Utah Jazz,assists,8.9,156.0,-170.0,6.8,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-03,Keegan Murray,Sacramento Kings,Utah Jazz,rebounds,11.8,156.0,-170.0,10.6,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-03,Domantas Sabonis,Sacramento Kings,Utah Jazz,points,19.6,-131.0,121.0,21.4,True,0.7633587786259542,-1.0,PrizePicks
+2023-01-03,DeMar DeRozan,Sacramento Kings,Utah Jazz,points,22.9,109.0,-118.0,28.0,True,0.9174311926605505,-1.0,PrizePicks
+2023-01-03,Kevin Huerter,Sacramento Kings,Utah Jazz,points,23.4,-150.0,138.0,24.1,True,0.6666666666666666,-1.0,PrizePicks
+2023-01-03,Keegan Murray,Sacramento Kings,Utah Jazz,rebounds,9.6,-126.0,117.0,8.8,False,-1.0,0.8547008547008547,PrizePicks
+2023-01-04,Jimmy Butler,Golden State Warriors,Houston Rockets,assists,11.0,101.0,-109.0,16.9,True,0.9900990099009901,-1.0,PrizePicks
+2023-01-04,Stephen Curry,Golden State Warriors,Houston Rockets,points,20.3,-139.0,128.0,21.7,True,0.7194244604316546,-1.0,PrizePicks
+2023-01-04,Jonathan Kuminga,Golden State Warriors,Houston Rockets,points,21.2,126.0,-137.0,16.7,False,-1.0,0.7299270072992701,PrizePicks
+2023-01-04,Amen Thompson,Houston Rockets,Golden State Warriors,rebounds,8.1,-128.0,118.0,8.3,True,0.78125,-1.0,PrizePicks
+2023-01-04,Jamal Murray,Denver Nuggets,Dallas Mavericks,assists,4.5,-131.0,121.0,3.4,False,-1.0,0.8264462809917356,PrizePicks
+2023-01-04,Michael Porter Jr.,Denver Nuggets,Dallas Mavericks,rebounds,4.5,122.0,-132.0,4.0,False,-1.0,0.7575757575757576,PrizePicks
+2023-01-04,P.J. Washington,Dallas Mavericks,Denver Nuggets,points,27.6,121.0,-131.0,35.4,True,0.8264462809917356,-1.0,PrizePicks
+2023-01-04,Kyrie Irving,Dallas Mavericks,Denver Nuggets,PRA,35.4,106.0,-115.0,24.5,False,-1.0,0.8695652173913043,PrizePicks
+2023-01-04,Jonathan Kuminga,Golden State Warriors,Sacramento Kings,assists,9.0,-108.0,-101.0,6.6,False,-1.0,0.9900990099009901,PrizePicks
+2023-01-04,Keegan Murray,Sacramento Kings,Golden State Warriors,assists,11.6,124.0,-135.0,18.4,True,0.8064516129032258,-1.0,PrizePicks
+2023-01-04,Jonathan Kuminga,Golden State Warriors,Sacramento Kings,PRA,43.1,-111.0,102.0,37.9,False,-1.0,0.9803921568627451,PrizePicks
+2023-01-04,Kevin Huerter,Sacramento Kings,Golden State Warriors,points,24.0,-107.0,-101.0,28.6,True,0.9345794392523364,-1.0,PrizePicks
+2023-01-04,Draymond Green,Golden State Warriors,Sacramento Kings,points,31.6,140.0,-152.0,32.8,True,0.7142857142857143,-1.0,PrizePicks
+2023-01-05,Rudy Gobert,Minnesota Timberwolves,Washington Wizards,rebounds,12.2,123.0,-133.0,12.5,True,0.8130081300813008,-1.0,PrizePicks
+2023-01-05,Rudy Gobert,Minnesota Timberwolves,Washington Wizards,rebounds,13.7,104.0,-113.0,17.1,True,0.9615384615384616,-1.0,PrizePicks
+2023-01-05,Donte DiVincenzo,Minnesota Timberwolves,Washington Wizards,rebounds,9.2,107.0,-116.0,6.9,False,-1.0,0.8620689655172413,PrizePicks
+2023-01-05,Rudy Gobert,Minnesota Timberwolves,Washington Wizards,assists,5.9,-137.0,126.0,7.5,True,0.7299270072992701,-1.0,PrizePicks
+2023-01-05,Julius Randle,Minnesota Timberwolves,Washington Wizards,rebounds,8.8,136.0,-147.0,3.9,False,-1.0,0.6802721088435374,PrizePicks
+2023-01-05,Donte DiVincenzo,Minnesota Timberwolves,Washington Wizards,rebounds,8.9,135.0,-146.0,9.4,True,0.7407407407407407,-1.0,PrizePicks
+2023-01-05,Fred VanVleet,Houston Rockets,Oklahoma City Thunder,assists,14.2,-155.0,142.0,14.3,True,0.6451612903225806,-1.0,PrizePicks
+2023-01-05,Jalen Williams,Oklahoma City Thunder,Houston Rockets,rebounds,9.3,-110.0,101.0,7.4,False,-1.0,0.9900990099009901,PrizePicks
+2023-01-05,Fred VanVleet,Houston Rockets,Oklahoma City Thunder,PRA,37.3,-109.0,101.0,33.1,False,-1.0,0.9900990099009901,PrizePicks
+2023-01-05,Jalen Green,Houston Rockets,Oklahoma City Thunder,points,25.1,156.0,-170.0,22.7,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-06,Joel Embiid,Philadelphia 76ers,Orlando Magic,points,26.0,-127.0,117.0,21.5,False,-1.0,0.8547008547008547,PrizePicks
+2023-01-06,Caleb Martin,Philadelphia 76ers,Orlando Magic,points,13.8,-126.0,116.0,6.3,False,-1.0,0.8620689655172413,PrizePicks
+2023-01-06,Paul George,Philadelphia 76ers,Orlando Magic,points,24.7,-101.0,-107.0,24.8,True,0.9900990099009901,-1.0,PrizePicks
+2023-01-06,Paul George,Philadelphia 76ers,Orlando Magic,rebounds,11.6,122.0,-132.0,13.1,True,0.819672131147541,-1.0,PrizePicks
+2023-01-06,Caleb Martin,Philadelphia 76ers,Orlando Magic,points,22.1,-135.0,125.0,26.2,True,0.7407407407407407,-1.0,PrizePicks
+2023-01-06,Paul George,Philadelphia 76ers,LA Clippers,rebounds,17.1,156.0,-170.0,12.8,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-06,Ivica Zubac,LA Clippers,Philadelphia 76ers,points,20.5,141.0,-154.0,17.7,False,-1.0,0.6493506493506493,PrizePicks
+2023-01-06,Norman Powell,LA Clippers,Philadelphia 76ers,rebounds,13.3,-150.0,138.0,15.6,True,0.6666666666666666,-1.0,PrizePicks
+2023-01-06,Tyrese Maxey,Philadelphia 76ers,LA Clippers,rebounds,9.5,-110.0,102.0,11.6,True,0.9090909090909091,-1.0,PrizePicks
+2023-01-06,Caleb Martin,Philadelphia 76ers,Utah Jazz,rebounds,7.2,117.0,-127.0,2.4,False,-1.0,0.7874015748031497,PrizePicks
+2023-01-06,Caleb Martin,Philadelphia 76ers,Utah Jazz,points,33.3,142.0,-155.0,19.3,False,-1.0,0.6451612903225806,PrizePicks
+2023-01-06,Caleb Martin,Philadelphia 76ers,Utah Jazz,assists,6.6,-152.0,140.0,8.3,True,0.6578947368421053,-1.0,PrizePicks
+2023-01-06,Tyrese Maxey,Philadelphia 76ers,Utah Jazz,points,17.7,134.0,-145.0,13.3,False,-1.0,0.6896551724137931,PrizePicks
+2023-01-06,Joel Embiid,Philadelphia 76ers,Utah Jazz,points,20.9,112.0,-121.0,27.0,True,0.8928571428571429,-1.0,PrizePicks
+2023-01-06,Joel Embiid,Philadelphia 76ers,Utah Jazz,assists,10.5,-100.0,-108.0,9.5,False,-1.0,0.9259259259259259,PrizePicks
+2023-01-06,Paul George,Philadelphia 76ers,Utah Jazz,rebounds,7.3,-148.0,136.0,14.6,True,0.6756756756756757,-1.0,PrizePicks
+2023-01-06,Jimmy Butler,Golden State Warriors,Phoenix Suns,points,25.6,-151.0,139.0,25.2,False,-1.0,0.7194244604316546,PrizePicks
+2023-01-06,Draymond Green,Golden State Warriors,Phoenix Suns,rebounds,9.4,-108.0,-100.0,1.8,False,-1.0,1.0,PrizePicks
+2023-01-06,Jonathan Kuminga,Golden State Warriors,Phoenix Suns,rebounds,9.7,-102.0,-106.0,13.7,True,0.9803921568627451,-1.0,PrizePicks
+2023-01-06,Jimmy Butler,Golden State Warriors,Phoenix Suns,assists,8.7,123.0,-133.0,7.6,False,-1.0,0.7518796992481203,PrizePicks
+2023-01-06,Devin Booker,Phoenix Suns,Golden State Warriors,rebounds,10.4,140.0,-152.0,12.1,True,0.7142857142857143,-1.0,PrizePicks
+2023-01-06,Devin Booker,Phoenix Suns,Golden State Warriors,PRA,35.2,-105.0,-103.0,20.9,False,-1.0,0.970873786407767,PrizePicks
+2023-01-06,Kevin Durant,Phoenix Suns,Golden State Warriors,points,24.3,144.0,-156.0,27.0,True,0.6944444444444444,-1.0,PrizePicks
+2023-01-10,Tyrese Haliburton,Indiana Pacers,Houston Rockets,rebounds,6.2,102.0,-111.0,5.5,False,-1.0,0.9009009009009009,PrizePicks
+2023-01-10,Pascal Siakam,Indiana Pacers,Houston Rockets,points,24.4,-119.0,110.0,21.9,False,-1.0,0.9090909090909091,PrizePicks
+2023-01-10,Tyrese Haliburton,Indiana Pacers,Houston Rockets,PRA,37.6,117.0,-127.0,39.8,True,0.8547008547008547,-1.0,PrizePicks
+2023-01-10,Tyrese Haliburton,Indiana Pacers,Houston Rockets,points,30.9,129.0,-140.0,26.8,False,-1.0,0.7142857142857143,PrizePicks
+2023-01-10,Tyrese Haliburton,Indiana Pacers,Houston Rockets,PRA,37.6,156.0,-170.0,33.6,False,-1.0,0.5882352941176471,PrizePicks
+2023-01-10,Fred VanVleet,Houston Rockets,Indiana Pacers,assists,8.3,-127.0,117.0,8.3,False,-1.0,0.8547008547008547,PrizePicks
+2023-01-10,Myles Turner,Indiana Pacers,Houston Rockets,points,24.4,-103.0,-105.0,26.2,True,0.970873786407767,-1.0,PrizePicks
+2023-01-10,Nikola Jovic,Miami Heat,Washington Wizards,points,19.2,-127.0,118.0,18.8,False,-1.0,0.847457627118644,PrizePicks
+2023-01-10,Bam Adebayo,Miami Heat,Washington Wizards,rebounds,9.8,136.0,-147.0,13.9,True,0.7352941176470589,-1.0,PrizePicks
+2023-01-10,Bam Adebayo,Miami Heat,Washington Wizards,points,24.3,114.0,-124.0,26.1,True,0.8771929824561403,-1.0,PrizePicks
+2023-01-10,Nikola Jovic,Miami Heat,Washington Wizards,points,24.1,101.0,-110.0,25.4,True,0.9900990099009901,-1.0,PrizePicks
+2023-01-10,Anthony Davis,Los Angeles Lakers,Detroit Pistons,rebounds,9.5,140.0,-152.0,6.5,False,-1.0,0.6578947368421053,PrizePicks
+2023-01-10,Austin Reaves,Los Angeles Lakers,Detroit Pistons,PRA,39.2,-105.0,-103.0,42.9,True,0.9523809523809523,-1.0,PrizePicks
+2023-01-10,Rui Hachimura,Los Angeles Lakers,Detroit Pistons,points,21.3,142.0,-154.0,17.3,False,-1.0,0.6493506493506493,PrizePicks
+2023-01-10,Anthony Davis,Los Angeles Lakers,Detroit Pistons,PRA,35.2,151.0,-165.0,34.9,False,-1.0,0.6060606060606061,PrizePicks
+2023-01-10,Anthony Davis,Los Angeles Lakers,Detroit Pistons,assists,7.1,-110.0,102.0,6.4,False,-1.0,0.9803921568627451,PrizePicks
+2023-01-10,Karl-Anthony Towns,New York Knicks,Toronto Raptors,points,29.3,-138.0,127.0,28.8,False,-1.0,0.7874015748031497,PrizePicks
+2023-01-10,OG Anunoby,New York Knicks,Toronto Raptors,PRA,31.3,-131.0,120.0,33.5,True,0.7633587786259542,-1.0,PrizePicks
+2023-01-10,Jalen Brunson,New York Knicks,Toronto Raptors,assists,6.8,-116.0,107.0,10.1,True,0.8620689655172413,-1.0,PrizePicks
+2023-01-10,Jalen Brunson,New York Knicks,Toronto Raptors,points,28.3,-104.0,-105.0,32.3,True,0.9615384615384616,-1.0,PrizePicks
+2023-01-10,Jalen Brunson,New York Knicks,Toronto Raptors,assists,14.7,-170.0,156.0,15.0,True,0.5882352941176471,-1.0,PrizePicks
+2023-01-10,Jalen Brunson,New York Knicks,Toronto Raptors,points,20.5,130.0,-141.0,24.5,True,0.7692307692307693,-1.0,PrizePicks
+2023-01-10,Caleb Martin,Philadelphia 76ers,Toronto Raptors,points,27.9,-130.0,120.0,30.3,True,0.7692307692307693,-1.0,PrizePicks
+2023-01-10,Joel Embiid,Philadelphia 76ers,Toronto Raptors,PRA,43.4,107.0,-116.0,40.3,False,-1.0,0.8620689655172413,PrizePicks
+2023-01-10,Tyrese Maxey,Philadelphia 76ers,Toronto Raptors,rebounds,11.0,-135.0,124.0,7.8,False,-1.0,0.8064516129032258,PrizePicks
+2023-01-10,Paul George,Philadelphia 76ers,Toronto Raptors,points,21.2,-156.0,144.0,21.5,True,0.6410256410256411,-1.0,PrizePicks
+2023-01-10,Paul George,Philadelphia 76ers,Toronto Raptors,assists,6.8,-110.0,102.0,4.4,False,-1.0,0.9803921568627451,PrizePicks
+2023-01-11,Norman Powell,LA Clippers,Atlanta Hawks,assists,9.0,116.0,-125.0,7.0,False,-1.0,0.8,PrizePicks
+2023-01-11,Ivica Zubac,LA Clippers,Atlanta Hawks,PRA,37.9,-108.0,-101.0,46.2,True,0.9259259259259259,-1.0,PrizePicks
+2023-01-11,Kawhi Leonard,LA Clippers,Atlanta Hawks,points,21.2,117.0,-126.0,23.6,True,0.8547008547008547,-1.0,PrizePicks
+2023-01-11,Kawhi Leonard,LA Clippers,Atlanta Hawks,points,27.4,104.0,-113.0,23.7,False,-1.0,0.8849557522123894,PrizePicks
+2023-01-11,Norman Powell,LA Clippers,Atlanta Hawks,rebounds,8.5,121.0,-132.0,9.0,True,0.8264462809917356,-1.0,PrizePicks
+2023-01-11,Kawhi Leonard,LA Clippers,Atlanta Hawks,assists,10.9,-138.0,127.0,13.7,True,0.7246376811594203,-1.0,PrizePicks
+2023-01-11,James Harden,LA Clippers,Atlanta Hawks,rebounds,8.7,-102.0,-106.0,7.5,False,-1.0,0.9433962264150944,PrizePicks
+2023-01-11,Daniel Gafford,Dallas Mavericks,Chicago Bulls,rebounds,6.0,-118.0,109.0,5.4,False,-1.0,0.9174311926605505,PrizePicks
+2023-01-11,P.J. Washington,Dallas Mavericks,Chicago Bulls,rebounds,15.1,-158.0,145.0,17.8,True,0.6329113924050633,-1.0,PrizePicks
+2023-01-11,Kyrie Irving,Dallas Mavericks,Chicago Bulls,rebounds,10.6,101.0,-110.0,6.4,False,-1.0,0.9090909090909091,PrizePicks
+2023-01-11,Daniel Gafford,Dallas Mavericks,Chicago Bulls,points,21.8,156.0,-170.0,26.2,True,0.6410256410256411,-1.0,PrizePicks
+2023-01-11,LeBron James,Los Angeles Lakers,Boston Celtics,assists,9.5,116.0,-126.0,7.9,False,-1.0,0.7936507936507936,PrizePicks
+2023-01-11,Jayson Tatum,Boston Celtics,Los Angeles Lakers,points,12.5,114.0,-124.0,20.4,True,0.8771929824561403,-1.0,PrizePicks
+2023-01-11,Kristaps Porzingis,Boston Celtics,Los Angeles Lakers,assists,4.6,108.0,-117.0,10.6,True,0.9259259259259259,-1.0,PrizePicks
+2023-01-11,Jayson Tatum,Boston Celtics,Los Angeles Lakers,rebounds,5.5,144.0,-157.0,7.4,True,0.6944444444444444,-1.0,PrizePicks
+2023-01-11,Jayson Tatum,Boston Celtics,Los Angeles Lakers,PRA,28.2,156.0,-170.0,27.8,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-03,Jaylen Brown,Boston Celtics,Denver Nuggets,assists,5.3,109.0,-118.0,5.4,True,0.9174311926605505,-1.0,PrizePicks
+2024-01-03,Jaylen Brown,Boston Celtics,Denver Nuggets,PRA,35.0,-134.0,124.0,35.0,False,-1.0,0.8064516129032258,PrizePicks
+2024-01-03,Jayson Tatum,Boston Celtics,Denver Nuggets,assists,9.4,156.0,-170.0,10.3,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-03,Jamal Murray,Denver Nuggets,Boston Celtics,assists,6.2,129.0,-140.0,7.3,True,0.7751937984496124,-1.0,PrizePicks
+2024-01-03,Jamal Murray,Denver Nuggets,Boston Celtics,points,28.2,-170.0,156.0,27.4,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-03,Michael Porter Jr.,Denver Nuggets,Boston Celtics,assists,7.3,-147.0,136.0,12.1,True,0.6802721088435374,-1.0,PrizePicks
+2024-01-03,Michael Porter Jr.,Denver Nuggets,Boston Celtics,PRA,30.5,-170.0,156.0,24.8,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-03,Luka Doncic,Dallas Mavericks,Washington Wizards,assists,12.3,156.0,-170.0,11.3,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-03,Luka Doncic,Dallas Mavericks,Washington Wizards,rebounds,15.9,152.0,-166.0,16.2,True,0.6578947368421053,-1.0,PrizePicks
+2024-01-03,Luka Doncic,Dallas Mavericks,Washington Wizards,PRA,36.5,105.0,-113.0,39.7,True,0.9523809523809523,-1.0,PrizePicks
+2024-01-03,Luka Doncic,Dallas Mavericks,Washington Wizards,rebounds,10.0,-170.0,156.0,14.0,True,0.5882352941176471,-1.0,PrizePicks
+2024-01-03,Luka Doncic,Dallas Mavericks,Washington Wizards,PRA,34.5,156.0,-170.0,30.1,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-03,Daniel Gafford,Dallas Mavericks,Washington Wizards,points,18.1,-130.0,120.0,18.1,False,-1.0,0.8333333333333334,PrizePicks
+2024-01-03,Chet Holmgren,Oklahoma City Thunder,Indiana Pacers,points,21.0,154.0,-167.0,17.4,False,-1.0,0.5988023952095808,PrizePicks
+2024-01-03,Shai Gilgeous-Alexander,Oklahoma City Thunder,Indiana Pacers,points,25.0,-145.0,134.0,21.4,False,-1.0,0.746268656716418,PrizePicks
+2024-01-03,Pascal Siakam,Indiana Pacers,Oklahoma City Thunder,assists,10.5,156.0,-170.0,11.1,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-03,Jalen Williams,Oklahoma City Thunder,Indiana Pacers,rebounds,17.5,-155.0,143.0,25.9,True,0.6451612903225806,-1.0,PrizePicks
+2024-01-03,Donovan Mitchell,Cleveland Cavaliers,Philadelphia 76ers,points,21.1,-115.0,106.0,16.2,False,-1.0,0.9433962264150944,PrizePicks
+2024-01-03,Caleb Martin,Philadelphia 76ers,Cleveland Cavaliers,assists,11.2,-130.0,120.0,14.2,True,0.7692307692307693,-1.0,PrizePicks
+2024-01-03,Caleb Martin,Philadelphia 76ers,Cleveland Cavaliers,rebounds,6.9,-118.0,109.0,8.5,True,0.847457627118644,-1.0,PrizePicks
+2024-01-03,Donovan Mitchell,Cleveland Cavaliers,Philadelphia 76ers,assists,10.2,139.0,-151.0,8.9,False,-1.0,0.6622516556291391,PrizePicks
+2024-01-03,Caleb Martin,Philadelphia 76ers,Cleveland Cavaliers,rebounds,7.6,122.0,-132.0,8.2,True,0.819672131147541,-1.0,PrizePicks
+2024-01-03,Jarrett Allen,Cleveland Cavaliers,Philadelphia 76ers,rebounds,10.3,-170.0,156.0,8.9,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-03,Tyrese Maxey,Philadelphia 76ers,Cleveland Cavaliers,assists,5.5,-105.0,-103.0,7.2,True,0.9523809523809523,-1.0,PrizePicks
+2024-01-03,Darius Garland,Cleveland Cavaliers,Philadelphia 76ers,points,21.7,137.0,-149.0,29.9,True,0.7299270072992701,-1.0,PrizePicks
+2024-01-03,Draymond Green,Golden State Warriors,Utah Jazz,points,15.3,156.0,-170.0,15.0,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-03,Draymond Green,Golden State Warriors,Utah Jazz,PRA,38.2,156.0,-170.0,34.9,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-03,Jonathan Kuminga,Golden State Warriors,Utah Jazz,assists,8.3,137.0,-149.0,10.3,True,0.7299270072992701,-1.0,PrizePicks
+2024-01-03,Stephen Curry,Golden State Warriors,Utah Jazz,points,22.4,111.0,-120.0,24.0,True,0.9009009009009009,-1.0,PrizePicks
+2024-01-03,Stephen Curry,Golden State Warriors,Utah Jazz,assists,7.2,144.0,-157.0,9.9,True,0.6944444444444444,-1.0,PrizePicks
+2024-01-03,Stephen Curry,Golden State Warriors,Utah Jazz,assists,8.4,116.0,-126.0,8.4,False,-1.0,0.7936507936507936,PrizePicks
+2024-01-04,LeBron James,Los Angeles Lakers,Indiana Pacers,assists,9.8,128.0,-139.0,12.7,True,0.78125,-1.0,PrizePicks
+2024-01-04,Myles Turner,Indiana Pacers,Los Angeles Lakers,points,35.8,156.0,-170.0,37.5,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-04,LeBron James,Los Angeles Lakers,Indiana Pacers,PRA,45.3,-150.0,138.0,51.2,True,0.6666666666666666,-1.0,PrizePicks
+2024-01-04,Tyrese Haliburton,Indiana Pacers,Los Angeles Lakers,PRA,36.7,156.0,-170.0,47.7,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-04,James Harden,LA Clippers,Dallas Mavericks,rebounds,12.7,102.0,-110.0,15.2,True,0.9803921568627451,-1.0,PrizePicks
+2024-01-04,Kyrie Irving,Dallas Mavericks,LA Clippers,assists,10.7,-147.0,136.0,9.2,False,-1.0,0.7352941176470589,PrizePicks
+2024-01-04,Luka Doncic,Dallas Mavericks,LA Clippers,assists,9.0,152.0,-165.0,8.8,False,-1.0,0.6060606060606061,PrizePicks
+2024-01-04,Daniel Gafford,Dallas Mavericks,LA Clippers,rebounds,13.4,-170.0,156.0,16.8,True,0.5882352941176471,-1.0,PrizePicks
+2024-01-04,Daniel Gafford,Dallas Mavericks,LA Clippers,rebounds,10.3,-103.0,-105.0,14.6,True,0.970873786407767,-1.0,PrizePicks
+2024-01-04,Daniel Gafford,Dallas Mavericks,Portland Trail Blazers,rebounds,13.6,-111.0,102.0,10.9,False,-1.0,0.9803921568627451,PrizePicks
+2024-01-04,Kyrie Irving,Dallas Mavericks,Portland Trail Blazers,rebounds,6.2,-126.0,116.0,8.9,True,0.7936507936507936,-1.0,PrizePicks
+2024-01-04,Kyrie Irving,Dallas Mavericks,Portland Trail Blazers,assists,7.8,124.0,-135.0,7.1,False,-1.0,0.7407407407407407,PrizePicks
+2024-01-04,P.J. Washington,Dallas Mavericks,Portland Trail Blazers,rebounds,12.1,-119.0,110.0,11.4,False,-1.0,0.9090909090909091,PrizePicks
+2024-01-04,P.J. Washington,Dallas Mavericks,Portland Trail Blazers,assists,8.5,-104.0,-104.0,9.3,True,0.9615384615384616,-1.0,PrizePicks
+2024-01-05,OG Anunoby,New York Knicks,Brooklyn Nets,PRA,34.0,-146.0,134.0,32.4,False,-1.0,0.746268656716418,PrizePicks
+2024-01-05,Karl-Anthony Towns,New York Knicks,Brooklyn Nets,rebounds,10.3,-112.0,103.0,12.9,True,0.8928571428571429,-1.0,PrizePicks
+2024-01-05,Mikal Bridges,New York Knicks,Brooklyn Nets,PRA,28.9,-151.0,139.0,22.9,False,-1.0,0.7194244604316546,PrizePicks
+2024-01-05,OG Anunoby,New York Knicks,Brooklyn Nets,assists,6.6,-128.0,118.0,2.8,False,-1.0,0.847457627118644,PrizePicks
+2024-01-05,Mikal Bridges,New York Knicks,Brooklyn Nets,assists,8.0,-123.0,113.0,6.1,False,-1.0,0.8849557522123894,PrizePicks
+2024-01-05,Jalen Brunson,New York Knicks,Brooklyn Nets,points,14.5,116.0,-125.0,17.9,True,0.8620689655172413,-1.0,PrizePicks
+2024-01-05,OG Anunoby,New York Knicks,Brooklyn Nets,points,20.5,123.0,-134.0,13.1,False,-1.0,0.746268656716418,PrizePicks
+2024-01-05,Myles Turner,Indiana Pacers,Miami Heat,points,25.1,130.0,-141.0,28.0,True,0.7692307692307693,-1.0,PrizePicks
+2024-01-05,Myles Turner,Indiana Pacers,Miami Heat,PRA,40.2,-146.0,134.0,39.2,False,-1.0,0.746268656716418,PrizePicks
+2024-01-05,Andrew Nembhard,Indiana Pacers,Miami Heat,rebounds,9.0,108.0,-117.0,12.4,True,0.9259259259259259,-1.0,PrizePicks
+2024-01-05,Jimmy Butler,Miami Heat,Indiana Pacers,rebounds,8.7,-107.0,-101.0,4.6,False,-1.0,0.9900990099009901,PrizePicks
+2024-01-05,Pascal Siakam,Indiana Pacers,Miami Heat,points,20.9,-131.0,121.0,23.5,True,0.7633587786259542,-1.0,PrizePicks
+2024-01-05,Pascal Siakam,Indiana Pacers,Miami Heat,assists,6.5,151.0,-165.0,5.2,False,-1.0,0.6060606060606061,PrizePicks
+2024-01-05,Nikola Jovic,Miami Heat,Indiana Pacers,PRA,33.2,145.0,-158.0,23.4,False,-1.0,0.6329113924050633,PrizePicks
+2024-01-05,Andrew Nembhard,Indiana Pacers,Miami Heat,assists,9.1,108.0,-117.0,5.4,False,-1.0,0.8547008547008547,PrizePicks
+2024-01-05,Keegan Murray,Sacramento Kings,Boston Celtics,PRA,35.3,130.0,-141.0,42.2,True,0.7692307692307693,-1.0,PrizePicks
+2024-01-05,Kevin Huerter,Sacramento Kings,Boston Celtics,points,19.4,-122.0,113.0,26.8,True,0.819672131147541,-1.0,PrizePicks
+2024-01-05,Jayson Tatum,Boston Celtics,Sacramento Kings,points,17.3,-170.0,156.0,17.0,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-05,Keegan Murray,Sacramento Kings,Boston Celtics,PRA,37.8,-151.0,139.0,42.4,True,0.6622516556291391,-1.0,PrizePicks
+2024-01-05,Kevin Huerter,Sacramento Kings,Boston Celtics,points,22.0,145.0,-158.0,17.9,False,-1.0,0.6329113924050633,PrizePicks
+2024-01-05,Domantas Sabonis,Sacramento Kings,Boston Celtics,points,20.0,-170.0,156.0,23.6,True,0.5882352941176471,-1.0,PrizePicks
+2024-01-05,Kristaps Porzingis,Boston Celtics,Sacramento Kings,points,19.6,-131.0,121.0,20.8,True,0.7633587786259542,-1.0,PrizePicks
+2024-01-05,Kawhi Leonard,LA Clippers,Dallas Mavericks,points,30.0,144.0,-157.0,30.8,True,0.6944444444444444,-1.0,PrizePicks
+2024-01-05,P.J. Washington,Dallas Mavericks,LA Clippers,points,20.7,127.0,-137.0,20.8,True,0.7874015748031497,-1.0,PrizePicks
+2024-01-05,Ivica Zubac,LA Clippers,Dallas Mavericks,rebounds,10.3,-103.0,-106.0,12.1,True,0.970873786407767,-1.0,PrizePicks
+2024-01-05,Luka Doncic,Dallas Mavericks,LA Clippers,points,26.6,-157.0,144.0,21.5,False,-1.0,0.6944444444444444,PrizePicks
+2024-01-05,James Harden,LA Clippers,Dallas Mavericks,assists,7.4,-158.0,145.0,7.9,True,0.6329113924050633,-1.0,PrizePicks
+2024-01-05,P.J. Washington,Dallas Mavericks,LA Clippers,assists,11.9,137.0,-148.0,11.9,False,-1.0,0.6756756756756757,PrizePicks
+2024-01-05,Kyrie Irving,Dallas Mavericks,LA Clippers,points,19.7,-104.0,-104.0,18.8,False,-1.0,0.9615384615384616,PrizePicks
+2024-01-05,Kawhi Leonard,LA Clippers,Dallas Mavericks,points,28.9,-115.0,107.0,25.3,False,-1.0,0.9345794392523364,PrizePicks
+2024-01-05,Jalen Green,Houston Rockets,San Antonio Spurs,points,19.8,-109.0,100.0,15.7,False,-1.0,1.0,PrizePicks
+2024-01-05,Jalen Green,Houston Rockets,San Antonio Spurs,assists,8.6,156.0,-170.0,10.6,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-05,Amen Thompson,Houston Rockets,San Antonio Spurs,rebounds,11.2,-149.0,137.0,9.3,False,-1.0,0.7299270072992701,PrizePicks
+2024-01-05,Jalen Green,Houston Rockets,San Antonio Spurs,points,24.9,-112.0,104.0,11.8,False,-1.0,0.9615384615384616,PrizePicks
+2024-01-05,Fred VanVleet,Houston Rockets,San Antonio Spurs,points,26.3,112.0,-121.0,28.7,True,0.8928571428571429,-1.0,PrizePicks
+2024-01-05,Fred VanVleet,Houston Rockets,San Antonio Spurs,points,22.0,-110.0,102.0,23.2,True,0.9090909090909091,-1.0,PrizePicks
+2024-01-06,Darius Garland,Cleveland Cavaliers,Toronto Raptors,rebounds,11.8,100.0,-108.0,11.2,False,-1.0,0.9259259259259259,PrizePicks
+2024-01-06,Donovan Mitchell,Cleveland Cavaliers,Toronto Raptors,assists,8.4,-144.0,133.0,3.2,False,-1.0,0.7518796992481203,PrizePicks
+2024-01-06,Donovan Mitchell,Cleveland Cavaliers,Toronto Raptors,points,20.5,108.0,-118.0,23.2,True,0.9259259259259259,-1.0,PrizePicks
+2024-01-06,Evan Mobley,Cleveland Cavaliers,Toronto Raptors,assists,11.3,-122.0,112.0,9.6,False,-1.0,0.8928571428571429,PrizePicks
+2024-01-06,Jaylen Brown,Boston Celtics,New Orleans Pelicans,rebounds,4.5,150.0,-164.0,3.8,False,-1.0,0.6097560975609756,PrizePicks
+2024-01-06,Jaylen Brown,Boston Celtics,New Orleans Pelicans,PRA,35.6,-101.0,-107.0,31.0,False,-1.0,0.9345794392523364,PrizePicks
+2024-01-06,Jayson Tatum,Boston Celtics,New Orleans Pelicans,rebounds,6.7,-149.0,137.0,10.8,True,0.6711409395973155,-1.0,PrizePicks
+2024-01-06,Jaylen Brown,Boston Celtics,New Orleans Pelicans,points,27.5,-128.0,118.0,32.0,True,0.78125,-1.0,PrizePicks
+2024-01-06,Derrick White,Boston Celtics,New Orleans Pelicans,rebounds,12.8,127.0,-138.0,11.1,False,-1.0,0.7246376811594203,PrizePicks
+2024-01-06,Jayson Tatum,Boston Celtics,New Orleans Pelicans,PRA,23.6,-149.0,137.0,18.9,False,-1.0,0.7299270072992701,PrizePicks
+2024-01-06,Kristaps Porzingis,Boston Celtics,New Orleans Pelicans,PRA,35.5,-124.0,114.0,32.5,False,-1.0,0.8771929824561403,PrizePicks
+2024-01-06,Keegan Murray,Sacramento Kings,Portland Trail Blazers,points,26.4,-170.0,156.0,24.6,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-06,DeMar DeRozan,Sacramento Kings,Portland Trail Blazers,PRA,39.3,104.0,-113.0,33.9,False,-1.0,0.8849557522123894,PrizePicks
+2024-01-06,Kevin Huerter,Sacramento Kings,Portland Trail Blazers,points,28.3,109.0,-118.0,25.7,False,-1.0,0.847457627118644,PrizePicks
+2024-01-06,Kevin Huerter,Sacramento Kings,Portland Trail Blazers,assists,5.6,134.0,-146.0,8.8,True,0.746268656716418,-1.0,PrizePicks
+2024-01-06,Keegan Murray,Sacramento Kings,Portland Trail Blazers,PRA,38.8,127.0,-137.0,39.5,True,0.7874015748031497,-1.0,PrizePicks
+2024-01-06,Shai Gilgeous-Alexander,Oklahoma City Thunder,Philadelphia 76ers,points,15.8,-116.0,107.0,17.7,True,0.8620689655172413,-1.0,PrizePicks
+2024-01-06,Joel Embiid,Philadelphia 76ers,Oklahoma City Thunder,PRA,34.5,156.0,-170.0,38.5,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-06,Joel Embiid,Philadelphia 76ers,Oklahoma City Thunder,PRA,29.6,-136.0,126.0,22.4,False,-1.0,0.7936507936507936,PrizePicks
+2024-01-06,Tyrese Maxey,Philadelphia 76ers,Oklahoma City Thunder,rebounds,9.1,-145.0,134.0,18.6,True,0.6896551724137931,-1.0,PrizePicks
+2024-01-10,Jalen Brunson,New York Knicks,Chicago Bulls,assists,10.1,124.0,-135.0,7.5,False,-1.0,0.7407407407407407,PrizePicks
+2024-01-10,Mikal Bridges,New York Knicks,Chicago Bulls,points,41.5,-120.0,111.0,40.9,False,-1.0,0.9009009009009009,PrizePicks
+2024-01-10,Jalen Brunson,New York Knicks,Chicago Bulls,points,19.3,-132.0,122.0,13.4,False,-1.0,0.819672131147541,PrizePicks
+2024-01-10,Mikal Bridges,New York Knicks,Chicago Bulls,rebounds,7.6,-118.0,109.0,6.3,False,-1.0,0.9174311926605505,PrizePicks
+2024-01-10,Karl-Anthony Towns,New York Knicks,Chicago Bulls,assists,4.5,138.0,-150.0,1.2,False,-1.0,0.6666666666666666,PrizePicks
+2024-01-10,OG Anunoby,New York Knicks,Chicago Bulls,rebounds,10.2,156.0,-170.0,6.6,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-10,Mikal Bridges,New York Knicks,Chicago Bulls,points,15.6,-126.0,117.0,16.6,True,0.7936507936507936,-1.0,PrizePicks
+2024-01-10,Brook Lopez,Milwaukee Bucks,New Orleans Pelicans,points,27.6,156.0,-169.0,27.4,False,-1.0,0.591715976331361,PrizePicks
+2024-01-10,Khris Middleton,Milwaukee Bucks,New Orleans Pelicans,assists,8.3,-136.0,125.0,10.4,True,0.7352941176470589,-1.0,PrizePicks
+2024-01-10,Damian Lillard,Milwaukee Bucks,New Orleans Pelicans,assists,11.9,-117.0,108.0,10.2,False,-1.0,0.9259259259259259,PrizePicks
+2024-01-10,Khris Middleton,Milwaukee Bucks,New Orleans Pelicans,PRA,33.9,-143.0,132.0,26.7,False,-1.0,0.7575757575757576,PrizePicks
+2024-01-10,Khris Middleton,Milwaukee Bucks,New Orleans Pelicans,rebounds,11.9,-114.0,105.0,12.0,True,0.8771929824561403,-1.0,PrizePicks
+2024-01-10,Giannis Antetokounmpo,Milwaukee Bucks,New Orleans Pelicans,rebounds,13.9,-146.0,134.0,15.5,True,0.684931506849315,-1.0,PrizePicks
+2024-01-10,Khris Middleton,Milwaukee Bucks,New Orleans Pelicans,points,22.3,-104.0,-104.0,29.6,True,0.9615384615384616,-1.0,PrizePicks
+2024-01-10,Jalen Williams,Oklahoma City Thunder,Atlanta Hawks,PRA,39.8,104.0,-112.0,35.0,False,-1.0,0.8928571428571429,PrizePicks
+2024-01-10,Jalen Williams,Oklahoma City Thunder,Atlanta Hawks,points,14.7,-170.0,156.0,14.8,True,0.5882352941176471,-1.0,PrizePicks
+2024-01-10,Chet Holmgren,Oklahoma City Thunder,Atlanta Hawks,points,21.9,-114.0,105.0,16.7,False,-1.0,0.9523809523809523,PrizePicks
+2024-01-10,Jalen Williams,Oklahoma City Thunder,Atlanta Hawks,PRA,34.4,-170.0,156.0,23.8,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-10,Derrick White,Boston Celtics,Utah Jazz,points,17.4,128.0,-139.0,13.7,False,-1.0,0.7194244604316546,PrizePicks
+2024-01-10,Kristaps Porzingis,Boston Celtics,Utah Jazz,PRA,35.7,-117.0,108.0,34.8,False,-1.0,0.9259259259259259,PrizePicks
+2024-01-10,Jaylen Brown,Boston Celtics,Utah Jazz,rebounds,6.0,-115.0,107.0,3.0,False,-1.0,0.9345794392523364,PrizePicks
+2024-01-10,Derrick White,Boston Celtics,Utah Jazz,rebounds,12.3,156.0,-170.0,16.7,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-10,Derrick White,Boston Celtics,Utah Jazz,assists,10.7,-116.0,107.0,7.0,False,-1.0,0.9345794392523364,PrizePicks
+2024-01-10,Jayson Tatum,Boston Celtics,Utah Jazz,points,19.3,-119.0,110.0,21.5,True,0.8403361344537815,-1.0,PrizePicks
+2024-01-10,Jaylen Brown,Boston Celtics,Utah Jazz,points,18.2,-100.0,-108.0,17.4,False,-1.0,0.9259259259259259,PrizePicks
+2024-01-10,Derrick White,Boston Celtics,Utah Jazz,points,18.1,125.0,-136.0,13.9,False,-1.0,0.7352941176470589,PrizePicks
+2024-01-10,Jalen Green,Houston Rockets,LA Clippers,points,21.6,-100.0,-108.0,28.3,True,1.0,-1.0,PrizePicks
+2024-01-10,Ivica Zubac,LA Clippers,Houston Rockets,points,12.4,-116.0,107.0,8.5,False,-1.0,0.9345794392523364,PrizePicks
+2024-01-10,Kawhi Leonard,LA Clippers,Houston Rockets,points,18.8,108.0,-117.0,20.1,True,0.9259259259259259,-1.0,PrizePicks
+2024-01-10,Jalen Green,Houston Rockets,LA Clippers,points,22.0,156.0,-170.0,18.6,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-10,Fred VanVleet,Houston Rockets,LA Clippers,PRA,43.6,114.0,-123.0,49.0,True,0.8771929824561403,-1.0,PrizePicks
+2024-01-11,Donovan Mitchell,Cleveland Cavaliers,Memphis Grizzlies,points,17.0,-113.0,104.0,10.2,False,-1.0,0.9615384615384616,PrizePicks
+2024-01-11,Evan Mobley,Cleveland Cavaliers,Memphis Grizzlies,PRA,38.3,-125.0,115.0,36.6,False,-1.0,0.8695652173913043,PrizePicks
+2024-01-11,Evan Mobley,Cleveland Cavaliers,Memphis Grizzlies,rebounds,8.7,-119.0,110.0,9.1,True,0.8403361344537815,-1.0,PrizePicks
+2024-01-11,Darius Garland,Cleveland Cavaliers,Memphis Grizzlies,assists,11.8,-131.0,121.0,10.8,False,-1.0,0.8264462809917356,PrizePicks
+2024-01-11,Nikola Jovic,Miami Heat,Minnesota Timberwolves,rebounds,7.3,-109.0,101.0,10.1,True,0.9174311926605505,-1.0,PrizePicks
+2024-01-11,Anthony Edwards,Minnesota Timberwolves,Miami Heat,PRA,32.3,114.0,-123.0,39.4,True,0.8771929824561403,-1.0,PrizePicks
+2024-01-11,Rudy Gobert,Minnesota Timberwolves,Miami Heat,points,18.1,-108.0,-101.0,19.1,True,0.9259259259259259,-1.0,PrizePicks
+2024-01-11,Julius Randle,Minnesota Timberwolves,Miami Heat,points,17.8,156.0,-170.0,24.1,True,0.6410256410256411,-1.0,PrizePicks
+2024-01-11,Bam Adebayo,Miami Heat,Minnesota Timberwolves,points,21.5,140.0,-152.0,10.1,False,-1.0,0.6578947368421053,PrizePicks
+2024-01-11,Bam Adebayo,Miami Heat,Minnesota Timberwolves,points,22.0,143.0,-155.0,24.1,True,0.6993006993006993,-1.0,PrizePicks
+2024-01-11,Julius Randle,Minnesota Timberwolves,Miami Heat,points,21.2,121.0,-132.0,28.7,True,0.8264462809917356,-1.0,PrizePicks
+2024-01-11,Nurkic,Phoenix Suns,Houston Rockets,rebounds,9.9,144.0,-156.0,0.3,False,-1.0,0.6410256410256411,PrizePicks
+2024-01-11,Alperen Sengun,Houston Rockets,Phoenix Suns,rebounds,4.5,105.0,-114.0,8.3,True,0.9523809523809523,-1.0,PrizePicks
+2024-01-11,Bradley Beal,Phoenix Suns,Houston Rockets,rebounds,9.5,-111.0,102.0,13.5,True,0.9009009009009009,-1.0,PrizePicks
+2024-01-11,Kevin Durant,Phoenix Suns,Houston Rockets,points,25.3,-137.0,126.0,29.7,True,0.7299270072992701,-1.0,PrizePicks
+2024-01-11,Jalen Green,Houston Rockets,Phoenix Suns,rebounds,4.5,156.0,-170.0,4.5,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-11,Bradley Beal,Phoenix Suns,Houston Rockets,points,26.9,156.0,-170.0,24.6,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-11,Amen Thompson,Houston Rockets,Phoenix Suns,rebounds,4.8,-116.0,107.0,7.1,True,0.8620689655172413,-1.0,PrizePicks
+2024-01-11,Nurkic,Phoenix Suns,Houston Rockets,PRA,31.9,156.0,-170.0,29.7,False,-1.0,0.5882352941176471,PrizePicks
+2024-01-11,Jalen Green,Houston Rockets,Brooklyn Nets,points,28.3,104.0,-113.0,23.5,False,-1.0,0.8849557522123894,PrizePicks
+2024-01-11,Jalen Green,Houston Rockets,Brooklyn Nets,assists,9.1,-154.0,142.0,10.9,True,0.6493506493506493,-1.0,PrizePicks
+2024-01-11,Amen Thompson,Houston Rockets,Brooklyn Nets,points,19.4,116.0,-126.0,16.9,False,-1.0,0.7936507936507936,PrizePicks
+2024-01-11,Fred VanVleet,Houston Rockets,Brooklyn Nets,points,26.5,129.0,-140.0,23.7,False,-1.0,0.7142857142857143,PrizePicks
+2024-01-11,Alperen Sengun,Houston Rockets,Brooklyn Nets,points,33.1,140.0,-152.0,40.6,True,0.7142857142857143,-1.0,PrizePicks
+2024-01-11,Amen Thompson,Houston Rockets,Brooklyn Nets,points,29.9,-150.0,138.0,31.6,True,0.6666666666666666,-1.0,PrizePicks
+2024-01-11,Amen Thompson,Houston Rockets,Brooklyn Nets,rebounds,4.5,-170.0,156.0,5.5,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-03,Anthony Edwards,Minnesota Timberwolves,Toronto Raptors,points,32.6,-129.0,119.0,26.8,False,-1.0,0.8403361344537815,PrizePicks
+2025-01-03,Rudy Gobert,Minnesota Timberwolves,Toronto Raptors,rebounds,7.8,-110.0,102.0,13.5,True,0.9090909090909091,-1.0,PrizePicks
+2025-01-03,Anthony Edwards,Minnesota Timberwolves,Toronto Raptors,points,31.5,156.0,-170.0,34.1,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-03,Donte DiVincenzo,Minnesota Timberwolves,Toronto Raptors,points,25.6,156.0,-170.0,29.3,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-03,Julius Randle,Minnesota Timberwolves,Toronto Raptors,PRA,35.0,101.0,-110.0,41.9,True,0.9900990099009901,-1.0,PrizePicks
+2025-01-03,Rudy Gobert,Minnesota Timberwolves,Toronto Raptors,assists,9.4,-151.0,139.0,12.7,True,0.6622516556291391,-1.0,PrizePicks
+2025-01-03,Rudy Gobert,Minnesota Timberwolves,Toronto Raptors,points,20.2,156.0,-170.0,20.3,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-03,Donte DiVincenzo,Minnesota Timberwolves,Toronto Raptors,points,30.0,111.0,-120.0,33.7,True,0.9009009009009009,-1.0,PrizePicks
+2025-01-03,Giannis Antetokounmpo,Milwaukee Bucks,Phoenix Suns,PRA,36.2,110.0,-119.0,49.1,True,0.9090909090909091,-1.0,PrizePicks
+2025-01-03,Kevin Durant,Phoenix Suns,Milwaukee Bucks,points,40.2,-104.0,-105.0,43.4,True,0.9615384615384616,-1.0,PrizePicks
+2025-01-03,Khris Middleton,Milwaukee Bucks,Phoenix Suns,points,19.5,150.0,-163.0,17.9,False,-1.0,0.6134969325153374,PrizePicks
+2025-01-03,Brook Lopez,Milwaukee Bucks,Phoenix Suns,rebounds,9.5,-134.0,124.0,12.8,True,0.746268656716418,-1.0,PrizePicks
+2025-01-03,Jimmy Butler,Golden State Warriors,New Orleans Pelicans,PRA,33.5,-137.0,127.0,41.5,True,0.7299270072992701,-1.0,PrizePicks
+2025-01-03,Stephen Curry,Golden State Warriors,New Orleans Pelicans,rebounds,9.8,-131.0,121.0,5.0,False,-1.0,0.8264462809917356,PrizePicks
+2025-01-03,Stephen Curry,Golden State Warriors,New Orleans Pelicans,rebounds,15.6,117.0,-127.0,21.2,True,0.8547008547008547,-1.0,PrizePicks
+2025-01-03,Stephen Curry,Golden State Warriors,New Orleans Pelicans,rebounds,6.7,156.0,-170.0,5.8,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-03,Stephen Curry,Golden State Warriors,New Orleans Pelicans,assists,10.2,124.0,-135.0,12.9,True,0.8064516129032258,-1.0,PrizePicks
+2025-01-03,Aaron Gordon,Denver Nuggets,Philadelphia 76ers,assists,8.4,-139.0,128.0,9.6,True,0.7194244604316546,-1.0,PrizePicks
+2025-01-03,Caleb Martin,Philadelphia 76ers,Denver Nuggets,assists,9.0,102.0,-110.0,5.4,False,-1.0,0.9090909090909091,PrizePicks
+2025-01-03,Michael Porter Jr.,Denver Nuggets,Philadelphia 76ers,points,23.0,110.0,-119.0,20.9,False,-1.0,0.8403361344537815,PrizePicks
+2025-01-03,Nikola Jokic,Denver Nuggets,Philadelphia 76ers,points,29.0,145.0,-158.0,36.1,True,0.6896551724137931,-1.0,PrizePicks
+2025-01-03,Joel Embiid,Philadelphia 76ers,Denver Nuggets,PRA,31.1,156.0,-170.0,28.9,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-03,Nikola Jokic,Denver Nuggets,Philadelphia 76ers,assists,5.0,-100.0,-108.0,5.0,False,-1.0,0.9259259259259259,PrizePicks
+2025-01-03,Nikola Jokic,Denver Nuggets,Philadelphia 76ers,points,36.4,135.0,-146.0,35.8,False,-1.0,0.684931506849315,PrizePicks
+2025-01-04,Joel Embiid,Philadelphia 76ers,Golden State Warriors,points,27.0,-170.0,156.0,23.0,False,-1.0,0.6410256410256411,PrizePicks
+2025-01-04,Joel Embiid,Philadelphia 76ers,Golden State Warriors,points,24.3,-117.0,108.0,19.1,False,-1.0,0.9259259259259259,PrizePicks
+2025-01-04,Jimmy Butler,Golden State Warriors,Philadelphia 76ers,assists,5.7,-123.0,114.0,3.6,False,-1.0,0.8771929824561403,PrizePicks
+2025-01-04,Tyrese Maxey,Philadelphia 76ers,Golden State Warriors,assists,7.5,129.0,-140.0,6.8,False,-1.0,0.7142857142857143,PrizePicks
+2025-01-04,Caleb Martin,Philadelphia 76ers,Golden State Warriors,rebounds,4.9,-105.0,-103.0,7.2,True,0.9523809523809523,-1.0,PrizePicks
+2025-01-04,OG Anunoby,New York Knicks,Detroit Pistons,assists,9.1,-123.0,114.0,9.7,True,0.8130081300813008,-1.0,PrizePicks
+2025-01-04,Mikal Bridges,New York Knicks,Detroit Pistons,rebounds,9.3,116.0,-125.0,7.6,False,-1.0,0.8,PrizePicks
+2025-01-04,Karl-Anthony Towns,New York Knicks,Detroit Pistons,points,29.1,102.0,-111.0,28.8,False,-1.0,0.9009009009009009,PrizePicks
+2025-01-04,Jalen Brunson,New York Knicks,Detroit Pistons,points,35.2,115.0,-124.0,35.1,False,-1.0,0.8064516129032258,PrizePicks
+2025-01-04,OG Anunoby,New York Knicks,Detroit Pistons,assists,6.6,-122.0,112.0,5.3,False,-1.0,0.8928571428571429,PrizePicks
+2025-01-04,Karl-Anthony Towns,New York Knicks,Detroit Pistons,assists,8.6,-105.0,-103.0,8.2,False,-1.0,0.970873786407767,PrizePicks
+2025-01-04,Jalen Williams,Oklahoma City Thunder,New York Knicks,points,28.2,156.0,-170.0,32.0,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-04,Jalen Brunson,New York Knicks,Oklahoma City Thunder,points,31.2,120.0,-130.0,30.5,False,-1.0,0.7692307692307693,PrizePicks
+2025-01-04,Jalen Williams,Oklahoma City Thunder,New York Knicks,points,20.7,156.0,-170.0,20.5,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-04,OG Anunoby,New York Knicks,Oklahoma City Thunder,points,21.8,115.0,-125.0,21.8,False,-1.0,0.8,PrizePicks
+2025-01-04,Jalen Williams,Oklahoma City Thunder,New York Knicks,rebounds,13.3,156.0,-170.0,12.4,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-04,Mikal Bridges,New York Knicks,Oklahoma City Thunder,PRA,34.8,124.0,-135.0,47.2,True,0.8064516129032258,-1.0,PrizePicks
+2025-01-04,Shai Gilgeous-Alexander,Oklahoma City Thunder,New York Knicks,PRA,35.1,119.0,-130.0,35.8,True,0.8403361344537815,-1.0,PrizePicks
+2025-01-04,OG Anunoby,New York Knicks,Oklahoma City Thunder,points,37.9,142.0,-155.0,39.6,True,0.704225352112676,-1.0,PrizePicks
+2025-01-04,Austin Reaves,Los Angeles Lakers,Washington Wizards,rebounds,4.9,-103.0,-106.0,5.7,True,0.970873786407767,-1.0,PrizePicks
+2025-01-04,Anthony Davis,Los Angeles Lakers,Washington Wizards,assists,13.7,123.0,-133.0,20.9,True,0.8130081300813008,-1.0,PrizePicks
+2025-01-04,Anthony Davis,Los Angeles Lakers,Washington Wizards,points,15.7,-148.0,136.0,18.5,True,0.6756756756756757,-1.0,PrizePicks
+2025-01-04,Anthony Davis,Los Angeles Lakers,Washington Wizards,rebounds,9.5,116.0,-125.0,8.5,False,-1.0,0.8,PrizePicks
+2025-01-04,LeBron James,Los Angeles Lakers,Washington Wizards,PRA,35.8,136.0,-148.0,37.2,True,0.7352941176470589,-1.0,PrizePicks
+2025-01-04,Rui Hachimura,Los Angeles Lakers,Washington Wizards,rebounds,6.9,123.0,-133.0,7.9,True,0.8130081300813008,-1.0,PrizePicks
+2025-01-04,Anthony Davis,Los Angeles Lakers,Washington Wizards,points,26.8,120.0,-130.0,27.3,True,0.8333333333333334,-1.0,PrizePicks
+2025-01-04,Rui Hachimura,Los Angeles Lakers,Washington Wizards,assists,6.6,129.0,-140.0,7.9,True,0.7751937984496124,-1.0,PrizePicks
+2025-01-05,Stephen Curry,Golden State Warriors,Denver Nuggets,points,24.2,109.0,-118.0,19.9,False,-1.0,0.847457627118644,PrizePicks
+2025-01-05,Jimmy Butler,Golden State Warriors,Denver Nuggets,assists,10.5,111.0,-121.0,14.5,True,0.9009009009009009,-1.0,PrizePicks
+2025-01-05,Jamal Murray,Denver Nuggets,Golden State Warriors,assists,7.8,-170.0,156.0,9.7,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-05,Michael Porter Jr.,Denver Nuggets,Golden State Warriors,rebounds,11.2,156.0,-170.0,8.2,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-05,Jonathan Kuminga,Golden State Warriors,Denver Nuggets,points,18.1,114.0,-123.0,25.3,True,0.8771929824561403,-1.0,PrizePicks
+2025-01-05,Draymond Green,Golden State Warriors,Denver Nuggets,assists,9.8,-170.0,156.0,10.3,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-05,Stephen Curry,Golden State Warriors,Denver Nuggets,assists,9.3,125.0,-135.0,9.1,False,-1.0,0.7407407407407407,PrizePicks
+2025-01-05,Michael Porter Jr.,Denver Nuggets,Golden State Warriors,points,24.8,101.0,-110.0,25.9,True,0.9900990099009901,-1.0,PrizePicks
+2025-01-05,Jimmy Butler,Golden State Warriors,San Antonio Spurs,rebounds,10.6,-105.0,-103.0,8.9,False,-1.0,0.970873786407767,PrizePicks
+2025-01-05,Jonathan Kuminga,Golden State Warriors,San Antonio Spurs,points,28.8,-119.0,110.0,21.3,False,-1.0,0.9090909090909091,PrizePicks
+2025-01-05,Stephen Curry,Golden State Warriors,San Antonio Spurs,assists,10.6,-135.0,125.0,11.0,True,0.7407407407407407,-1.0,PrizePicks
+2025-01-05,Draymond Green,Golden State Warriors,San Antonio Spurs,points,22.8,-111.0,102.0,26.9,True,0.9009009009009009,-1.0,PrizePicks
+2025-01-05,Draymond Green,Golden State Warriors,San Antonio Spurs,rebounds,9.6,125.0,-136.0,6.1,False,-1.0,0.7352941176470589,PrizePicks
+2025-01-05,Draymond Green,Golden State Warriors,San Antonio Spurs,PRA,39.1,-120.0,111.0,42.2,True,0.8333333333333334,-1.0,PrizePicks
+2025-01-05,Jimmy Butler,Golden State Warriors,San Antonio Spurs,assists,4.5,-144.0,133.0,5.1,True,0.6944444444444444,-1.0,PrizePicks
+2025-01-05,Jimmy Butler,Golden State Warriors,San Antonio Spurs,PRA,39.7,-161.0,148.0,42.8,True,0.6211180124223602,-1.0,PrizePicks
+2025-01-05,Nikola Jovic,Miami Heat,Dallas Mavericks,rebounds,6.8,103.0,-111.0,8.4,True,0.970873786407767,-1.0,PrizePicks
+2025-01-05,Bam Adebayo,Miami Heat,Dallas Mavericks,assists,8.1,-136.0,125.0,7.2,False,-1.0,0.8,PrizePicks
+2025-01-05,Tyler Herro,Miami Heat,Dallas Mavericks,rebounds,6.1,-152.0,140.0,9.1,True,0.6578947368421053,-1.0,PrizePicks
+2025-01-05,Daniel Gafford,Dallas Mavericks,Miami Heat,points,25.5,-115.0,106.0,21.6,False,-1.0,0.9433962264150944,PrizePicks
+2025-01-05,Karl-Anthony Towns,New York Knicks,Boston Celtics,points,27.0,-164.0,151.0,43.2,True,0.6097560975609756,-1.0,PrizePicks
+2025-01-05,Karl-Anthony Towns,New York Knicks,Boston Celtics,rebounds,5.2,123.0,-133.0,8.4,True,0.8130081300813008,-1.0,PrizePicks
+2025-01-05,Karl-Anthony Towns,New York Knicks,Boston Celtics,assists,10.4,-136.0,125.0,11.6,True,0.7352941176470589,-1.0,PrizePicks
+2025-01-05,Derrick White,Boston Celtics,New York Knicks,PRA,40.4,145.0,-158.0,42.6,True,0.6896551724137931,-1.0,PrizePicks
+2025-01-05,Karl-Anthony Towns,New York Knicks,Boston Celtics,points,20.4,-137.0,126.0,16.9,False,-1.0,0.7936507936507936,PrizePicks
+2025-01-05,Jalen Brunson,New York Knicks,Boston Celtics,assists,5.6,-103.0,-105.0,6.6,True,0.970873786407767,-1.0,PrizePicks
+2025-01-05,Kristaps Porzingis,Boston Celtics,New York Knicks,points,32.4,-128.0,118.0,34.5,True,0.78125,-1.0,PrizePicks
+2025-01-06,Devin Booker,Phoenix Suns,Portland Trail Blazers,PRA,32.6,125.0,-136.0,33.9,True,0.8,-1.0,PrizePicks
+2025-01-06,Kevin Durant,Phoenix Suns,Portland Trail Blazers,PRA,35.4,-170.0,156.0,30.9,False,-1.0,0.6410256410256411,PrizePicks
+2025-01-06,Nurkic,Phoenix Suns,Portland Trail Blazers,points,28.0,106.0,-115.0,36.2,True,0.9433962264150944,-1.0,PrizePicks
+2025-01-06,Devin Booker,Phoenix Suns,Portland Trail Blazers,points,23.5,156.0,-170.0,13.2,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-06,Devin Booker,Phoenix Suns,Portland Trail Blazers,points,22.2,-107.0,-101.0,15.5,False,-1.0,0.9900990099009901,PrizePicks
+2025-01-06,Bradley Beal,Phoenix Suns,Portland Trail Blazers,points,31.4,156.0,-170.0,35.0,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-06,Darius Garland,Cleveland Cavaliers,Memphis Grizzlies,assists,5.5,106.0,-115.0,7.0,True,0.9433962264150944,-1.0,PrizePicks
+2025-01-06,Evan Mobley,Cleveland Cavaliers,Memphis Grizzlies,points,28.5,-128.0,118.0,15.6,False,-1.0,0.847457627118644,PrizePicks
+2025-01-06,Jarrett Allen,Cleveland Cavaliers,Memphis Grizzlies,points,27.3,113.0,-122.0,34.5,True,0.8849557522123894,-1.0,PrizePicks
+2025-01-06,Donovan Mitchell,Cleveland Cavaliers,Memphis Grizzlies,assists,4.5,102.0,-110.0,3.1,False,-1.0,0.9090909090909091,PrizePicks
+2025-01-06,Kevin Huerter,Sacramento Kings,Los Angeles Lakers,assists,8.2,110.0,-120.0,4.7,False,-1.0,0.8333333333333334,PrizePicks
+2025-01-06,Austin Reaves,Los Angeles Lakers,Sacramento Kings,points,19.5,107.0,-116.0,20.0,True,0.9345794392523364,-1.0,PrizePicks
+2025-01-06,Anthony Davis,Los Angeles Lakers,Sacramento Kings,rebounds,9.2,156.0,-170.0,12.5,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-06,Keegan Murray,Sacramento Kings,Los Angeles Lakers,assists,10.2,155.0,-168.0,6.0,False,-1.0,0.5952380952380952,PrizePicks
+2025-01-06,LeBron James,Los Angeles Lakers,Sacramento Kings,assists,11.1,144.0,-156.0,2.4,False,-1.0,0.6410256410256411,PrizePicks
+2025-01-06,Keegan Murray,Sacramento Kings,Los Angeles Lakers,assists,4.5,115.0,-125.0,0.9,False,-1.0,0.8,PrizePicks
+2025-01-06,DeMar DeRozan,Sacramento Kings,Los Angeles Lakers,points,28.2,156.0,-170.0,25.4,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-06,Myles Turner,Indiana Pacers,Washington Wizards,assists,6.3,122.0,-132.0,10.5,True,0.819672131147541,-1.0,PrizePicks
+2025-01-06,Andrew Nembhard,Indiana Pacers,Washington Wizards,points,30.9,-149.0,137.0,35.4,True,0.6711409395973155,-1.0,PrizePicks
+2025-01-06,Andrew Nembhard,Indiana Pacers,Washington Wizards,rebounds,9.1,-138.0,127.0,3.5,False,-1.0,0.7874015748031497,PrizePicks
+2025-01-06,Pascal Siakam,Indiana Pacers,Washington Wizards,rebounds,10.1,-116.0,107.0,13.1,True,0.8620689655172413,-1.0,PrizePicks
+2025-01-10,OG Anunoby,New York Knicks,Brooklyn Nets,rebounds,9.8,156.0,-170.0,10.9,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-10,Jalen Brunson,New York Knicks,Brooklyn Nets,assists,6.1,156.0,-170.0,4.1,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-10,Mikal Bridges,New York Knicks,Brooklyn Nets,rebounds,4.8,-110.0,101.0,1.3,False,-1.0,0.9900990099009901,PrizePicks
+2025-01-10,Jalen Brunson,New York Knicks,Brooklyn Nets,rebounds,10.5,-170.0,156.0,12.6,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-10,Jalen Brunson,New York Knicks,Brooklyn Nets,PRA,29.6,-117.0,108.0,18.3,False,-1.0,0.9259259259259259,PrizePicks
+2025-01-10,Mikal Bridges,New York Knicks,Brooklyn Nets,points,18.4,-151.0,139.0,9.9,False,-1.0,0.7194244604316546,PrizePicks
+2025-01-10,Mikal Bridges,New York Knicks,Brooklyn Nets,points,28.6,-121.0,112.0,21.9,False,-1.0,0.8928571428571429,PrizePicks
+2025-01-10,Tyrese Maxey,Philadelphia 76ers,Washington Wizards,points,22.0,105.0,-114.0,20.2,False,-1.0,0.8771929824561403,PrizePicks
+2025-01-10,Joel Embiid,Philadelphia 76ers,Washington Wizards,rebounds,9.3,-147.0,135.0,7.4,False,-1.0,0.7407407407407407,PrizePicks
+2025-01-10,Joel Embiid,Philadelphia 76ers,Washington Wizards,points,23.0,-170.0,156.0,29.0,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-10,Caleb Martin,Philadelphia 76ers,Washington Wizards,points,23.5,-150.0,138.0,20.8,False,-1.0,0.7246376811594203,PrizePicks
+2025-01-10,P.J. Washington,Dallas Mavericks,Los Angeles Lakers,points,18.8,107.0,-116.0,15.8,False,-1.0,0.8620689655172413,PrizePicks
+2025-01-10,Kyrie Irving,Dallas Mavericks,Los Angeles Lakers,points,24.7,129.0,-140.0,34.3,True,0.7751937984496124,-1.0,PrizePicks
+2025-01-10,LeBron James,Los Angeles Lakers,Dallas Mavericks,points,24.3,126.0,-137.0,24.6,True,0.7936507936507936,-1.0,PrizePicks
+2025-01-10,Anthony Davis,Los Angeles Lakers,Dallas Mavericks,PRA,26.6,106.0,-115.0,11.6,False,-1.0,0.8695652173913043,PrizePicks
+2025-01-10,Caleb Martin,Philadelphia 76ers,Portland Trail Blazers,assists,7.4,135.0,-146.0,7.1,False,-1.0,0.684931506849315,PrizePicks
+2025-01-10,Paul George,Philadelphia 76ers,Portland Trail Blazers,assists,11.1,-141.0,130.0,12.6,True,0.7092198581560284,-1.0,PrizePicks
+2025-01-10,Paul George,Philadelphia 76ers,Portland Trail Blazers,points,18.0,138.0,-150.0,25.9,True,0.7246376811594203,-1.0,PrizePicks
+2025-01-10,Caleb Martin,Philadelphia 76ers,Portland Trail Blazers,points,25.1,-118.0,109.0,21.7,False,-1.0,0.9174311926605505,PrizePicks
+2025-01-10,Tyrese Maxey,Philadelphia 76ers,Portland Trail Blazers,PRA,27.0,135.0,-146.0,29.4,True,0.7407407407407407,-1.0,PrizePicks
+2025-01-10,Caleb Martin,Philadelphia 76ers,Portland Trail Blazers,points,16.9,119.0,-129.0,19.5,True,0.8403361344537815,-1.0,PrizePicks
+2025-01-10,Paul George,Philadelphia 76ers,Portland Trail Blazers,rebounds,6.2,113.0,-123.0,4.7,False,-1.0,0.8130081300813008,PrizePicks
+2025-01-10,Kevin Huerter,Sacramento Kings,Atlanta Hawks,assists,13.8,-113.0,105.0,15.7,True,0.8849557522123894,-1.0,PrizePicks
+2025-01-10,DeMar DeRozan,Sacramento Kings,Atlanta Hawks,rebounds,7.8,-135.0,125.0,11.3,True,0.7407407407407407,-1.0,PrizePicks
+2025-01-10,Domantas Sabonis,Sacramento Kings,Atlanta Hawks,PRA,33.0,156.0,-170.0,40.0,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-10,Keegan Murray,Sacramento Kings,Atlanta Hawks,assists,6.9,-125.0,116.0,9.8,True,0.8,-1.0,PrizePicks
+2025-01-10,Kevin Huerter,Sacramento Kings,Atlanta Hawks,rebounds,9.5,-128.0,118.0,9.0,False,-1.0,0.847457627118644,PrizePicks
+2025-01-10,Keegan Murray,Sacramento Kings,Atlanta Hawks,rebounds,8.3,144.0,-157.0,9.8,True,0.6944444444444444,-1.0,PrizePicks
+2025-01-10,Kevin Huerter,Sacramento Kings,Atlanta Hawks,rebounds,11.7,140.0,-152.0,14.6,True,0.7142857142857143,-1.0,PrizePicks
+2025-01-10,DeMar DeRozan,Sacramento Kings,Atlanta Hawks,assists,8.1,-119.0,109.0,6.0,False,-1.0,0.9174311926605505,PrizePicks
+2025-01-11,Jarrett Allen,Cleveland Cavaliers,LA Clippers,PRA,28.6,-107.0,-101.0,22.3,False,-1.0,0.9900990099009901,PrizePicks
+2025-01-11,Ivica Zubac,LA Clippers,Cleveland Cavaliers,rebounds,8.9,156.0,-170.0,13.2,True,0.6410256410256411,-1.0,PrizePicks
+2025-01-11,Evan Mobley,Cleveland Cavaliers,LA Clippers,rebounds,8.3,102.0,-111.0,13.0,True,0.9803921568627451,-1.0,PrizePicks
+2025-01-11,Darius Garland,Cleveland Cavaliers,LA Clippers,rebounds,13.3,-106.0,-102.0,10.4,False,-1.0,0.9803921568627451,PrizePicks
+2025-01-11,Norman Powell,LA Clippers,Cleveland Cavaliers,assists,6.9,113.0,-123.0,6.1,False,-1.0,0.8130081300813008,PrizePicks
+2025-01-11,Kawhi Leonard,LA Clippers,Cleveland Cavaliers,assists,6.8,-170.0,156.0,10.3,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-11,Ivica Zubac,LA Clippers,Cleveland Cavaliers,rebounds,7.3,125.0,-135.0,4.1,False,-1.0,0.7407407407407407,PrizePicks
+2025-01-11,Pascal Siakam,Indiana Pacers,New York Knicks,PRA,37.4,111.0,-120.0,37.0,False,-1.0,0.8333333333333334,PrizePicks
+2025-01-11,OG Anunoby,New York Knicks,Indiana Pacers,assists,9.8,-140.0,129.0,11.6,True,0.7142857142857143,-1.0,PrizePicks
+2025-01-11,Mikal Bridges,New York Knicks,Indiana Pacers,points,24.9,102.0,-111.0,24.5,False,-1.0,0.9009009009009009,PrizePicks
+2025-01-11,Andrew Nembhard,Indiana Pacers,New York Knicks,rebounds,4.5,116.0,-126.0,5.3,True,0.8620689655172413,-1.0,PrizePicks
+2025-01-11,Andrew Nembhard,Indiana Pacers,New York Knicks,PRA,36.1,139.0,-151.0,35.0,False,-1.0,0.6622516556291391,PrizePicks
+2025-01-11,OG Anunoby,New York Knicks,Indiana Pacers,assists,7.3,-127.0,117.0,4.7,False,-1.0,0.8547008547008547,PrizePicks
+2025-01-11,Pascal Siakam,Indiana Pacers,New York Knicks,PRA,32.9,103.0,-112.0,28.1,False,-1.0,0.8928571428571429,PrizePicks
+2025-01-11,OG Anunoby,New York Knicks,Indiana Pacers,points,28.0,-102.0,-106.0,25.4,False,-1.0,0.9433962264150944,PrizePicks
+2025-01-11,Anthony Edwards,Minnesota Timberwolves,Houston Rockets,rebounds,8.5,156.0,-170.0,5.5,False,-1.0,0.5882352941176471,PrizePicks
+2025-01-11,Amen Thompson,Houston Rockets,Minnesota Timberwolves,PRA,32.2,-138.0,127.0,39.0,True,0.7246376811594203,-1.0,PrizePicks
+2025-01-11,Anthony Edwards,Minnesota Timberwolves,Houston Rockets,assists,7.2,-133.0,123.0,9.4,True,0.7518796992481203,-1.0,PrizePicks
+2025-01-11,Jalen Green,Houston Rockets,Minnesota Timberwolves,points,22.8,114.0,-124.0,20.4,False,-1.0,0.8064516129032258,PrizePicks
+2025-01-11,Anthony Edwards,Minnesota Timberwolves,Houston Rockets,assists,6.2,149.0,-162.0,5.5,False,-1.0,0.6172839506172839,PrizePicks
+2025-01-11,Julius Randle,Minnesota Timberwolves,Houston Rockets,points,17.6,101.0,-110.0,20.6,True,0.9900990099009901,-1.0,PrizePicks
+2025-01-11,Tyrese Maxey,Philadelphia 76ers,Toronto Raptors,points,21.6,128.0,-138.0,19.4,False,-1.0,0.7246376811594203,PrizePicks
+2025-01-11,Caleb Martin,Philadelphia 76ers,Toronto Raptors,points,24.1,-170.0,156.0,26.2,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-11,Tyrese Maxey,Philadelphia 76ers,Toronto Raptors,assists,8.8,-141.0,130.0,6.6,False,-1.0,0.7692307692307693,PrizePicks
+2025-01-11,Joel Embiid,Philadelphia 76ers,Toronto Raptors,PRA,36.8,-170.0,156.0,37.8,True,0.5882352941176471,-1.0,PrizePicks
+2025-01-11,Tyrese Maxey,Philadelphia 76ers,Toronto Raptors,points,29.8,113.0,-122.0,17.2,False,-1.0,0.819672131147541,PrizePicks
+2026-01-03,Donovan Mitchell,Cleveland Cavaliers,Boston Celtics,assists,5.8,-170.0,156.0,4.3,False,-1.0,0.6410256410256411,PrizePicks
+2026-01-03,Darius Garland,Cleveland Cavaliers,Boston Celtics,PRA,33.5,134.0,-145.0,40.6,True,0.746268656716418,-1.0,PrizePicks
+2026-01-03,Jayson Tatum,Boston Celtics,Cleveland Cavaliers,rebounds,10.3,114.0,-123.0,19.1,True,0.8771929824561403,-1.0,PrizePicks
+2026-01-03,Derrick White,Boston Celtics,Cleveland Cavaliers,PRA,40.8,106.0,-115.0,34.4,False,-1.0,0.8695652173913043,PrizePicks
+2026-01-03,Jimmy Butler,Golden State Warriors,Milwaukee Bucks,points,18.8,112.0,-121.0,15.9,False,-1.0,0.8264462809917356,PrizePicks
+2026-01-03,Jonathan Kuminga,Golden State Warriors,Milwaukee Bucks,points,29.5,-105.0,-103.0,22.6,False,-1.0,0.970873786407767,PrizePicks
+2026-01-03,Jonathan Kuminga,Golden State Warriors,Milwaukee Bucks,points,27.7,-137.0,126.0,28.8,True,0.7299270072992701,-1.0,PrizePicks
+2026-01-03,Khris Middleton,Milwaukee Bucks,Golden State Warriors,points,27.7,-104.0,-104.0,26.6,False,-1.0,0.9615384615384616,PrizePicks
+2026-01-03,Jimmy Butler,Golden State Warriors,Milwaukee Bucks,PRA,33.4,-160.0,147.0,35.1,True,0.625,-1.0,PrizePicks
+2026-01-03,Stephen Curry,Golden State Warriors,Milwaukee Bucks,rebounds,9.9,130.0,-142.0,9.4,False,-1.0,0.704225352112676,PrizePicks
+2026-01-03,Jonathan Kuminga,Golden State Warriors,Memphis Grizzlies,rebounds,11.1,-139.0,129.0,11.6,True,0.7194244604316546,-1.0,PrizePicks
+2026-01-03,Jonathan Kuminga,Golden State Warriors,Memphis Grizzlies,points,34.6,156.0,-170.0,36.1,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-03,Jonathan Kuminga,Golden State Warriors,Memphis Grizzlies,assists,7.4,156.0,-170.0,3.3,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-03,Draymond Green,Golden State Warriors,Memphis Grizzlies,points,32.3,134.0,-145.0,34.0,True,0.746268656716418,-1.0,PrizePicks
+2026-01-03,Jonathan Kuminga,Golden State Warriors,Memphis Grizzlies,rebounds,7.5,156.0,-170.0,12.0,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-03,Draymond Green,Golden State Warriors,Memphis Grizzlies,points,20.8,125.0,-135.0,24.2,True,0.8,-1.0,PrizePicks
+2026-01-03,Draymond Green,Golden State Warriors,Memphis Grizzlies,points,20.9,-155.0,143.0,17.6,False,-1.0,0.6993006993006993,PrizePicks
+2026-01-03,Andrew Nembhard,Indiana Pacers,Portland Trail Blazers,assists,6.4,125.0,-136.0,6.0,False,-1.0,0.7352941176470589,PrizePicks
+2026-01-03,Pascal Siakam,Indiana Pacers,Portland Trail Blazers,rebounds,8.6,-163.0,150.0,7.0,False,-1.0,0.6666666666666666,PrizePicks
+2026-01-03,Andrew Nembhard,Indiana Pacers,Portland Trail Blazers,points,20.3,-133.0,122.0,16.6,False,-1.0,0.819672131147541,PrizePicks
+2026-01-03,Tyrese Haliburton,Indiana Pacers,Portland Trail Blazers,points,34.2,-105.0,-103.0,33.3,False,-1.0,0.970873786407767,PrizePicks
+2026-01-03,Tyrese Haliburton,Indiana Pacers,Portland Trail Blazers,points,18.2,156.0,-170.0,14.7,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-03,Tyrese Haliburton,Indiana Pacers,Portland Trail Blazers,PRA,31.1,156.0,-170.0,23.3,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-03,Domantas Sabonis,Sacramento Kings,Chicago Bulls,assists,7.8,-103.0,-106.0,9.0,True,0.970873786407767,-1.0,PrizePicks
+2026-01-03,DeMar DeRozan,Sacramento Kings,Chicago Bulls,PRA,38.4,-122.0,113.0,42.5,True,0.819672131147541,-1.0,PrizePicks
+2026-01-03,Keegan Murray,Sacramento Kings,Chicago Bulls,rebounds,7.2,138.0,-150.0,9.7,True,0.7246376811594203,-1.0,PrizePicks
+2026-01-03,DeMar DeRozan,Sacramento Kings,Chicago Bulls,rebounds,6.8,144.0,-157.0,7.7,True,0.6944444444444444,-1.0,PrizePicks
+2026-01-03,DeMar DeRozan,Sacramento Kings,Chicago Bulls,rebounds,9.8,156.0,-170.0,7.3,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-03,Keegan Murray,Sacramento Kings,Chicago Bulls,points,24.2,-110.0,101.0,26.0,True,0.9090909090909091,-1.0,PrizePicks
+2026-01-03,Kevin Huerter,Sacramento Kings,Chicago Bulls,points,35.0,-162.0,149.0,43.1,True,0.6172839506172839,-1.0,PrizePicks
+2026-01-04,Nurkic,Phoenix Suns,Los Angeles Lakers,points,26.9,-154.0,142.0,24.7,False,-1.0,0.704225352112676,PrizePicks
+2026-01-04,Rui Hachimura,Los Angeles Lakers,Phoenix Suns,points,22.3,119.0,-129.0,28.9,True,0.8403361344537815,-1.0,PrizePicks
+2026-01-04,Austin Reaves,Los Angeles Lakers,Phoenix Suns,rebounds,9.8,-135.0,125.0,8.1,False,-1.0,0.8,PrizePicks
+2026-01-04,LeBron James,Los Angeles Lakers,Phoenix Suns,rebounds,9.5,143.0,-156.0,13.5,True,0.6993006993006993,-1.0,PrizePicks
+2026-01-04,Kevin Durant,Phoenix Suns,Los Angeles Lakers,points,26.5,131.0,-142.0,16.7,False,-1.0,0.704225352112676,PrizePicks
+2026-01-04,Rui Hachimura,Los Angeles Lakers,Phoenix Suns,assists,6.4,-136.0,125.0,3.0,False,-1.0,0.8,PrizePicks
+2026-01-04,Bradley Beal,Phoenix Suns,Los Angeles Lakers,rebounds,8.1,122.0,-132.0,6.1,False,-1.0,0.7575757575757576,PrizePicks
+2026-01-04,Austin Reaves,Los Angeles Lakers,Phoenix Suns,PRA,33.1,-126.0,116.0,35.3,True,0.7936507936507936,-1.0,PrizePicks
+2026-01-04,Nikola Jokic,Denver Nuggets,San Antonio Spurs,assists,10.5,103.0,-111.0,15.1,True,0.970873786407767,-1.0,PrizePicks
+2026-01-04,Michael Porter Jr.,Denver Nuggets,San Antonio Spurs,assists,10.5,140.0,-152.0,12.1,True,0.7142857142857143,-1.0,PrizePicks
+2026-01-04,Nikola Jokic,Denver Nuggets,San Antonio Spurs,assists,5.9,-105.0,-103.0,7.4,True,0.9523809523809523,-1.0,PrizePicks
+2026-01-04,Jamal Murray,Denver Nuggets,San Antonio Spurs,rebounds,13.3,107.0,-116.0,15.3,True,0.9345794392523364,-1.0,PrizePicks
+2026-01-04,Michael Porter Jr.,Denver Nuggets,San Antonio Spurs,assists,6.7,156.0,-170.0,6.6,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-04,Jamal Murray,Denver Nuggets,San Antonio Spurs,PRA,33.1,-132.0,121.0,34.6,True,0.7575757575757576,-1.0,PrizePicks
+2026-01-04,Nikola Jokic,Denver Nuggets,San Antonio Spurs,points,17.6,-106.0,-102.0,11.1,False,-1.0,0.9803921568627451,PrizePicks
+2026-01-04,Jamal Murray,Denver Nuggets,San Antonio Spurs,rebounds,8.9,-130.0,120.0,9.0,True,0.7692307692307693,-1.0,PrizePicks
+2026-01-04,Nikola Jovic,Miami Heat,Denver Nuggets,assists,4.5,-121.0,111.0,5.2,True,0.8264462809917356,-1.0,PrizePicks
+2026-01-04,Jamal Murray,Denver Nuggets,Miami Heat,points,23.5,108.0,-117.0,18.9,False,-1.0,0.8547008547008547,PrizePicks
+2026-01-04,Nikola Jokic,Denver Nuggets,Miami Heat,assists,10.9,124.0,-134.0,12.3,True,0.8064516129032258,-1.0,PrizePicks
+2026-01-04,Jimmy Butler,Miami Heat,Denver Nuggets,points,16.9,156.0,-170.0,17.3,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-04,Tyler Herro,Miami Heat,Denver Nuggets,rebounds,11.8,152.0,-166.0,12.9,True,0.6578947368421053,-1.0,PrizePicks
+2026-01-04,Jimmy Butler,Miami Heat,Denver Nuggets,points,25.6,132.0,-143.0,22.2,False,-1.0,0.6993006993006993,PrizePicks
+2026-01-04,Bam Adebayo,Miami Heat,Denver Nuggets,points,35.4,137.0,-149.0,28.4,False,-1.0,0.6711409395973155,PrizePicks
+2026-01-04,Brook Lopez,Milwaukee Bucks,Orlando Magic,points,14.3,-103.0,-105.0,15.4,True,0.970873786407767,-1.0,PrizePicks
+2026-01-04,Giannis Antetokounmpo,Milwaukee Bucks,Orlando Magic,points,29.7,110.0,-119.0,32.0,True,0.9090909090909091,-1.0,PrizePicks
+2026-01-04,Khris Middleton,Milwaukee Bucks,Orlando Magic,points,23.3,113.0,-122.0,27.1,True,0.8849557522123894,-1.0,PrizePicks
+2026-01-04,Brook Lopez,Milwaukee Bucks,Orlando Magic,points,31.1,-138.0,127.0,28.4,False,-1.0,0.7874015748031497,PrizePicks
+2026-01-04,Damian Lillard,Milwaukee Bucks,Orlando Magic,points,23.5,-111.0,103.0,23.6,True,0.9009009009009009,-1.0,PrizePicks
+2026-01-05,Donte DiVincenzo,Minnesota Timberwolves,Detroit Pistons,PRA,41.0,156.0,-170.0,45.5,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-05,Anthony Edwards,Minnesota Timberwolves,Detroit Pistons,assists,10.7,-122.0,112.0,7.2,False,-1.0,0.8928571428571429,PrizePicks
+2026-01-05,Anthony Edwards,Minnesota Timberwolves,Detroit Pistons,points,21.2,105.0,-114.0,20.6,False,-1.0,0.8771929824561403,PrizePicks
+2026-01-05,Julius Randle,Minnesota Timberwolves,Detroit Pistons,rebounds,12.5,104.0,-113.0,8.8,False,-1.0,0.8849557522123894,PrizePicks
+2026-01-05,Julius Randle,Minnesota Timberwolves,Detroit Pistons,rebounds,9.3,-116.0,108.0,10.7,True,0.8620689655172413,-1.0,PrizePicks
+2026-01-05,Donte DiVincenzo,Minnesota Timberwolves,Detroit Pistons,assists,7.8,142.0,-155.0,6.5,False,-1.0,0.6451612903225806,PrizePicks
+2026-01-05,Kawhi Leonard,LA Clippers,Toronto Raptors,assists,6.4,-102.0,-106.0,6.4,False,-1.0,0.9433962264150944,PrizePicks
+2026-01-05,James Harden,LA Clippers,Toronto Raptors,rebounds,4.5,-105.0,-103.0,7.4,True,0.9523809523809523,-1.0,PrizePicks
+2026-01-05,James Harden,LA Clippers,Toronto Raptors,points,24.3,-106.0,-103.0,17.3,False,-1.0,0.970873786407767,PrizePicks
+2026-01-05,James Harden,LA Clippers,Toronto Raptors,PRA,41.6,-111.0,102.0,42.1,True,0.9009009009009009,-1.0,PrizePicks
+2026-01-05,Norman Powell,LA Clippers,Toronto Raptors,points,30.3,-124.0,114.0,32.1,True,0.8064516129032258,-1.0,PrizePicks
+2026-01-05,Kawhi Leonard,LA Clippers,Toronto Raptors,assists,9.0,155.0,-169.0,11.5,True,0.6451612903225806,-1.0,PrizePicks
+2026-01-05,James Harden,LA Clippers,Toronto Raptors,PRA,31.2,105.0,-113.0,35.3,True,0.9523809523809523,-1.0,PrizePicks
+2026-01-05,Norman Powell,LA Clippers,Toronto Raptors,assists,9.8,101.0,-110.0,9.0,False,-1.0,0.9090909090909091,PrizePicks
+2026-01-05,Kevin Huerter,Sacramento Kings,Minnesota Timberwolves,rebounds,14.2,107.0,-116.0,7.8,False,-1.0,0.8620689655172413,PrizePicks
+2026-01-05,Anthony Edwards,Minnesota Timberwolves,Sacramento Kings,rebounds,8.8,-104.0,-104.0,2.0,False,-1.0,0.9615384615384616,PrizePicks
+2026-01-05,Keegan Murray,Sacramento Kings,Minnesota Timberwolves,PRA,36.1,131.0,-142.0,33.8,False,-1.0,0.704225352112676,PrizePicks
+2026-01-05,Donte DiVincenzo,Minnesota Timberwolves,Sacramento Kings,points,19.4,-113.0,105.0,22.3,True,0.8849557522123894,-1.0,PrizePicks
+2026-01-05,Kevin Huerter,Sacramento Kings,Minnesota Timberwolves,rebounds,9.7,-102.0,-106.0,11.4,True,0.9803921568627451,-1.0,PrizePicks
+2026-01-05,Jamal Murray,Denver Nuggets,Brooklyn Nets,assists,8.3,139.0,-151.0,5.9,False,-1.0,0.6622516556291391,PrizePicks
+2026-01-05,Aaron Gordon,Denver Nuggets,Brooklyn Nets,rebounds,10.0,117.0,-127.0,15.9,True,0.8547008547008547,-1.0,PrizePicks
+2026-01-05,Michael Porter Jr.,Denver Nuggets,Brooklyn Nets,points,29.5,130.0,-141.0,27.9,False,-1.0,0.7092198581560284,PrizePicks
+2026-01-05,Jamal Murray,Denver Nuggets,Brooklyn Nets,points,13.5,-119.0,110.0,6.7,False,-1.0,0.9090909090909091,PrizePicks
+2026-01-05,Nikola Jokic,Denver Nuggets,Brooklyn Nets,PRA,31.6,126.0,-137.0,30.6,False,-1.0,0.7299270072992701,PrizePicks
+2026-01-05,Nikola Jokic,Denver Nuggets,Brooklyn Nets,points,20.1,143.0,-155.0,19.5,False,-1.0,0.6451612903225806,PrizePicks
+2026-01-05,Aaron Gordon,Denver Nuggets,Brooklyn Nets,rebounds,14.9,-104.0,-104.0,16.4,True,0.9615384615384616,-1.0,PrizePicks
+2026-01-05,Jamal Murray,Denver Nuggets,Brooklyn Nets,rebounds,13.9,114.0,-124.0,15.6,True,0.8771929824561403,-1.0,PrizePicks
+2026-01-05,Damian Lillard,Milwaukee Bucks,Utah Jazz,PRA,31.4,156.0,-170.0,33.0,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-05,Damian Lillard,Milwaukee Bucks,Utah Jazz,points,16.6,104.0,-113.0,20.9,True,0.9615384615384616,-1.0,PrizePicks
+2026-01-05,Damian Lillard,Milwaukee Bucks,Utah Jazz,PRA,37.3,-124.0,115.0,33.0,False,-1.0,0.8695652173913043,PrizePicks
+2026-01-05,Giannis Antetokounmpo,Milwaukee Bucks,Utah Jazz,points,36.7,-118.0,109.0,41.2,True,0.847457627118644,-1.0,PrizePicks
+2026-01-05,Damian Lillard,Milwaukee Bucks,Utah Jazz,points,30.0,-126.0,116.0,28.6,False,-1.0,0.8620689655172413,PrizePicks
+2026-01-05,Brook Lopez,Milwaukee Bucks,Utah Jazz,points,22.8,-116.0,107.0,22.5,False,-1.0,0.9345794392523364,PrizePicks
+2026-01-05,Khris Middleton,Milwaukee Bucks,Utah Jazz,points,26.3,-133.0,123.0,22.7,False,-1.0,0.8130081300813008,PrizePicks
+2026-01-06,Bradley Beal,Phoenix Suns,San Antonio Spurs,rebounds,10.9,116.0,-125.0,11.7,True,0.8620689655172413,-1.0,PrizePicks
+2026-01-06,Devin Booker,Phoenix Suns,San Antonio Spurs,PRA,30.2,107.0,-116.0,33.1,True,0.9345794392523364,-1.0,PrizePicks
+2026-01-06,Nurkic,Phoenix Suns,San Antonio Spurs,rebounds,8.9,-135.0,124.0,13.3,True,0.7407407407407407,-1.0,PrizePicks
+2026-01-06,Kevin Durant,Phoenix Suns,San Antonio Spurs,rebounds,7.5,-115.0,106.0,10.3,True,0.8695652173913043,-1.0,PrizePicks
+2026-01-06,Nurkic,Phoenix Suns,San Antonio Spurs,rebounds,12.3,-106.0,-102.0,16.0,True,0.9433962264150944,-1.0,PrizePicks
+2026-01-06,Devin Booker,Phoenix Suns,San Antonio Spurs,assists,8.0,-114.0,105.0,4.3,False,-1.0,0.9523809523809523,PrizePicks
+2026-01-06,Devin Booker,Phoenix Suns,San Antonio Spurs,assists,4.5,127.0,-138.0,4.6,True,0.7874015748031497,-1.0,PrizePicks
+2026-01-06,Joel Embiid,Philadelphia 76ers,Portland Trail Blazers,assists,10.0,-114.0,105.0,7.6,False,-1.0,0.9523809523809523,PrizePicks
+2026-01-06,Paul George,Philadelphia 76ers,Portland Trail Blazers,rebounds,7.4,132.0,-144.0,8.2,True,0.7575757575757576,-1.0,PrizePicks
+2026-01-06,Caleb Martin,Philadelphia 76ers,Portland Trail Blazers,points,21.9,-141.0,130.0,20.6,False,-1.0,0.7692307692307693,PrizePicks
+2026-01-06,Tyrese Maxey,Philadelphia 76ers,Portland Trail Blazers,rebounds,6.7,136.0,-147.0,12.6,True,0.7352941176470589,-1.0,PrizePicks
+2026-01-06,Paul George,Philadelphia 76ers,Portland Trail Blazers,points,11.1,122.0,-133.0,8.7,False,-1.0,0.7518796992481203,PrizePicks
+2026-01-06,Caleb Martin,Philadelphia 76ers,Portland Trail Blazers,assists,8.7,-146.0,134.0,6.9,False,-1.0,0.746268656716418,PrizePicks
+2026-01-06,Caleb Martin,Philadelphia 76ers,Portland Trail Blazers,assists,5.9,108.0,-117.0,8.8,True,0.9259259259259259,-1.0,PrizePicks
+2026-01-06,Draymond Green,Golden State Warriors,New Orleans Pelicans,rebounds,6.6,107.0,-116.0,7.9,True,0.9345794392523364,-1.0,PrizePicks
+2026-01-06,Jimmy Butler,Golden State Warriors,New Orleans Pelicans,points,21.2,-150.0,138.0,25.1,True,0.6666666666666666,-1.0,PrizePicks
+2026-01-06,Draymond Green,Golden State Warriors,New Orleans Pelicans,assists,4.5,100.0,-109.0,5.0,True,1.0,-1.0,PrizePicks
+2026-01-06,Jimmy Butler,Golden State Warriors,New Orleans Pelicans,rebounds,10.3,-103.0,-106.0,6.5,False,-1.0,0.9433962264150944,PrizePicks
+2026-01-06,Jimmy Butler,Golden State Warriors,New Orleans Pelicans,points,27.1,-131.0,121.0,26.7,False,-1.0,0.8264462809917356,PrizePicks
+2026-01-06,Jonathan Kuminga,Golden State Warriors,New Orleans Pelicans,points,22.3,104.0,-113.0,22.7,True,0.9615384615384616,-1.0,PrizePicks
+2026-01-06,Jonathan Kuminga,Golden State Warriors,New Orleans Pelicans,points,26.2,102.0,-111.0,28.4,True,0.9803921568627451,-1.0,PrizePicks
+2026-01-06,Jalen Green,Houston Rockets,Memphis Grizzlies,points,18.1,110.0,-119.0,28.0,True,0.9090909090909091,-1.0,PrizePicks
+2026-01-06,Alperen Sengun,Houston Rockets,Memphis Grizzlies,rebounds,11.1,122.0,-132.0,4.5,False,-1.0,0.7575757575757576,PrizePicks
+2026-01-06,Fred VanVleet,Houston Rockets,Memphis Grizzlies,points,29.5,135.0,-147.0,33.2,True,0.7407407407407407,-1.0,PrizePicks
+2026-01-06,Alperen Sengun,Houston Rockets,Memphis Grizzlies,points,25.3,-109.0,101.0,26.8,True,0.9174311926605505,-1.0,PrizePicks
+2026-01-10,Kevin Huerter,Sacramento Kings,Cleveland Cavaliers,PRA,19.4,-112.0,103.0,13.3,False,-1.0,0.970873786407767,PrizePicks
+2026-01-10,Darius Garland,Cleveland Cavaliers,Sacramento Kings,points,16.3,-170.0,156.0,8.1,False,-1.0,0.6410256410256411,PrizePicks
+2026-01-10,Keegan Murray,Sacramento Kings,Cleveland Cavaliers,rebounds,10.4,156.0,-170.0,0.9,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-10,Darius Garland,Cleveland Cavaliers,Sacramento Kings,PRA,35.0,-109.0,100.0,25.6,False,-1.0,1.0,PrizePicks
+2026-01-10,Keegan Murray,Sacramento Kings,Cleveland Cavaliers,rebounds,12.6,-103.0,-105.0,16.5,True,0.970873786407767,-1.0,PrizePicks
+2026-01-10,Jarrett Allen,Cleveland Cavaliers,Sacramento Kings,points,22.5,156.0,-170.0,23.3,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-10,Darius Garland,Cleveland Cavaliers,Sacramento Kings,rebounds,9.2,-135.0,125.0,9.7,True,0.7407407407407407,-1.0,PrizePicks
+2026-01-10,Brook Lopez,Milwaukee Bucks,Atlanta Hawks,rebounds,4.5,-115.0,106.0,1.3,False,-1.0,0.9433962264150944,PrizePicks
+2026-01-10,Khris Middleton,Milwaukee Bucks,Atlanta Hawks,points,23.9,-108.0,-101.0,26.7,True,0.9259259259259259,-1.0,PrizePicks
+2026-01-10,Khris Middleton,Milwaukee Bucks,Atlanta Hawks,assists,9.5,-102.0,-106.0,9.2,False,-1.0,0.9433962264150944,PrizePicks
+2026-01-10,Giannis Antetokounmpo,Milwaukee Bucks,Atlanta Hawks,points,23.5,147.0,-160.0,29.0,True,0.6802721088435374,-1.0,PrizePicks
+2026-01-10,Damian Lillard,Milwaukee Bucks,Atlanta Hawks,points,20.7,156.0,-170.0,23.7,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-10,Khris Middleton,Milwaukee Bucks,Atlanta Hawks,PRA,33.5,156.0,-170.0,32.9,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-10,Brook Lopez,Milwaukee Bucks,Atlanta Hawks,assists,7.8,-143.0,132.0,9.6,True,0.6993006993006993,-1.0,PrizePicks
+2026-01-10,Julius Randle,Minnesota Timberwolves,Toronto Raptors,points,27.6,-170.0,156.0,29.5,True,0.5882352941176471,-1.0,PrizePicks
+2026-01-10,Rudy Gobert,Minnesota Timberwolves,Toronto Raptors,rebounds,13.1,151.0,-165.0,11.1,False,-1.0,0.6060606060606061,PrizePicks
+2026-01-10,Anthony Edwards,Minnesota Timberwolves,Toronto Raptors,assists,5.6,-107.0,-101.0,3.6,False,-1.0,0.9900990099009901,PrizePicks
+2026-01-10,Rudy Gobert,Minnesota Timberwolves,Toronto Raptors,PRA,31.1,156.0,-170.0,32.4,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-10,Rudy Gobert,Minnesota Timberwolves,Toronto Raptors,points,27.5,-108.0,-100.0,23.2,False,-1.0,1.0,PrizePicks
+2026-01-10,Anthony Edwards,Minnesota Timberwolves,Toronto Raptors,PRA,35.1,132.0,-143.0,33.5,False,-1.0,0.6993006993006993,PrizePicks
+2026-01-10,Julius Randle,Minnesota Timberwolves,Toronto Raptors,rebounds,5.6,117.0,-127.0,5.3,False,-1.0,0.7874015748031497,PrizePicks
+2026-01-10,Anthony Edwards,Minnesota Timberwolves,Toronto Raptors,rebounds,4.5,113.0,-123.0,3.5,False,-1.0,0.8130081300813008,PrizePicks
+2026-01-10,Kyrie Irving,Dallas Mavericks,Utah Jazz,rebounds,6.3,-170.0,156.0,9.1,True,0.5882352941176471,-1.0,PrizePicks
+2026-01-10,Luka Doncic,Dallas Mavericks,Utah Jazz,rebounds,8.3,-150.0,138.0,10.9,True,0.6666666666666666,-1.0,PrizePicks
+2026-01-10,P.J. Washington,Dallas Mavericks,Utah Jazz,points,21.6,-170.0,156.0,20.1,False,-1.0,0.6410256410256411,PrizePicks
+2026-01-10,Daniel Gafford,Dallas Mavericks,Utah Jazz,points,22.6,125.0,-136.0,22.5,False,-1.0,0.7352941176470589,PrizePicks
+2026-01-10,Daniel Gafford,Dallas Mavericks,Utah Jazz,points,21.9,-126.0,116.0,24.2,True,0.7936507936507936,-1.0,PrizePicks
+2026-01-11,Jarrett Allen,Cleveland Cavaliers,Washington Wizards,rebounds,9.4,156.0,-170.0,13.2,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-11,Jarrett Allen,Cleveland Cavaliers,Washington Wizards,rebounds,11.8,107.0,-116.0,13.9,True,0.9345794392523364,-1.0,PrizePicks
+2026-01-11,Evan Mobley,Cleveland Cavaliers,Washington Wizards,rebounds,13.7,105.0,-114.0,16.0,True,0.9523809523809523,-1.0,PrizePicks
+2026-01-11,Evan Mobley,Cleveland Cavaliers,Washington Wizards,rebounds,6.2,101.0,-109.0,7.9,True,0.9900990099009901,-1.0,PrizePicks
+2026-01-11,Evan Mobley,Cleveland Cavaliers,Washington Wizards,points,26.0,-112.0,103.0,14.7,False,-1.0,0.970873786407767,PrizePicks
+2026-01-11,Darius Garland,Cleveland Cavaliers,Washington Wizards,rebounds,11.2,145.0,-157.0,14.7,True,0.6896551724137931,-1.0,PrizePicks
+2026-01-11,Evan Mobley,Cleveland Cavaliers,Washington Wizards,assists,6.9,129.0,-140.0,6.7,False,-1.0,0.7142857142857143,PrizePicks
+2026-01-11,Jaylen Brown,Boston Celtics,Phoenix Suns,points,21.9,-148.0,136.0,17.6,False,-1.0,0.7352941176470589,PrizePicks
+2026-01-11,Nurkic,Phoenix Suns,Boston Celtics,assists,6.0,142.0,-154.0,6.7,True,0.704225352112676,-1.0,PrizePicks
+2026-01-11,Bradley Beal,Phoenix Suns,Boston Celtics,assists,7.9,-115.0,106.0,10.7,True,0.8695652173913043,-1.0,PrizePicks
+2026-01-11,Kristaps Porzingis,Boston Celtics,Phoenix Suns,assists,4.5,-108.0,-101.0,3.9,False,-1.0,0.9900990099009901,PrizePicks
+2026-01-11,Jaylen Brown,Boston Celtics,Phoenix Suns,assists,10.3,156.0,-170.0,9.0,False,-1.0,0.5882352941176471,PrizePicks
+2026-01-11,Shai Gilgeous-Alexander,Oklahoma City Thunder,Sacramento Kings,points,21.1,-124.0,114.0,16.6,False,-1.0,0.8771929824561403,PrizePicks
+2026-01-11,DeMar DeRozan,Sacramento Kings,Oklahoma City Thunder,points,25.2,-112.0,104.0,22.7,False,-1.0,0.9615384615384616,PrizePicks
+2026-01-11,Chet Holmgren,Oklahoma City Thunder,Sacramento Kings,points,27.9,-131.0,121.0,27.3,False,-1.0,0.8264462809917356,PrizePicks
+2026-01-11,Shai Gilgeous-Alexander,Oklahoma City Thunder,Sacramento Kings,assists,10.7,117.0,-127.0,10.9,True,0.8547008547008547,-1.0,PrizePicks
+2026-01-11,Kevin Huerter,Sacramento Kings,Oklahoma City Thunder,PRA,33.6,122.0,-132.0,35.5,True,0.819672131147541,-1.0,PrizePicks
+2026-01-11,Kevin Huerter,Sacramento Kings,Oklahoma City Thunder,points,27.7,129.0,-140.0,28.2,True,0.7751937984496124,-1.0,PrizePicks
+2026-01-11,Caleb Martin,Philadelphia 76ers,New York Knicks,assists,10.9,156.0,-170.0,12.0,True,0.6410256410256411,-1.0,PrizePicks
+2026-01-11,Joel Embiid,Philadelphia 76ers,New York Knicks,points,17.9,-111.0,103.0,21.9,True,0.9009009009009009,-1.0,PrizePicks
+2026-01-11,Paul George,Philadelphia 76ers,New York Knicks,rebounds,9.8,103.0,-112.0,6.4,False,-1.0,0.8928571428571429,PrizePicks
+2026-01-11,OG Anunoby,New York Knicks,Philadelphia 76ers,points,31.9,-127.0,117.0,35.7,True,0.7874015748031497,-1.0,PrizePicks
+2026-01-11,OG Anunoby,New York Knicks,Philadelphia 76ers,assists,8.5,-110.0,101.0,7.3,False,-1.0,0.9900990099009901,PrizePicks
+2026-01-11,Jalen Brunson,New York Knicks,Philadelphia 76ers,PRA,36.4,-103.0,-105.0,33.8,False,-1.0,0.9523809523809523,PrizePicks
+2026-01-11,OG Anunoby,New York Knicks,Philadelphia 76ers,points,25.0,-126.0,116.0,24.0,False,-1.0,0.8620689655172413,PrizePicks
+2026-01-11,Joel Embiid,Philadelphia 76ers,New York Knicks,rebounds,11.1,-105.0,-103.0,14.7,True,0.9523809523809523,-1.0,PrizePicks

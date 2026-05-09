@@ -1,0 +1,53 @@
+[
+  {
+    "id": "d63e8eeedaff",
+    "title": "Test build",
+    "query": "build a login page",
+    "schedule": "now",
+    "recurrence": "",
+    "depends_on": [],
+    "tags": [],
+    "priority": 5,
+    "status": "pending",
+    "created_at": 1778195765.4800627,
+    "last_run": 1778212104.7388017,
+    "next_run": 1778195765.4800627,
+    "run_count": 1
+  },
+  {
+    "id": "51cee7c80e77",
+    "title": "Finish knowledge bank",
+    "query": "work toward: Finish knowledge bank",
+    "schedule": "daily",
+    "recurrence": "",
+    "depends_on": [],
+    "tags": [
+      "soul",
+      "autonomous"
+    ],
+    "priority": 5,
+    "status": "pending",
+    "created_at": 1778212082.2683654,
+    "last_run": 0,
+    "next_run": 1778212382.2683654,
+    "run_count": 0
+  },
+  {
+    "id": "9eaa19273af2",
+    "title": "Upgrade UI",
+    "query": "work toward: Upgrade UI",
+    "schedule": "daily",
+    "recurrence": "",
+    "depends_on": [],
+    "tags": [
+      "soul",
+      "autonomous"
+    ],
+    "priority": 5,
+    "status": "pending",
+    "created_at": 1778212082.2683654,
+    "last_run": 0,
+    "next_run": 1778212382.2683654,
+    "run_count": 0
+  }
+]

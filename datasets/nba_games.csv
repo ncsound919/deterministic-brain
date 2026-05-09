@@ -1,0 +1,151 @@
+date,season,home_team,away_team,home_score,away_score,spread_line,total_line,home_ml,away_ml,home_spread_actual,over_actual,home_win,home_cover,over_hit,home_implied_prob,away_implied_prob,actual_total
+2022-01-03,2021-2022,Golden State Warriors,Memphis Grizzlies,128,123,-3.3,207.3,-106.0,106.0,3.3,207.3,True,True,True,0.5146,0.4854,251
+2022-01-03,2021-2022,LA Clippers,Orlando Magic,125,108,3.0,215.8,105.0,-105.0,-3.0,215.8,True,True,True,0.4878,0.5122,233
+2022-01-03,2021-2022,Milwaukee Bucks,Houston Rockets,103,95,1.1,210.9,-219.0,219.0,-1.1,210.9,True,True,False,0.6865,0.3135,198
+2022-01-03,2021-2022,Toronto Raptors,Oklahoma City Thunder,119,100,0.1,205.3,-197.0,197.0,-0.1,205.3,True,True,True,0.6633,0.3367,219
+2022-01-03,2021-2022,Oklahoma City Thunder,Orlando Magic,115,107,3.6,209.7,137.0,-137.0,-3.6,209.7,True,True,True,0.4219,0.5781,222
+2022-01-04,2021-2022,Houston Rockets,Philadelphia 76ers,124,115,4.5,219.2,117.0,-117.0,-4.5,219.2,True,True,True,0.4608,0.5392,239
+2022-01-04,2021-2022,Philadelphia 76ers,New Orleans Pelicans,105,111,-0.2,209.3,-206.0,206.0,0.2,209.3,False,False,True,0.6732,0.3268,216
+2022-01-04,2021-2022,Utah Jazz,Charlotte Hornets,126,118,2.5,207.2,-198.0,198.0,-2.5,207.2,True,True,True,0.6644,0.3356,244
+2022-01-04,2021-2022,Detroit Pistons,Charlotte Hornets,113,100,-0.1,228.6,-156.0,156.0,0.1,228.6,True,True,False,0.6094,0.3906,213
+2022-01-04,2021-2022,San Antonio Spurs,Oklahoma City Thunder,98,107,-2.4,222.9,-172.0,172.0,2.4,222.9,False,False,False,0.6324,0.3676,205
+2022-01-05,2021-2022,Phoenix Suns,Boston Celtics,126,109,1.1,221.2,-106.0,106.0,-1.1,221.2,True,True,True,0.5146,0.4854,235
+2022-01-05,2021-2022,Denver Nuggets,San Antonio Spurs,141,94,3.3,227.7,-146.0,146.0,-3.3,227.7,True,True,True,0.5935,0.4065,235
+2022-01-05,2021-2022,Charlotte Hornets,Portland Trail Blazers,121,110,7.0,214.6,-278.0,278.0,-7.0,214.6,True,True,True,0.7354,0.2646,231
+2022-01-05,2021-2022,Cleveland Cavaliers,Boston Celtics,136,105,3.5,207.7,-119.0,119.0,-3.5,207.7,True,True,True,0.5434,0.4566,241
+2022-01-05,2021-2022,Orlando Magic,San Antonio Spurs,114,112,1.1,204.8,108.0,-108.0,-1.1,204.8,True,True,True,0.4808,0.5192,226
+2022-01-06,2021-2022,Los Angeles Lakers,San Antonio Spurs,131,114,1.5,224.6,-211.0,211.0,-1.5,224.6,True,True,True,0.6785,0.3215,245
+2022-01-06,2021-2022,Boston Celtics,Dallas Mavericks,110,114,4.7,204.8,-278.0,278.0,-4.7,204.8,False,False,True,0.7354,0.2646,224
+2022-01-06,2021-2022,Memphis Grizzlies,Phoenix Suns,125,106,4.6,213.1,-278.0,278.0,-4.6,213.1,True,True,True,0.7354,0.2646,231
+2022-01-06,2021-2022,Indiana Pacers,LA Clippers,103,119,-4.9,212.6,-203.0,203.0,4.9,212.6,False,False,True,0.67,0.33,222
+2022-01-06,2021-2022,Sacramento Kings,Toronto Raptors,115,95,1.8,215.8,-126.0,126.0,-1.8,215.8,True,True,False,0.5575,0.4425,210
+2022-01-10,2021-2022,Portland Trail Blazers,Golden State Warriors,105,104,-2.2,207.4,-278.0,278.0,2.2,207.4,True,True,True,0.7354,0.2646,209
+2022-01-10,2021-2022,Chicago Bulls,Washington Wizards,109,103,2.4,205.4,-278.0,278.0,-2.4,205.4,True,True,True,0.7354,0.2646,212
+2022-01-10,2021-2022,Brooklyn Nets,Dallas Mavericks,116,106,-1.3,205.2,240.0,-240.0,1.3,205.2,True,True,True,0.2941,0.7059,222
+2022-01-10,2021-2022,Minnesota Timberwolves,Philadelphia 76ers,129,114,0.7,215.1,108.0,-108.0,-0.7,215.1,True,True,True,0.4808,0.5192,243
+2022-01-10,2021-2022,New Orleans Pelicans,Toronto Raptors,111,104,1.2,210.6,-129.0,129.0,-1.2,210.6,True,True,True,0.5633,0.4367,215
+2022-01-11,2021-2022,Miami Heat,Orlando Magic,113,105,1.5,220.8,-144.0,144.0,-1.5,220.8,True,True,False,0.5902,0.4098,218
+2022-01-11,2021-2022,Washington Wizards,Memphis Grizzlies,118,112,1.0,205.1,-130.0,130.0,-1.0,205.1,True,True,True,0.5652,0.4348,230
+2022-01-11,2021-2022,Atlanta Hawks,Cleveland Cavaliers,108,99,2.6,205.1,-134.0,134.0,-2.6,205.1,True,True,True,0.5726,0.4274,207
+2022-01-11,2021-2022,Dallas Mavericks,Denver Nuggets,101,126,-1.4,202.7,-105.0,105.0,1.4,202.7,False,False,True,0.5122,0.4878,227
+2022-01-11,2021-2022,New York Knicks,Indiana Pacers,125,127,-3.3,213.0,-113.0,113.0,3.3,213.0,False,True,True,0.5305,0.4695,252
+2023-01-03,2022-2023,Cleveland Cavaliers,Philadelphia 76ers,113,120,1.8,223.1,-255.0,255.0,-1.8,223.1,False,False,True,0.7183,0.2817,233
+2023-01-03,2022-2023,Milwaukee Bucks,Los Angeles Lakers,119,115,2.8,215.4,-143.0,143.0,-2.8,215.4,True,True,True,0.5885,0.4115,234
+2023-01-03,2022-2023,New Orleans Pelicans,Toronto Raptors,119,117,-6.9,220.8,108.0,-108.0,6.9,220.8,True,True,True,0.4808,0.5192,236
+2023-01-03,2022-2023,Charlotte Hornets,Utah Jazz,126,117,0.1,215.0,-166.0,166.0,-0.1,215.0,True,True,True,0.6241,0.3759,243
+2023-01-03,2022-2023,Sacramento Kings,Utah Jazz,101,109,-3.2,225.0,-109.0,109.0,3.2,225.0,False,False,False,0.5215,0.4785,210
+2023-01-04,2022-2023,Houston Rockets,Golden State Warriors,122,118,2.0,214.6,-142.0,142.0,-2.0,214.6,True,True,True,0.5868,0.4132,240
+2023-01-04,2022-2023,Utah Jazz,Chicago Bulls,127,108,2.6,217.5,-109.0,109.0,-2.6,217.5,True,True,True,0.5215,0.4785,235
+2023-01-04,2022-2023,Detroit Pistons,Charlotte Hornets,119,111,2.9,211.0,240.0,-240.0,-2.9,211.0,True,True,True,0.2941,0.7059,230
+2023-01-04,2022-2023,Denver Nuggets,Dallas Mavericks,106,126,-2.2,220.5,-199.0,199.0,2.2,220.5,False,False,True,0.6656,0.3344,232
+2023-01-04,2022-2023,Golden State Warriors,Sacramento Kings,136,116,2.1,217.2,-278.0,278.0,-2.1,217.2,True,True,True,0.7354,0.2646,252
+2023-01-05,2022-2023,Minnesota Timberwolves,Washington Wizards,112,115,-1.7,221.0,-149.0,149.0,1.7,221.0,False,False,True,0.5984,0.4016,227
+2023-01-05,2022-2023,Brooklyn Nets,Detroit Pistons,138,101,5.4,223.7,101.0,-101.0,-5.4,223.7,True,True,True,0.4975,0.5025,239
+2023-01-05,2022-2023,Washington Wizards,Memphis Grizzlies,114,111,2.4,213.1,-245.0,245.0,-2.4,213.1,True,True,True,0.7101,0.2899,225
+2023-01-05,2022-2023,Chicago Bulls,Utah Jazz,127,106,-1.1,211.1,-149.0,149.0,1.1,211.1,True,True,True,0.5984,0.4016,233
+2023-01-05,2022-2023,Oklahoma City Thunder,Houston Rockets,117,110,8.1,220.6,-144.0,144.0,-8.1,220.6,True,False,True,0.5902,0.4098,227
+2023-01-06,2022-2023,Orlando Magic,Philadelphia 76ers,111,131,1.0,231.2,149.0,-149.0,-1.0,231.2,False,False,True,0.4016,0.5984,242
+2023-01-06,2022-2023,LA Clippers,Philadelphia 76ers,124,116,3.0,217.0,127.0,-127.0,-3.0,217.0,True,True,True,0.4405,0.5595,240
+2023-01-06,2022-2023,Philadelphia 76ers,Utah Jazz,133,113,1.4,205.1,-278.0,278.0,-1.4,205.1,True,True,True,0.7354,0.2646,246
+2023-01-06,2022-2023,Portland Trail Blazers,New Orleans Pelicans,133,119,1.9,197.3,-111.0,111.0,-1.9,197.3,True,True,True,0.5261,0.4739,252
+2023-01-06,2022-2023,Phoenix Suns,Golden State Warriors,108,129,-2.2,225.3,-249.0,249.0,2.2,225.3,False,False,True,0.7135,0.2865,237
+2023-01-10,2022-2023,Indiana Pacers,Houston Rockets,125,116,6.2,205.9,102.0,-102.0,-6.2,205.9,True,True,True,0.495,0.505,241
+2023-01-10,2022-2023,Miami Heat,Washington Wizards,98,103,4.7,214.8,-113.0,113.0,-4.7,214.8,False,False,False,0.5305,0.4695,201
+2023-01-10,2022-2023,Los Angeles Lakers,Detroit Pistons,117,125,-7.5,225.4,164.0,-164.0,7.5,225.4,False,False,True,0.3788,0.6212,242
+2023-01-10,2022-2023,New York Knicks,Toronto Raptors,124,106,2.2,213.3,-235.0,235.0,-2.2,213.3,True,True,True,0.7015,0.2985,230
+2023-01-10,2022-2023,Toronto Raptors,Philadelphia 76ers,105,123,-6.5,222.7,-278.0,278.0,6.5,222.7,False,False,True,0.7354,0.2646,228
+2023-01-11,2022-2023,Memphis Grizzlies,Detroit Pistons,129,105,3.9,224.7,116.0,-116.0,-3.9,224.7,True,True,True,0.463,0.537,234
+2023-01-11,2022-2023,San Antonio Spurs,New Orleans Pelicans,113,114,-0.7,205.5,-120.0,120.0,0.7,205.5,False,False,True,0.5455,0.4545,227
+2023-01-11,2022-2023,Atlanta Hawks,LA Clippers,115,116,-10.2,202.8,-278.0,278.0,10.2,202.8,False,True,True,0.7354,0.2646,231
+2023-01-11,2022-2023,Dallas Mavericks,Chicago Bulls,120,115,5.8,202.8,-114.0,114.0,-5.8,202.8,True,False,True,0.5327,0.4673,235
+2023-01-11,2022-2023,Boston Celtics,Los Angeles Lakers,105,103,-1.9,209.6,-129.0,129.0,1.9,209.6,True,True,False,0.5633,0.4367,208
+2024-01-03,2023-2024,Denver Nuggets,Boston Celtics,123,110,2.1,215.3,117.0,-117.0,-2.1,215.3,True,True,True,0.4608,0.5392,233
+2024-01-03,2023-2024,Washington Wizards,Dallas Mavericks,111,110,-1.8,213.2,-105.0,105.0,1.8,213.2,True,True,True,0.5122,0.4878,221
+2024-01-03,2023-2024,Indiana Pacers,Oklahoma City Thunder,114,100,5.5,208.9,-236.0,236.0,-5.5,208.9,True,True,True,0.7024,0.2976,214
+2024-01-03,2023-2024,Cleveland Cavaliers,Philadelphia 76ers,99,122,-2.0,201.2,-150.0,150.0,2.0,201.2,False,False,True,0.6,0.4,221
+2024-01-03,2023-2024,Golden State Warriors,Utah Jazz,131,123,1.7,230.9,-116.0,116.0,-1.7,230.9,True,True,True,0.537,0.463,254
+2024-01-04,2023-2024,Los Angeles Lakers,Indiana Pacers,104,108,0.6,203.3,-278.0,278.0,-0.6,203.3,False,False,True,0.7354,0.2646,212
+2024-01-04,2023-2024,LA Clippers,Dallas Mavericks,103,120,-0.6,211.0,-190.0,190.0,0.6,211.0,False,False,True,0.6552,0.3448,223
+2024-01-04,2023-2024,Portland Trail Blazers,Dallas Mavericks,116,106,5.5,213.4,-170.0,170.0,-5.5,213.4,True,True,True,0.6296,0.3704,222
+2024-01-04,2023-2024,Charlotte Hornets,Toronto Raptors,107,104,3.2,228.6,-278.0,278.0,-3.2,228.6,True,False,False,0.7354,0.2646,211
+2024-01-04,2023-2024,Atlanta Hawks,Brooklyn Nets,111,131,0.8,206.7,-126.0,126.0,-0.8,206.7,False,False,True,0.5575,0.4425,242
+2024-01-05,2023-2024,New York Knicks,Brooklyn Nets,125,101,4.3,225.0,-278.0,278.0,-4.3,225.0,True,True,True,0.7354,0.2646,226
+2024-01-05,2023-2024,Miami Heat,Indiana Pacers,101,109,-4.2,203.6,-278.0,278.0,4.2,203.6,False,False,True,0.7354,0.2646,210
+2024-01-05,2023-2024,Boston Celtics,Sacramento Kings,124,121,-3.6,213.3,100.0,-100.0,3.6,213.3,True,True,True,0.5,0.5,245
+2024-01-05,2023-2024,Dallas Mavericks,LA Clippers,119,107,3.0,212.9,218.0,-218.0,-3.0,212.9,True,True,True,0.3145,0.6855,226
+2024-01-05,2023-2024,San Antonio Spurs,Houston Rockets,132,107,1.3,206.5,-252.0,252.0,-1.3,206.5,True,True,True,0.7159,0.2841,239
+2024-01-06,2023-2024,Toronto Raptors,Cleveland Cavaliers,127,118,0.5,223.4,-278.0,278.0,-0.5,223.4,True,True,True,0.7354,0.2646,245
+2024-01-06,2023-2024,Detroit Pistons,Washington Wizards,104,108,-6.6,213.1,-278.0,278.0,6.6,213.1,False,True,False,0.7354,0.2646,212
+2024-01-06,2023-2024,New Orleans Pelicans,Boston Celtics,127,116,2.6,211.2,-267.0,267.0,-2.6,211.2,True,True,True,0.7275,0.2725,243
+2024-01-06,2023-2024,Sacramento Kings,Portland Trail Blazers,125,116,1.6,206.7,182.0,-182.0,-1.6,206.7,True,True,True,0.3546,0.6454,241
+2024-01-06,2023-2024,Philadelphia 76ers,Oklahoma City Thunder,104,106,-0.7,210.6,-137.0,137.0,0.7,210.6,False,False,False,0.5781,0.4219,210
+2024-01-10,2023-2024,Chicago Bulls,New York Knicks,119,112,-0.1,215.3,-130.0,130.0,0.1,215.3,True,True,True,0.5652,0.4348,231
+2024-01-10,2023-2024,Milwaukee Bucks,New Orleans Pelicans,108,103,2.6,215.3,-204.0,204.0,-2.6,215.3,True,True,False,0.6711,0.3289,211
+2024-01-10,2023-2024,Oklahoma City Thunder,Atlanta Hawks,125,123,-1.0,199.9,134.0,-134.0,1.0,199.9,True,True,True,0.4274,0.5726,248
+2024-01-10,2023-2024,Utah Jazz,Boston Celtics,119,122,-1.8,211.0,-114.0,114.0,1.8,211.0,False,False,True,0.5327,0.4673,241
+2024-01-10,2023-2024,Houston Rockets,LA Clippers,118,127,-5.8,204.7,-104.0,104.0,5.8,204.7,False,False,True,0.5098,0.4902,245
+2024-01-11,2023-2024,Memphis Grizzlies,Cleveland Cavaliers,133,110,1.3,215.7,-278.0,278.0,-1.3,215.7,True,True,True,0.7354,0.2646,243
+2024-01-11,2023-2024,Minnesota Timberwolves,Miami Heat,107,124,-2.8,212.8,-131.0,131.0,2.8,212.8,False,False,True,0.5671,0.4329,231
+2024-01-11,2023-2024,Phoenix Suns,Houston Rockets,116,112,-0.7,224.6,-115.0,115.0,0.7,224.6,True,True,True,0.5349,0.4651,228
+2024-01-11,2023-2024,Brooklyn Nets,Houston Rockets,109,125,-1.4,216.7,110.0,-110.0,1.4,216.7,False,False,True,0.4762,0.5238,234
+2024-01-11,2023-2024,Orlando Magic,New Orleans Pelicans,113,98,1.1,205.2,-109.0,109.0,-1.1,205.2,True,True,True,0.5215,0.4785,211
+2025-01-03,2024-2025,Minnesota Timberwolves,Toronto Raptors,99,109,1.4,219.7,-278.0,278.0,-1.4,219.7,False,False,False,0.7354,0.2646,208
+2025-01-03,2024-2025,Milwaukee Bucks,Phoenix Suns,121,107,0.7,209.9,-234.0,234.0,-0.7,209.9,True,True,True,0.7006,0.2994,228
+2025-01-03,2024-2025,New Orleans Pelicans,Golden State Warriors,123,119,-0.9,210.7,187.0,-187.0,0.9,210.7,True,True,True,0.3484,0.6516,242
+2025-01-03,2024-2025,Philadelphia 76ers,Denver Nuggets,106,118,-5.1,216.8,-103.0,103.0,5.1,216.8,False,False,True,0.5074,0.4926,224
+2025-01-03,2024-2025,Memphis Grizzlies,Toronto Raptors,108,113,-5.3,202.5,-278.0,278.0,5.3,202.5,False,True,True,0.7354,0.2646,221
+2025-01-04,2024-2025,Golden State Warriors,Philadelphia 76ers,116,104,1.4,205.3,-108.0,108.0,-1.4,205.3,True,True,True,0.5192,0.4808,220
+2025-01-04,2024-2025,Orlando Magic,San Antonio Spurs,106,107,-9.3,210.8,-278.0,278.0,9.3,210.8,False,True,True,0.7354,0.2646,213
+2025-01-04,2024-2025,Detroit Pistons,New York Knicks,120,110,-6.3,210.5,101.0,-101.0,6.3,210.5,True,True,True,0.4975,0.5025,230
+2025-01-04,2024-2025,Oklahoma City Thunder,New York Knicks,113,93,5.3,211.8,-278.0,278.0,-5.3,211.8,True,True,False,0.7354,0.2646,206
+2025-01-04,2024-2025,Los Angeles Lakers,Washington Wizards,122,109,4.7,211.4,-140.0,140.0,-4.7,211.4,True,True,True,0.5833,0.4167,231
+2025-01-05,2024-2025,Denver Nuggets,Golden State Warriors,111,106,-4.5,213.2,-211.0,211.0,4.5,213.2,True,True,True,0.6785,0.3215,217
+2025-01-05,2024-2025,San Antonio Spurs,Golden State Warriors,125,120,4.1,209.1,-233.0,233.0,-4.1,209.1,True,True,True,0.6997,0.3003,245
+2025-01-05,2024-2025,Miami Heat,Dallas Mavericks,123,103,5.7,223.3,-101.0,101.0,-5.7,223.3,True,True,True,0.5025,0.4975,226
+2025-01-05,2024-2025,Chicago Bulls,Toronto Raptors,134,116,2.3,219.0,205.0,-205.0,-2.3,219.0,True,True,True,0.3279,0.6721,250
+2025-01-05,2024-2025,Boston Celtics,New York Knicks,115,114,0.9,213.1,-278.0,278.0,-0.9,213.1,True,True,True,0.7354,0.2646,229
+2025-01-06,2024-2025,Phoenix Suns,Portland Trail Blazers,114,100,0.5,222.7,-174.0,174.0,-0.5,222.7,True,True,False,0.635,0.365,214
+2025-01-06,2024-2025,Cleveland Cavaliers,Memphis Grizzlies,95,114,-6.5,209.3,-202.0,202.0,6.5,209.3,False,False,False,0.6689,0.3311,209
+2025-01-06,2024-2025,Sacramento Kings,Los Angeles Lakers,109,122,-0.7,219.5,-105.0,105.0,0.7,219.5,False,False,True,0.5122,0.4878,231
+2025-01-06,2024-2025,Utah Jazz,Memphis Grizzlies,118,119,-3.3,221.1,-278.0,278.0,3.3,221.1,False,True,True,0.7354,0.2646,237
+2025-01-06,2024-2025,Indiana Pacers,Washington Wizards,139,105,7.0,209.9,-228.0,228.0,-7.0,209.9,True,True,True,0.6951,0.3049,244
+2025-01-10,2024-2025,Brooklyn Nets,New York Knicks,120,107,5.6,217.6,138.0,-138.0,-5.6,217.6,True,True,True,0.4202,0.5798,227
+2025-01-10,2024-2025,Washington Wizards,Philadelphia 76ers,126,110,3.3,212.5,-201.0,201.0,-3.3,212.5,True,True,True,0.6678,0.3322,236
+2025-01-10,2024-2025,Dallas Mavericks,Los Angeles Lakers,109,107,1.2,209.1,-278.0,278.0,-1.2,209.1,True,True,True,0.7354,0.2646,216
+2025-01-10,2024-2025,Portland Trail Blazers,Philadelphia 76ers,129,110,6.7,207.6,-129.0,129.0,-6.7,207.6,True,True,True,0.5633,0.4367,239
+2025-01-10,2024-2025,Atlanta Hawks,Sacramento Kings,128,112,3.2,219.2,-154.0,154.0,-3.2,219.2,True,True,True,0.6063,0.3937,240
+2025-01-11,2024-2025,Charlotte Hornets,Washington Wizards,109,114,1.9,223.1,-117.0,117.0,-1.9,223.1,False,False,False,0.5392,0.4608,223
+2025-01-11,2024-2025,LA Clippers,Cleveland Cavaliers,99,102,3.0,208.5,-278.0,278.0,-3.0,208.5,False,False,False,0.7354,0.2646,201
+2025-01-11,2024-2025,New York Knicks,Indiana Pacers,108,113,4.7,202.9,-148.0,148.0,-4.7,202.9,False,False,True,0.5968,0.4032,221
+2025-01-11,2024-2025,Houston Rockets,Minnesota Timberwolves,118,124,-1.9,216.9,-128.0,128.0,1.9,216.9,False,False,True,0.5614,0.4386,242
+2025-01-11,2024-2025,Toronto Raptors,Philadelphia 76ers,102,125,-10.4,209.3,-188.0,188.0,10.4,209.3,False,False,True,0.6528,0.3472,227
+2026-01-03,2025-2026,Cleveland Cavaliers,Boston Celtics,121,125,1.4,201.5,-118.0,118.0,-1.4,201.5,False,False,True,0.5413,0.4587,246
+2026-01-03,2025-2026,Milwaukee Bucks,Golden State Warriors,111,108,4.0,198.5,-134.0,134.0,-4.0,198.5,True,False,True,0.5726,0.4274,219
+2026-01-03,2025-2026,Memphis Grizzlies,Golden State Warriors,110,114,2.7,211.2,-227.0,227.0,-2.7,211.2,False,False,True,0.6942,0.3058,224
+2026-01-03,2025-2026,Indiana Pacers,Portland Trail Blazers,109,132,-0.5,210.5,-278.0,278.0,0.5,210.5,False,False,True,0.7354,0.2646,241
+2026-01-03,2025-2026,Chicago Bulls,Sacramento Kings,119,102,5.1,215.3,-278.0,278.0,-5.1,215.3,True,True,True,0.7354,0.2646,221
+2026-01-04,2025-2026,Los Angeles Lakers,Phoenix Suns,109,125,-9.1,218.6,-278.0,278.0,9.1,218.6,False,False,True,0.7354,0.2646,234
+2026-01-04,2025-2026,San Antonio Spurs,Denver Nuggets,122,108,1.7,223.2,101.0,-101.0,-1.7,223.2,True,True,True,0.4975,0.5025,230
+2026-01-04,2025-2026,Miami Heat,Denver Nuggets,106,123,-1.3,207.3,213.0,-213.0,1.3,207.3,False,False,True,0.3195,0.6805,229
+2026-01-04,2025-2026,Brooklyn Nets,Portland Trail Blazers,122,111,3.5,217.1,-111.0,111.0,-3.5,217.1,True,True,True,0.5261,0.4739,233
+2026-01-04,2025-2026,Orlando Magic,Milwaukee Bucks,128,117,-0.4,218.8,-149.0,149.0,0.4,218.8,True,True,True,0.5984,0.4016,245
+2026-01-05,2025-2026,Detroit Pistons,Minnesota Timberwolves,116,115,1.7,200.9,122.0,-122.0,-1.7,200.9,True,False,True,0.4505,0.5495,231
+2026-01-05,2025-2026,LA Clippers,Toronto Raptors,118,121,-1.9,221.0,-121.0,121.0,1.9,221.0,False,False,True,0.5475,0.4525,239
+2026-01-05,2025-2026,Minnesota Timberwolves,Sacramento Kings,112,107,1.0,212.7,-278.0,278.0,-1.0,212.7,True,True,True,0.7354,0.2646,219
+2026-01-05,2025-2026,Denver Nuggets,Brooklyn Nets,114,119,-4.1,205.8,-134.0,134.0,4.1,205.8,False,False,True,0.5726,0.4274,233
+2026-01-05,2025-2026,Utah Jazz,Milwaukee Bucks,117,103,2.3,195.5,-151.0,151.0,-2.3,195.5,True,True,True,0.6016,0.3984,220
+2026-01-06,2025-2026,Phoenix Suns,San Antonio Spurs,115,107,2.5,217.1,-278.0,278.0,-2.5,217.1,True,True,True,0.7354,0.2646,222
+2026-01-06,2025-2026,Philadelphia 76ers,Portland Trail Blazers,138,114,1.6,211.3,152.0,-152.0,-1.6,211.3,True,True,True,0.3968,0.6032,252
+2026-01-06,2025-2026,Golden State Warriors,New Orleans Pelicans,114,111,2.8,215.9,178.0,-178.0,-2.8,215.9,True,True,True,0.3597,0.6403,225
+2026-01-06,2025-2026,New Orleans Pelicans,Utah Jazz,120,114,4.5,195.5,-206.0,206.0,-4.5,195.5,True,True,True,0.6732,0.3268,234
+2026-01-06,2025-2026,Houston Rockets,Memphis Grizzlies,137,110,3.0,227.9,-278.0,278.0,-3.0,227.9,True,True,True,0.7354,0.2646,247
+2026-01-10,2025-2026,Sacramento Kings,Cleveland Cavaliers,116,113,-7.9,201.0,-160.0,160.0,7.9,201.0,True,True,True,0.6154,0.3846,229
+2026-01-10,2025-2026,Charlotte Hornets,Washington Wizards,112,104,0.2,201.4,240.0,-240.0,-0.2,201.4,True,True,True,0.2941,0.7059,216
+2026-01-10,2025-2026,Atlanta Hawks,Milwaukee Bucks,115,112,1.2,209.3,-136.0,136.0,-1.2,209.3,True,True,True,0.5763,0.4237,227
+2026-01-10,2025-2026,Toronto Raptors,Minnesota Timberwolves,110,104,6.3,219.6,127.0,-127.0,-6.3,219.6,True,False,False,0.4405,0.5595,214
+2026-01-10,2025-2026,Dallas Mavericks,Utah Jazz,119,117,6.7,221.5,-278.0,278.0,-6.7,221.5,True,False,True,0.7354,0.2646,236
+2026-01-11,2025-2026,Washington Wizards,Cleveland Cavaliers,123,109,3.5,223.3,-255.0,255.0,-3.5,223.3,True,True,True,0.7183,0.2817,232
+2026-01-11,2025-2026,Portland Trail Blazers,Toronto Raptors,118,102,2.6,218.7,-278.0,278.0,-2.6,218.7,True,True,True,0.7354,0.2646,220
+2026-01-11,2025-2026,Boston Celtics,Phoenix Suns,119,112,5.4,219.4,-153.0,153.0,-5.4,219.4,True,True,True,0.6047,0.3953,231
+2026-01-11,2025-2026,Oklahoma City Thunder,Sacramento Kings,125,122,-3.6,203.4,155.0,-155.0,3.6,203.4,True,True,True,0.3922,0.6078,247
+2026-01-11,2025-2026,New York Knicks,Philadelphia 76ers,119,116,6.1,218.8,-171.0,171.0,-6.1,218.8,True,False,True,0.631,0.369,235

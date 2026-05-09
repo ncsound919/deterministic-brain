@@ -1,0 +1,131 @@
+{
+  "live_mode": "live_h2h",
+  "live_games": 4,
+  "live_outcomes": 68,
+  "best_odds": {
+    "h2h:Cleveland Cavaliers": {
+      "team": "Cleveland Cavaliers",
+      "market": "h2h",
+      "book": "FanDuel",
+      "price": -176,
+      "prob": 0.6376811594202898,
+      "decimal": 0.36231884057971014,
+      "market_ev": -0.7689561016593153
+    },
+    "h2h:Detroit Pistons": {
+      "team": "Detroit Pistons",
+      "market": "h2h",
+      "book": "LowVig.ag",
+      "price": 158,
+      "prob": 0.3875968992248062,
+      "decimal": 2.58,
+      "market_ev": 0.0
+    },
+    "h2h:Los Angeles Lakers": {
+      "team": "Los Angeles Lakers",
+      "market": "h2h",
+      "book": "FanDuel",
+      "price": 310,
+      "prob": 0.24390243902439024,
+      "decimal": 4.1,
+      "market_ev": -1.1102230246251565e-16
+    },
+    "h2h:Oklahoma City Thunder": {
+      "team": "Oklahoma City Thunder",
+      "market": "h2h",
+      "book": "Bovada",
+      "price": -340,
+      "prob": 0.7727272727272727,
+      "decimal": 0.22727272727272727,
+      "market_ev": -0.8243801652892562
+    },
+    "h2h:New York Knicks": {
+      "team": "New York Knicks",
+      "market": "h2h",
+      "book": "DraftKings",
+      "price": -115,
+      "prob": 0.5348837209302325,
+      "decimal": 0.46511627906976744,
+      "market_ev": -0.7512168739859384
+    },
+    "h2h:Philadelphia 76ers": {
+      "team": "Philadelphia 76ers",
+      "market": "h2h",
+      "book": "FanDuel",
+      "price": 102,
+      "prob": 0.49504950495049505,
+      "decimal": 2.02,
+      "market_ev": 0.0
+    },
+    "h2h:Minnesota Timberwolves": {
+      "team": "Minnesota Timberwolves",
+      "market": "h2h",
+      "book": "Bovada",
+      "price": 165,
+      "prob": 0.37735849056603776,
+      "decimal": 2.65,
+      "market_ev": 0.0
+    },
+    "h2h:San Antonio Spurs": {
+      "team": "San Antonio Spurs",
+      "market": "h2h",
+      "book": "FanDuel",
+      "price": -184,
+      "prob": 0.647887323943662,
+      "decimal": 0.352112676056338,
+      "market_ev": -0.7718706605832176
+    }
+  },
+  "backtest_kelly": {
+    "strategy": "kelly_0.25_edge_0.00_ml",
+    "starting_bankroll": 10000,
+    "ending_bankroll": 14675.36,
+    "total_return": 4675.3579,
+    "roi": 0.4675,
+    "win_rate": 0.8049,
+    "total_bets": 41,
+    "wins": 33,
+    "losses": 8,
+    "pushes": 0,
+    "avg_odds": 0.0,
+    "avg_edge": 0.0819,
+    "kelly_fraction": 0.25,
+    "sharpe": 10.7336,
+    "max_drawdown": 211.29,
+    "max_drawdown_pct": 0.0211,
+    "roi_per_season": {},
+    "monte_carlo_95ci": {}
+  },
+  "props_summary": {
+    "n": {
+      "PRA": 105,
+      "assists": 152,
+      "points": 289,
+      "rebounds": 188
+    },
+    "over_rate": {
+      "PRA": 0.4857142857142857,
+      "assists": 0.4407894736842105,
+      "points": 0.5086505190311419,
+      "rebounds": 0.5957446808510638
+    },
+    "avg_line": {
+      "PRA": 35.03142857142857,
+      "assists": 8.24078947368421,
+      "points": 24.12318339100346,
+      "rebounds": 9.36808510638298
+    },
+    "over_pnl": {
+      "PRA": -0.12840966587830133,
+      "assists": -0.21530068768632693,
+      "points": -0.08286632350472815,
+      "rebounds": 0.07174610136341045
+    },
+    "under_pnl": {
+      "PRA": -0.08261727783192817,
+      "assists": 0.0017831126339983112,
+      "points": -0.12116399347238502,
+      "rebounds": -0.27493674537771773
+    }
+  }
+}
