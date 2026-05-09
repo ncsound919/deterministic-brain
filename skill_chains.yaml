@@ -1,0 +1,815 @@
+# ═══════════════════════════════════════════════════════════════════════
+# SKILL CHAINS -- Pre-built business workflows for the deterministic brain.
+# Each chain = a sequence or parallel set of skills that the brain fires.
+# Categories: DailyOps | Marketing | Promotion | Networking | SaaS | System
+# ═══════════════════════════════════════════════════════════════════════
+
+chains:
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: DAILY OPS (existing -- preserved)
+  # ═══════════════════════════════════════════════════════════════════
+
+  morning-kickstart:
+    description: "Wake-up briefing -- news, market data, agent health, social queue"
+    trigger: "cron"
+    cron: "0 7 * * *"
+    steps:
+      - skill: "news-fetch"
+        inputs: { "limit": 5 }
+        parallel: true
+      - skill: "market-data"
+        inputs: { "format": "summary" }
+        parallel: true
+      - skill: "agent-orchestrate"
+        inputs: { "action": "health_check" }
+        parallel: true
+    notify:
+      summary: "Morning briefing ready"
+    outputs:
+      - "knowledge_bank"
+
+  vibeserve-dev-sprint:
+    description: "Full build/test/deploy cycle for VibeServe"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../VibeServe" }
+      - skill: "github-manage"
+        inputs: { "repo": "ncsound919/VibeServe", "action": "list_issues" }
+      - skill: "agent-orchestrate"
+        inputs: { "target": "VibeServe", "action": "plan_sprint" }
+    post:
+      - skill: "deploy-web"
+        inputs: { "target": "cloudflare" }
+        condition: "on_success"
+
+  content-publish:
+    description: "Generate and schedule social content across platforms"
+    trigger: "cron"
+    cron: "0 9,12,16 * * *"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "auto", "platforms": ["twitter", "linkedin", "bluesky"] }
+      - skill: "news-fetch"
+        inputs: { "limit": 3 }
+        parallel: true
+    notify:
+      summary: "Social posts queued for today"
+
+  repo-health:
+    description: "Audit all active repos, score, report"
+    trigger: "cron"
+    cron: "0 2 * * 0"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../VibeServe" }
+        parallel: true
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../Overlay-Chain" }
+        parallel: true
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../tap919-middleman" }
+        parallel: true
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../Indy-Music-Platform" }
+        parallel: true
+    notify:
+      email: "weekly-repo-health"
+
+  learning-consolidation:
+    description: "AutoDream + knowledge bank + bandit evolve -- full learning loop"
+    trigger: "cron"
+    cron: "0 3 * * *"
+    steps:
+      - skill: "autodream"
+        inputs: { "dry_run": false }
+    post:
+      - call: "reward_tracker.feed_bandit"
+      - call: "reward_tracker.feed_evolver"
+      - call: "nightly_scorer.run_daily_score"
+      - skill: "skill_expander"
+        inputs: { "max_downloads": 2 }
+
+  marketing-autopilot:
+    description: "SEO analysis, AEO tracking, social batch"
+    trigger: "cron"
+    cron: "0 10 * * *"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "seo", "platforms": ["web"] }
+      - skill: "news-fetch"
+        inputs: { "topic": "AI marketing trends", "limit": 5 }
+    notify:
+      summary: "Marketing autopilot complete"
+
+  agent-health-check:
+    description: "Check all daemons, heal failures, verify circuit breakers"
+    trigger: "cron"
+    cron: "*/30 * * * *"
+    steps:
+      - skill: "agent-orchestrate"
+        inputs: { "action": "health_check", "auto_heal": true }
+
+  overlay-chain-build:
+    description: "Supply chain SaaS dev sprint"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../Overlay-Chain" }
+      - skill: "github-manage"
+        inputs: { "repo": "ncsound919/Overlay-Chain", "action": "list_issues" }
+    post:
+      - skill: "deploy-web"
+        inputs: { "target": "cloudflare" }
+        condition: "on_success"
+
+  weekly-report:
+    description: "Cross-vertical report -- revenue, health, learning, suggestions"
+    trigger: "cron"
+    cron: "0 8 * * 1"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "../VibeServe", "report": "summary" }
+        parallel: true
+    post:
+      - call: "reward_tracker.stats"
+      - call: "nightly_scorer.generate_report"
+      - call: "bandit.get_stats"
+      - call: "policy_engine.stats"
+    notify:
+      email: "weekly-report"
+      summary: "Weekly report ready at .weekly_report.json"
+
+  ncsound-branding-post:
+    description: "Schedule music branding content twice weekly"
+    trigger: "cron"
+    cron: "0 12 * * 3,6"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "music-production", "platforms": ["twitter", "instagram"] }
+
+  midnight-deep-work:
+    description: "Tap's 10pm-1am peak window -- fire resource-heavy tasks"
+    trigger: "cron"
+    cron: "0 22 * * *"
+    steps:
+      - skill: "skill_expander"
+        inputs: { "max_downloads": 5 }
+      - skill: "autodream"
+        inputs: { "dry_run": false, "deep_scan": true }
+    notify:
+      summary: "Deep work cycle started"
+
+  swarm-inventory-refresh:
+    description: "Discover all repos from tap919 + ncsound919, auto-queue un-audited"
+    trigger: "cron"
+    cron: "0 4 * * *"
+    steps:
+      - skill: "repo-inventory-discover"
+        inputs: { "max_queue": 5 }
+    post:
+      - call: "swarm_worker.tick"
+      - call: "repo_inventory.auto_queue"
+    notify:
+      summary: "Repo inventory refreshed"
+
+  swarm-repo-audit:
+    description: "Process swarm queue -- clone, audit, fix, commit, open PRs"
+    trigger: "cron"
+    cron: "0 5 * * *"
+    steps:
+      - skill: "swarm-worker-process"
+        inputs: { "max_tasks": 3 }
+    notify:
+      summary: "Swarm audit cycle complete"
+
+  nightly-financial-sweep:
+    description: "Market data fetch -> odds analysis -> betting recs"
+    trigger: "cron"
+    cron: "0 1 * * *"
+    steps:
+      - skill: "market-data"
+        inputs: { "format": "detailed", "markets": ["crypto", "stocks", "forex"] }
+        parallel: true
+      - skill: "odds-client"
+        inputs: { "sport": "all", "limit": 20 }
+        parallel: true
+    post:
+      - skill: "monte-carlo-bettor"
+        inputs: { "simulations": 5000 }
+        condition: "always"
+    notify:
+      summary: "Financial sweep complete"
+
+  content-crosspost:
+    description: "Crosspost existing content to all configured platforms"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "auto", "platforms": ["twitter", "linkedin", "bluesky", "threads"] }
+    notify:
+      summary: "Crosspost complete"
+
+  news-briefing:
+    description: "Fetch latest news from all configured providers"
+    trigger: "cron"
+    cron: "0 */6 * * *"
+    steps:
+      - skill: "news-fetch"
+        inputs: { "providers": ["newsapi", "gnews", "worldnews", "rss"] }
+    notify:
+      summary: "News briefing updated"
+
+  market-pulse:
+    description: "Crypto trends + stock quotes + financial overview"
+    trigger: "cron"
+    cron: "0 */4 * * *"
+    steps:
+      - skill: "crypto-trending"
+        inputs: { "top": 20 }
+      - skill: "market-data"
+        inputs: { "format": "detailed" }
+    notify:
+      summary: "Market pulse updated"
+
+  weather-check:
+    description: "Current weather for configured locations"
+    trigger: "cron"
+    cron: "0 7,12,18 * * *"
+    steps:
+      - skill: "weather-current"
+        inputs: { "latitude": 40.7128, "longitude": -74.0060 }
+
+  full-night-cycle:
+    description: "Complete night cycle: inventory -> audit -> learn -> report"
+    trigger: "manual"
+    steps:
+      - skill: "swarm-inventory-refresh"
+        inputs: {}
+      - skill: "swarm-repo-audit"
+        inputs: { "max_tasks": 5 }
+      - skill: "autodream"
+        inputs: { "dry_run": false, "deep_scan": true }
+      - skill: "news-fetch"
+        inputs: { "providers": ["newsapi", "gnews", "rss"] }
+        parallel: true
+      - skill: "market-data"
+        inputs: { "format": "summary" }
+        parallel: true
+
+  morning-briefing:
+    description: "Weather + top news + HN + exchange rates + crypto"
+    trigger: "cron"
+    cron: "0 7 * * *"
+    steps:
+      - skill: "weather-current"
+        inputs: { "latitude": 40.7128, "longitude": -74.0060 }
+        parallel: true
+      - skill: "news-fetch"
+        inputs: { "providers": ["newsapi", "gnews"] }
+        parallel: true
+      - skill: "hn-top"
+        inputs: { "limit": 10 }
+        parallel: true
+      - skill: "exchange-latest"
+        inputs: { "base": "USD", "symbols": "EUR,GBP,JPY" }
+        parallel: true
+      - skill: "crypto-top"
+        inputs: { "per_page": 5 }
+        parallel: true
+    notify:
+      summary: "Morning briefing ready"
+
+  knowledge-scan:
+    description: "HN top stories + Wikipedia on-this-day + number facts -> knowledge bank"
+    trigger: "cron"
+    cron: "0 8 * * *"
+    steps:
+      - skill: "hn-best"
+        inputs: {}
+      - skill: "wiki-onthisday"
+        inputs: {}
+      - skill: "number-fact"
+        inputs: { "number": "random", "kind": "math" }
+
+  cross-account-repo-sync:
+    description: "Discover repos from BOTH GitHub accounts, queue for audit"
+    trigger: "manual"
+    steps:
+      - skill: "repo-inventory-discover"
+        inputs: { "accounts": ["tap919", "ncsound919"] }
+      - skill: "swarm-worker-process"
+        inputs: { "max_tasks": 3 }
+
+  revenue-check:
+    description: "Stripe balance + subscriptions + active customers snapshot"
+    trigger: "cron"
+    cron: "0 9 * * *"
+    steps:
+      - skill: "stripe-balance"
+        inputs: {}
+        parallel: true
+      - skill: "stripe-customers"
+        inputs: {}
+        parallel: true
+      - skill: "stripe-subscriptions"
+        inputs: {}
+        parallel: true
+    notify:
+      summary: "Revenue check complete"
+
+  social-pulse:
+    description: "Content schedule + crosspost + brand post"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "auto", "platforms": ["twitter", "linkedin", "bluesky"] }
+      - skill: "news-fetch"
+        inputs: { "providers": ["rss"] }
+        parallel: true
+
+  auto-social-post:
+    description: "Auto-post generated content to all configured social platforms"
+    trigger: "cron"
+    cron: "0 9,16 * * *"
+    steps:
+      - skill: "social-crosspost"
+        inputs: { "platforms": ["facebook", "instagram", "x", "discord"] }
+    notify:
+      summary: "Social posts sent"
+
+  tech-scan:
+    description: "arXiv papers + Reddit hot + Dev.to + Product Hunt + RSS feeds"
+    trigger: "cron"
+    cron: "0 */6 * * *"
+    steps:
+      - skill: "arxiv-latest"
+        inputs: { "category": "cs.AI", "max_results": 5 }
+      - skill: "reddit-hot"
+        inputs: { "subreddit": "programming", "limit": 10 }
+      - skill: "devto-top"
+        inputs: {}
+      - skill: "producthunt-trending"
+        inputs: {}
+      - skill: "tech-feeds"
+        inputs: { "feeds": ["hn", "github_trending", "dev_to"] }
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: MARKETING (NEW -- comprehensive marketing automation)
+  # ═══════════════════════════════════════════════════════════════════
+
+  marketing-social-campaign:
+    description: "End-to-end social media campaign: strategy -> content -> schedule -> publish -> analyze"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "auto", "platforms": ["twitter", "linkedin", "bluesky", "threads", "instagram"] }
+      - skill: "news-fetch"
+        inputs: { "topic": "trending hashtags", "limit": 10 }
+        parallel: true
+      - skill: "social-crosspost"
+        inputs: { "platforms": ["twitter", "linkedin", "bluesky"] }
+    post:
+      - skill: "autodream"
+        inputs: { "dry_run": false }
+        condition: "on_success"
+    notify:
+      summary: "Social campaign executed across {platform_count} platforms"
+
+  marketing-seo-audit:
+    description: "Full SEO audit: crawl site -> analyze keywords -> competitor check -> generate recommendations"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "./website", "focus": "seo_metadata" }
+      - skill: "news-fetch"
+        inputs: { "topic": "SEO trends 2025", "limit": 5 }
+        parallel: true
+      - skill: "content-schedule"
+        inputs: { "topic": "seo-optimization", "platforms": ["web"] }
+    notify:
+      summary: "SEO audit complete -- recommendations ready"
+
+  marketing-content-calendar:
+    description: "Generate a week of content across all platforms with topic clusters"
+    trigger: "cron"
+    cron: "0 6 * * 1"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "weekly-themes", "platforms": ["twitter", "linkedin", "bluesky", "threads"], "days": 7 }
+      - skill: "news-fetch"
+        inputs: { "providers": ["newsapi", "rss"], "limit": 10 }
+        parallel: true
+      - skill: "hn-top"
+        inputs: { "limit": 5 }
+        parallel: true
+    notify:
+      summary: "Weekly content calendar ready"
+
+  marketing-email-campaign:
+    description: "Draft and queue email marketing sequence: welcome -> nurture -> convert"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "email-sequence", "platforms": ["email"], "sequence": "welcome,nurture,convert" }
+      - skill: "news-fetch"
+        inputs: { "topic": "email marketing best practices", "limit": 3 }
+        parallel: true
+    post:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "./templates", "focus": "email_html" }
+        condition: "always"
+
+  marketing-competitor-analysis:
+    description: "Analyze competitors: scrape sites -> compare features -> generate positioning report"
+    trigger: "manual"
+    steps:
+      - skill: "news-fetch"
+        inputs: { "topic": "competitor launches", "providers": ["newsapi"], "limit": 10 }
+      - skill: "content-schedule"
+        inputs: { "topic": "competitive-analysis", "platforms": ["web"] }
+        parallel: true
+      - skill: "autodream"
+        inputs: { "dry_run": false }
+        parallel: true
+    notify:
+      summary: "Competitor analysis complete"
+
+  marketing-growth-hack:
+    description: "Growth hacking sprint: viral hooks -> A/B test ideas -> distribution channels"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "growth-hooks", "platforms": ["twitter", "linkedin", "reddit", "producthunt"] }
+      - skill: "hn-top"
+        inputs: { "limit": 10 }
+        parallel: true
+      - skill: "reddit-hot"
+        inputs: { "subreddit": "startups", "limit": 10 }
+        parallel: true
+      - skill: "devto-top"
+        inputs: {}
+        parallel: true
+
+  marketing-brand-refresh:
+    description: "Refresh brand assets: audit current -> generate new copy -> update platforms"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "./branding", "focus": "consistency" }
+      - skill: "content-schedule"
+        inputs: { "topic": "brand-refresh", "platforms": ["web"] }
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: PROMOTION (NEW -- launch and amplify)
+  # ═══════════════════════════════════════════════════════════════════
+
+  promotion-product-launch:
+    description: "Product launch sequence: announce -> tease -> launch -> follow-up across all channels"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "launch-announcement", "platforms": ["twitter", "linkedin", "producthunt", "bluesky", "reddit"] }
+      - skill: "news-fetch"
+        inputs: { "topic": "launch timing", "limit": 5 }
+        parallel: true
+      - skill: "hn-top"
+        inputs: { "limit": 5 }
+        parallel: true
+    post:
+      - skill: "social-crosspost"
+        inputs: { "platforms": ["twitter", "linkedin", "reddit"] }
+        condition: "on_success"
+    notify:
+      summary: "Product launch sequence fired"
+
+  promotion-cross-promote:
+    description: "Cross-promote all verticals: post each SaaS on other platform accounts"
+    trigger: "cron"
+    cron: "0 14 * * 3"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "cross-promotion", "platforms": ["twitter", "linkedin", "bluesky", "instagram"] }
+      - skill: "social-crosspost"
+        inputs: { "platforms": ["twitter", "linkedin"] }
+    notify:
+      summary: "Cross-promotion posts sent"
+
+  promotion-influencer-outreach:
+    description: "Draft outreach messages for potential collaborators and influencers"
+    trigger: "manual"
+    steps:
+      - skill: "news-fetch"
+        inputs: { "topic": "influencers in tech", "providers": ["newsapi"], "limit": 10 }
+      - skill: "content-schedule"
+        inputs: { "topic": "outreach-template", "platforms": ["twitter", "email", "linkedin"] }
+        parallel: true
+
+  promotion-landing-page:
+    description: "Build and deploy a conversion-optimized landing page"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": "./landing", "focus": "performance" }
+      - skill: "agent-orchestrate"
+        inputs: { "action": "build_landing_page" }
+    post:
+      - skill: "deploy-web"
+        inputs: { "target": "cloudflare" }
+        condition: "on_success"
+
+  promotion-event-marketing:
+    description: "Event marketing push: pre-event hype -> live posting -> post-event recap"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "event-hype", "platforms": ["twitter", "linkedin", "instagram"] }
+      - skill: "news-fetch"
+        inputs: { "topic": "event marketing trends", "limit": 5 }
+        parallel: true
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: NETWORKING (NEW -- build connections and community)
+  # ═══════════════════════════════════════════════════════════════════
+
+  networking-github-outreach:
+    description: "Find and engage with relevant GitHub projects: star -> fork -> contribute -> connect"
+    trigger: "manual"
+    steps:
+      - skill: "repo-inventory-discover"
+        inputs: { "accounts": ["tap919", "ncsound919"] }
+      - skill: "github-manage"
+        inputs: { "action": "discover_contributors" }
+        parallel: true
+      - skill: "swarm-worker-process"
+        inputs: { "max_tasks": 3 }
+    notify:
+      summary: "GitHub outreach cycle complete"
+
+  networking-twitter-engagement:
+    description: "Engage on Twitter: find conversations -> draft replies -> schedule interactions"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "engagement-threads", "platforms": ["twitter"] }
+      - skill: "news-fetch"
+        inputs: { "topic": "trending tech topics", "limit": 10 }
+        parallel: true
+    notify:
+      summary: "Twitter engagement batch ready"
+
+  networking-linkedin-presence:
+    description: "Build LinkedIn presence: articles -> comments -> connection requests"
+    trigger: "cron"
+    cron: "0 10 * * 2,4"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "thought-leadership", "platforms": ["linkedin"] }
+      - skill: "news-fetch"
+        inputs: { "topic": "industry news", "limit": 5 }
+        parallel: true
+    notify:
+      summary: "LinkedIn presence updated"
+
+  networking-community-build:
+    description: "Build community: Discord announcements -> GitHub discussions -> social engagement"
+    trigger: "manual"
+    steps:
+      - skill: "content-schedule"
+        inputs: { "topic": "community-updates", "platforms": ["discord", "twitter", "github"] }
+      - skill: "social-crosspost"
+        inputs: { "platforms": ["discord", "twitter"] }
+    notify:
+      summary: "Community engagement batch sent"
+
+  networking-collab-discovery:
+    description: "Discover collaboration opportunities: scan HN/Reddit/Dev.to for collab posts"
+    trigger: "manual"
+    steps:
+      - skill: "hn-top"
+        inputs: { "limit": 15 }
+        parallel: true
+      - skill: "reddit-hot"
+        inputs: { "subreddit": "programming", "limit": 10 }
+        parallel: true
+      - skill: "reddit-hot"
+        inputs: { "subreddit": "webdev", "limit": 10 }
+        parallel: true
+      - skill: "devto-top"
+        inputs: {}
+        parallel: true
+      - skill: "content-schedule"
+        inputs: { "topic": "collaboration", "platforms": ["twitter"] }
+    notify:
+      summary: "Collab opportunities scanned"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: SAAS DEVELOPMENT (NEW -- full dev pipeline)
+  # ═══════════════════════════════════════════════════════════════════
+
+  saas-fullstack-scaffold:
+    description: "Scaffold a complete SaaS app: backend -> frontend -> database -> auth -> deploy"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "architecture" }
+      - skill: "agent-orchestrate"
+        inputs: { "action": "scaffold_fullstack" }
+    post:
+      - skill: "deploy-web"
+        inputs: { "target": "cloudflare" }
+        condition: "on_success"
+    notify:
+      summary: "Fullstack scaffold complete"
+
+  saas-deploy-pipeline:
+    description: "CI/CD deploy chain: test -> build -> deploy -> verify -> notify"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "ci_cd" }
+      - skill: "github-manage"
+        inputs: { "action": "check_workflows" }
+        parallel: true
+    post:
+      - skill: "deploy-web"
+        inputs: { "target": "cloudflare" }
+        condition: "on_success"
+
+  saas-test-suite:
+    description: "Run full test suite: unit -> integration -> e2e -> coverage report"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "test_coverage" }
+      - skill: "agent-orchestrate"
+        inputs: { "action": "run_tests" }
+    post:
+      - call: "nightly_scorer.generate_report"
+        condition: "on_success"
+    notify:
+      summary: "Test suite complete"
+
+  saas-monitoring-setup:
+    description: "Set up monitoring: health checks -> alerts -> logging -> dashboard"
+    trigger: "manual"
+    steps:
+      - skill: "agent-orchestrate"
+        inputs: { "action": "health_check" }
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "monitoring" }
+        parallel: true
+    notify:
+      summary: "Monitoring configured"
+
+  saas-api-docs-generate:
+    description: "Generate API documentation from codebase: OpenAPI spec -> docs site"
+    trigger: "manual"
+    steps:
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "api_endpoints" }
+      - skill: "agent-orchestrate"
+        inputs: { "action": "generate_api_docs" }
+
+  saas-revenue-optimize:
+    description: "Revenue optimization: Stripe analytics -> churn prediction -> pricing suggestions"
+    trigger: "cron"
+    cron: "0 10 * * 1"
+    steps:
+      - skill: "stripe-balance"
+        inputs: {}
+        parallel: true
+      - skill: "stripe-customers"
+        inputs: {}
+        parallel: true
+      - skill: "stripe-subscriptions"
+        inputs: {}
+        parallel: true
+    post:
+      - call: "nightly_scorer.generate_report"
+      - skill: "content-schedule"
+        inputs: { "topic": "revenue-insights", "platforms": ["web"] }
+    notify:
+      summary: "Revenue optimization analysis complete"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: SYSTEM IMPROVEMENT (NEW -- self-healing and optimization)
+  # ═══════════════════════════════════════════════════════════════════
+
+  system-self-audit:
+    description: "Full system self-audit: all subsystems -> health score -> recommendations"
+    trigger: "manual"
+    steps:
+      - skill: "agent-orchestrate"
+        inputs: { "action": "health_check", "detailed": true }
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "code_quality" }
+        parallel: true
+    post:
+      - skill: "autodream"
+        inputs: { "dry_run": false, "deep_scan": true }
+      - call: "nightly_scorer.run_daily_score"
+    notify:
+      summary: "Self-audit complete -- report at .autodream_last_run.json"
+
+  system-full-optimize:
+    description: "Deep optimization: traces vacuum -> Qdrant dedup -> Neo4j prune -> KB consolidate -> cache clean"
+    trigger: "manual"
+    steps:
+      - skill: "autodream"
+        inputs: { "dry_run": false, "deep_scan": true }
+    post:
+      - call: "reward_tracker.feed_bandit"
+      - call: "reward_tracker.feed_evolver"
+    notify:
+      summary: "Full system optimization complete"
+
+  system-heal-loop:
+    description: "Self-healing cycle: find failures -> diagnose -> repair -> verify -> learn"
+    trigger: "manual"
+    steps:
+      - skill: "agent-orchestrate"
+        inputs: { "action": "health_check", "auto_heal": true }
+      - skill: "autodream"
+        inputs: { "dry_run": false }
+    post:
+      - call: "nightly_scorer.run_daily_score"
+      - skill: "skill_expander"
+        inputs: { "max_downloads": 2 }
+    notify:
+      summary: "Healing loop complete"
+
+  system-expand-skills:
+    description: "Expand skill library: discover -> download -> register -> test new skills"
+    trigger: "manual"
+    steps:
+      - skill: "skill_expander"
+        inputs: { "max_downloads": 5 }
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "skill_coverage" }
+        parallel: true
+    post:
+      - call: "nightly_scorer.run_daily_score"
+    notify:
+      summary: "Skills expanded and scored"
+
+  system-evolve-bandit:
+    description: "Evolve the bandit: feed all reward data -> recalculate weights -> update routing"
+    trigger: "cron"
+    cron: "0 2 * * *"
+    steps:
+      - skill: "autodream"
+        inputs: { "dry_run": false }
+    post:
+      - call: "reward_tracker.feed_bandit"
+      - call: "reward_tracker.feed_evolver"
+      - call: "nightly_scorer.run_daily_score"
+    notify:
+      summary: "Bandit evolved -- routing weights updated"
+
+  system-intelligence-report:
+    description: "Generate comprehensive system intelligence: health + learning + predictions + recommendations"
+    trigger: "manual"
+    steps:
+      - skill: "agent-orchestrate"
+        inputs: { "action": "health_check" }
+        parallel: true
+      - skill: "audit-repo"
+        inputs: { "repo_path": ".", "focus": "full" }
+        parallel: true
+    post:
+      - call: "reward_tracker.stats"
+      - call: "nightly_scorer.generate_report"
+      - call: "bandit.get_stats"
+      - call: "policy_engine.stats"
+    notify:
+      summary: "System intelligence report ready"
+
+# ═══════════════════════════════════════════════════════════════════════
+# CRON MASTER SCHEDULE (EST timezone -- all times in America/New_York)
+# ═══════════════════════════════════════════════════════════════════════
+#
+# 01:00  -- nightly-financial-sweep (market + odds + betting recs)
+# 02:00  -- system-evolve-bandit (bandit weights)  [NEW]
+# 02:00  -- repo-health (Sunday only)
+# 03:00  -- learning-consolidation (bandit evolve, autodream)
+# 04:00  -- swarm-inventory-refresh (discover repos, auto-queue)
+# 05:00  -- swarm-repo-audit (clone, audit, fix, PR)
+# 06:00  -- marketing-content-calendar (Monday)  [NEW]
+# 07:00  -- morning-kickstart (news, market, agent check)
+# 08:00  -- knowledge-scan (HN, Wikipedia)
+# 08:00  -- weekly-report (Monday only)
+# 09:00  -- content-publish (morning social)
+# 09:00  -- revenue-check (Stripe snapshot)
+# 10:00  -- marketing-autopilot
+# 10:00  -- saas-revenue-optimize (Monday)  [NEW]
+# 10:00  -- networking-linkedin-presence (Tue, Thu)  [NEW]
+# 12:00  -- content-publish (midday) + NCSOUND (Wed/Sat)
+# 14:00  -- promotion-cross-promote (Wednesday)  [NEW]
+# 16:00  -- content-publish (afternoon social)
+# 22:00  -- midnight-deep-work (Tap's peak coding window)
+# */30   -- agent-health-check (every 30 min)
+# */4h   -- market-pulse, news-briefing, tech-scan
+#
+# ═══════════════════════════════════════════════════════════════════════
