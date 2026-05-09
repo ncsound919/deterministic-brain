@@ -47,6 +47,34 @@ devpets/
 .autodream_last_run.json
 .autodream_corrections.jsonl
 
+# Benchmarks
+.benchmarks/
+.long_run/
+_test_*.py
+_test_log.txt
+_long_run_log.txt
+*.tmp
+
+# State
+.repo_inventory.json
+.reward_tracker_state.json
+.skill_performance.json
+.skill_weights.json
+.nightly_score_report.json
+.night_cycle_report.json
+.night_cycle_result.json
+.dream_log.json
+.heal_runtime_log.json
+.scheduler_tasks.json
+.brain_key
+.credentials.enc
+
+# External Repos (Temporary)
+Paper2Video-main/
+Superalgos-master/
+awesome-openclaw-skills-main/
+open-multi-agent-main/
+
 # pytest
 .pytest_cache/
 

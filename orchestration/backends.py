@@ -8,6 +8,8 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+_BUILDS_DIR = "builds"
+
 
 class SkillBackend(ABC):
     """Abstract base class for all skill backends."""
@@ -88,7 +90,7 @@ class LocalSkillBackend(SkillBackend):
 
         front_matter, steps = self._parse_skill_md(content)
 
-        # If no executable ## Step blocks, extract code blocks as artifacts
+        # If no executable ## Step blocks and no code blocks, try LLM fallback
         if not steps:
             code_blocks = re.findall(
                 r"```(\w+)?\n(.*?)```", content, re.DOTALL
@@ -103,20 +105,16 @@ class LocalSkillBackend(SkillBackend):
                     "output": f"Skill: {skill_id} — extracted {len(artifacts)} code blocks",
                     "artifacts": artifacts,
                     "logs": [
-                        f"Extracted {len(artifacts)} code blocks from SKILL.md",
+                        f"Extracted {len(artifacts)} code blocks from skill.md",
                         *[f"  [{a['lang']}] {len(a['content'])} chars" for a in artifacts],
                     ],
                 }
 
-            return {
-                "success": True,
-                "output": f"Skill: {skill_id} — documentation (no code blocks)",
-                "artifacts": [{"lang": "text", "content": content[:2000]}],
-                "logs": ["No executable steps or code blocks — returning raw documentation"],
-            }
+            return self._llm_fallback(skill_id, content, task, context)
 
         artifacts = []
         logs = []
+        build_id = task.get("session_id", "")
 
         for i, step in enumerate(steps):
             logs.append(f"Executing step {i+1}: {step.get('description', 'unnamed')}")
@@ -127,11 +125,12 @@ class LocalSkillBackend(SkillBackend):
                     try:
                         tmpl = Template(template_text)
                         rendered = tmpl.render(**task)
-                        output_path = step.get("output", f"output/{skill_id}/step{i+1}.txt")
+                        output_path_raw = step.get("output", f"output/{skill_id}/step{i+1}.txt")
+                        output_path = Template(output_path_raw).render(**task) if "{{" in output_path_raw else output_path_raw
                         os.makedirs(os.path.dirname(output_path), exist_ok=True)
                         file_write(output_path, rendered)
-                        artifacts.append({"path": output_path, "type": "file"})
-                        logs.append(f"Wrote {output_path}")
+                        artifacts.append({"file": os.path.basename(output_path), "path": output_path, "type": "file"})
+                        logs.append(f"Wrote {output_path} ({len(rendered)} chars)")
                     except Exception as e:
                         logs.append(f"Template error: {e}")
             elif step.get("command"):
@@ -139,9 +138,11 @@ class LocalSkillBackend(SkillBackend):
 
         return {
             "success": True,
-            "output": f"Executed {len(steps)} steps for skill {skill_id}",
+            "output": f"Generated {len(artifacts)} files",
             "artifacts": artifacts,
             "logs": logs,
+            "build_id": build_id,
+            "preview_url": f"/preview/{build_id}",
         }
 
     def _parse_skill_md(self, content: str) -> tuple[Dict, list[Dict]]:
@@ -161,10 +162,23 @@ class LocalSkillBackend(SkillBackend):
         for match in re.finditer(step_pattern, content, re.DOTALL):
             step_text = match.group(2).strip()
             step = {"description": step_text}
-            if '`' in step_text:
+
+            # Parse "Render template `X` with context" → template action
+            tmpl_match = re.search(r'Render template `([^`]+)`', step_text)
+            if tmpl_match:
+                step["template"] = tmpl_match.group(1)
+
+            # Parse "Write result to `path`" → output path
+            write_match = re.search(r'Write result to `([^`]+)`', step_text)
+            if write_match:
+                step["output"] = write_match.group(1)
+
+            # Parse backtick content as command (fallback)
+            if not step.get("template"):
                 code_match = re.search(r'`([^`]+)`', step_text)
                 if code_match:
                     step["command"] = code_match.group(1)
+
             steps.append(step)
 
         return front_matter, steps
@@ -177,6 +191,148 @@ class LocalSkillBackend(SkillBackend):
             with open(template_path, 'r', encoding='utf-8') as f:
                 return f.read()
         return None
+
+    def _llm_fallback(self, skill_id: str, skill_content: str, task: Dict, context: Dict) -> Dict[str, Any]:
+        """When a skill has no templates or code, use LLM to generate actual code."""
+        import hashlib
+        import time
+        import re
+
+        llm_enabled = os.getenv("LLM_ENABLED", "").lower() == "true"
+        if not llm_enabled:
+            llm_enabled = bool(os.getenv("OPENROUTER_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
+
+        if not llm_enabled:
+            return {
+                "success": True,
+                "output": f"Skill: {skill_id} — documentation (no code blocks, LLM off)",
+                "artifacts": [{"lang": "text", "content": f"#[LLM OFF] {skill_content[:500]}...\n\nSet OPENROUTER_API_KEY to generate code."}],
+                "logs": ["LLM is OFF — set OPENROUTER_API_KEY in .env to enable code generation"],
+            }
+
+        user_query = task.get("raw", task.get("task", "build something"))
+        soul_context = task.get("soul_context", "")
+        kb_context = ""
+        if task.get("knowledge_context"):
+            kb_context = "\n".join(
+                f"- {k['title']}: {k['text'][:200]}"
+                for k in task["knowledge_context"]
+            )
+
+        prompt = f"""You are an expert developer. Follow these instructions from the skill file:
+
+{skill_content}
+
+IMPORTANT CONTEXT:
+- User request: {user_query}
+{soul_context}
+{kb_context}
+
+Generate complete, working code. Output ONLY code blocks — no explanations outside code blocks.
+Use ```language notation for each file. Include ALL files needed for the project to work.
+For web projects include index.html with full HTML/CSS/JS inline.
+For React projects include the component file and any needed imports.
+For API projects include the main server file.
+
+If writing HTML, include ALL styles inline in <style> tags — make it look production-ready:
+- Use a modern dark theme with cyan/magenta accents
+- Include proper responsive layout
+- Add hover effects and transitions
+- Make the code ready to open in a browser immediately
+"""
+
+        result = None
+        logs = []
+
+        try:
+            from tools.llm.openrouter_client import get_client
+            client = get_client()
+            if client.available:
+                logs.append("Using OpenRouter for code generation")
+                response = client.generate_text(prompt, lane="coding", max_tokens=4096)
+                result = response
+            else:
+                raise Exception("OpenRouter not available")
+        except Exception:
+            try:
+                import os as _os
+                ak = _os.getenv("ANTHROPIC_API_KEY", "")
+                if ak:
+                    import anthropic
+                    cl = anthropic.Anthropic(api_key=ak)
+                    resp = cl.messages.create(
+                        model="claude-sonnet-4-5-20250514",
+                        max_tokens=4096,
+                        system=prompt,
+                        messages=[{"role": "user", "content": user_query}],
+                    )
+                    result = resp.content[0].text if resp.content else ""
+                    logs.append("Using Anthropic for code generation")
+                else:
+                    return {
+                        "success": False,
+                        "output": "No LLM API key configured",
+                        "artifacts": [],
+                        "logs": ["ERROR: Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env"],
+                    }
+            except Exception as e2:
+                return {
+                    "success": False,
+                    "output": f"LLM call failed: {str(e2)}",
+                    "artifacts": [],
+                    "logs": [f"ERROR: {str(e2)}"],
+                }
+
+        if not result:
+            return {
+                "success": False,
+                "output": "LLM returned empty response",
+                "artifacts": [],
+                "logs": ["ERROR: Empty response from LLM"],
+            }
+
+        code_blocks = re.findall(r"```(\w*)\n(.*?)```", result, re.DOTALL)
+        if not code_blocks:
+            code_blocks = [("text", result)]
+
+        build_id = hashlib.sha256((skill_id + user_query + str(time.time())).encode()).hexdigest()[:12]
+        build_dir = os.path.join(_BUILDS_DIR, build_id)
+        os.makedirs(build_dir, exist_ok=True)
+
+        artifacts = []
+        for lang, code in code_blocks:
+            lang = lang.strip() or "txt"
+            ext_map = {
+                "html": "index.html", "css": "style.css", "javascript": "app.js",
+                "js": "app.js", "jsx": "App.jsx", "tsx": "Component.tsx",
+                "typescript": "index.ts", "ts": "index.ts",
+                "python": "main.py", "py": "main.py",
+                "json": "config.json", "yaml": "config.yaml",
+                "dockerfile": "Dockerfile", "sh": "run.sh",
+            }
+            filename = ext_map.get(lang, f"output.{lang}")
+            filepath = os.path.join(build_dir, filename)
+
+            counter = 1
+            base, ext = os.path.splitext(filename)
+            while os.path.exists(filepath):
+                filepath = os.path.join(build_dir, f"{base}_{counter}{ext}")
+                counter += 1
+
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(code.strip())
+
+            artifacts.append({"lang": lang, "file": filename, "path": filepath, "preview_url": f"/preview/{build_id}/{filename}"})
+            logs.append(f"Wrote {filename} ({len(code)} chars)")
+
+        return {
+            "success": True,
+            "output": f"Generated {len(artifacts)} files in builds/{build_id}/",
+            "artifacts": artifacts,
+            "logs": logs,
+            "build_id": build_id,
+            "preview_url": f"/preview/{build_id}",
+        }
 
     def list_skills(self) -> list[Dict[str, str]]:
         skills = []
@@ -219,12 +375,7 @@ class ClaudeSkillBackend(SkillBackend):
 
     def run(self, skill_id: str, task: Dict, context: Dict) -> Dict[str, Any]:
         if not self.api_key:
-            return {
-                "success": False,
-                "output": "Claude API key not configured",
-                "artifacts": [],
-                "logs": ["ERROR: ANTHROPIC_API_KEY not set"],
-            }
+            return self._fallback_to_openrouter(skill_id, task, context)
 
         try:
             import anthropic
@@ -249,19 +400,33 @@ class ClaudeSkillBackend(SkillBackend):
                 "logs": [f"Claude skill '{skill_id}' executed successfully"],
             }
         except ImportError:
-            return {
-                "success": False,
-                "output": "anthropic package not installed",
-                "artifacts": [],
-                "logs": ["ERROR: pip install anthropic"],
-            }
+            return self._fallback_to_openrouter(skill_id, task, context)
         except Exception as e:
-            return {
-                "success": False,
-                "output": f"Claude API error: {str(e)}",
-                "artifacts": [],
-                "logs": [f"ERROR: {str(e)}"],
-            }
+            return self._fallback_to_openrouter(skill_id, task, context)
+
+    def _fallback_to_openrouter(self, skill_id: str, task: Dict, context: Dict) -> Dict[str, Any]:
+        """When Claude API isn't available, fall back to OpenRouter or local."""
+        skill_packs = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "skill_packs")
+        local = LocalSkillBackend(skill_packs)
+
+        skill_path = None
+        for root, dirs, files in os.walk(skill_packs):
+            for d in dirs:
+                for ext in ("skill.md", "SKILL.md"):
+                    candidate = os.path.join(root, d, ext)
+                    if os.path.exists(candidate) and skill_id in candidate:
+                        skill_path = candidate
+                        break
+                if skill_path:
+                    break
+            if skill_path:
+                break
+
+        if skill_path and os.path.exists(skill_path):
+            with open(skill_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return local._llm_fallback(skill_id, content, task, context)
+        return local.run(skill_id, task, context)
 
     def _build_skill_prompt(self, skill_id: str, context: Dict) -> str:
         skill_config = context.get("skill_configs", {}).get(skill_id, {})

@@ -4,6 +4,7 @@ import glob
 import os
 import re
 import yaml
+import logging
 from typing import Dict, List, Optional
 
 from brain.task_parser import TaskParser
@@ -16,6 +17,8 @@ from tools.registry import ToolRegistry
 from tools.tracing import log_event
 
 from orchestration import get_skill_registry, get_skill_executor, SkillExecutor
+
+logger = logging.getLogger(__name__)
 
 
 class SkillExecutor:
@@ -109,6 +112,13 @@ class DeterministicCodingAgent:
         self.skills_registry.discover()
         self.skill_executor = get_skill_executor()
         
+        self.policy_engine = None
+        try:
+            from reasoning.policy_engine import get_policy_engine
+            self.policy_engine = get_policy_engine()
+        except ImportError:
+            pass
+        
         self._legacy_skills_map = self._build_legacy_map()
 
     def _build_legacy_map(self) -> Dict[str, str]:
@@ -187,6 +197,13 @@ class DeterministicCodingAgent:
         if decision.chosen_skill and decision.chosen_skill in text_to_id:
             decision.chosen_skill = text_to_id[decision.chosen_skill]
 
+        # Boost: if task parser found a known task, prefer it
+        parsed_task = task.get("task")
+        if parsed_task and parsed_task != "unknown":
+            if parsed_task in self.router.routes:
+                decision.chosen_skill = parsed_task
+                decision.confidence = max(decision.confidence, 0.85)
+
         state["reasoning"] = decision.to_dict()
 
         log_event("reasoning", {
@@ -209,6 +226,26 @@ class DeterministicCodingAgent:
             }
             return state
 
+        # ---- Policy gate — guardrail enforcement --------------------
+        if self.policy_engine:
+            policy_ctx = {
+                "segment": task.get("raw", ""),
+                "channel": decision.chosen_config.get("channel", "default"),
+                "consent": {"email": True, "sms": True, "push": True, "in_app": True, "web": True},
+                "recent_sends": {},
+                "gdpr_consent": True,
+            }
+            gate = self.policy_engine.gate(decision.chosen_config, policy_ctx)
+            state["policy_gate"] = gate.to_dict()
+            if not gate.is_allowed:
+                state["status"]       = "blocked"
+                state["final_output"] = {
+                    "error":     "Policy engine blocked execution",
+                    "blocked_by": gate.blocked_by,
+                    "reasoning": decision.to_dict(),
+                }
+                return state
+
         # ---- Low confidence — dynamic threshold ---------------------
         # When many candidates exist, cosine scores naturally dilute.
         # Scale threshold down logarithmically: log2(92) ≈ 6.5 → 0.30/6.5 ≈ 0.046
@@ -225,15 +262,37 @@ class DeterministicCodingAgent:
             }
             return state
 
-        # ---- No skill found — try path-based resolution --------
+        # ---- No skill found — try bidirectional resolution ----------
+        # Router uses hyphenated keys (e.g. "create-react-component")
+        # Registry uses directory names (e.g. "react")
+        # Bridge the gap with three strategies.
         skill_id = decision.chosen_skill
         if not skill_id or not self.skills_registry.get(skill_id):
-            # Resolve route key → registry ID via path matching
             resolved = None
-            for meta in self.skills_registry.list_all():
-                if meta.path and skill_id in meta.path:
-                    resolved = meta.skill_id
-                    break
+
+            # Strategy 1: router path leaf → registry skill_id
+            route_path = self.router.routes.get(skill_id, "")
+            if route_path:
+                leaf = route_path.rstrip("/").split("/")[-1]
+                if self.skills_registry.get(leaf):
+                    resolved = leaf
+
+            # Strategy 2: registry skill_id is substring of router key
+            if not resolved:
+                for meta in self.skills_registry.list_all():
+                    if meta.skill_id in skill_id or skill_id in meta.skill_id:
+                        resolved = meta.skill_id
+                        break
+
+            # Strategy 3: any word in skill_id matches registry skill_id
+            if not resolved:
+                words = set(skill_id.replace("-", " ").replace("_", " ").split())
+                for meta in self.skills_registry.list_all():
+                    meta_words = set(meta.skill_id.replace("-", " ").replace("_", " ").split())
+                    if words & meta_words:
+                        resolved = meta.skill_id
+                        break
+
             if resolved:
                 skill_id = resolved
             else:
@@ -241,6 +300,7 @@ class DeterministicCodingAgent:
                 state["final_output"] = {
                     "error":     f"No skill.md for '{skill_id}'",
                     "reasoning": decision.to_dict(),
+                    "hint":      f"router path: '{route_path}'",
                 }
                 return state
 
@@ -252,6 +312,30 @@ class DeterministicCodingAgent:
             **decision.chosen_config,
             "session_id": state["session_id"],
         }
+        
+        knowledge_context = []
+        try:
+            from knowledge.bank import get_knowledge_bank
+            bank = get_knowledge_bank()
+            if bank.loaded:
+                fragments = bank.query(task.get("raw", task.get("task", "")), top_k=3)
+                knowledge_context = [
+                    {"title": f.source_title, "text": f.chunk_text, "tags": f.tags}
+                    for f, score in fragments if f.confidence > 0.5
+                ]
+                exec_inputs["knowledge_context"] = knowledge_context
+                state["knowledge_used"] = len(knowledge_context)
+        except Exception:
+            pass
+        
+        try:
+            from brain.soul import get_soul
+            soul = get_soul()
+            if soul.name:
+                soul.merge_into_exec_inputs(exec_inputs)
+                state["soul_loaded"] = True
+        except Exception:
+            pass
         
         context = {
             "session_id": state["session_id"],

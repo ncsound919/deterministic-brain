@@ -5,14 +5,15 @@ from typing import Dict, List
 
 
 PATTERNS = [
+    # Old explicit patterns (backward compat)
     (
-        r"create (?:a )?react component named ([\w]+)(?: with props ([\w ,]+))?",
-        {"task": "create-react-component",
+        r"create (?:a )?react component (?:named |called )?([\w]+)(?: with props ([\w ,]+))?",
+        {"task": "react-component",
          "group_map": {"component_name": 1, "props": 2}},
     ),
     (
-        r"scaffold (?:a )?rest api for ([\w]+)",
-        {"task": "scaffold-rest-api",
+        r"scaffold (?:a )?(?:rest )?api for ([\w]+)",
+        {"task": "api-scaffold",
          "group_map": {"resource": 1}},
     ),
     (
@@ -35,7 +36,31 @@ PATTERNS = [
         {"task": "live-docs-to-skill",
          "group_map": {"url": 1}},
     ),
-    # fallback
+    # Natural language build patterns
+    (
+        r"(?:build|create|make|generate|design) (?:a |an |the )?(?:landing page|homepage)",
+        {"task": "landing-page"},
+    ),
+    (
+        r"(?:build|create|make|generate) (?:a |an )?(?:react component|component)(?: (?:named|called) ([\w]+))?",
+        {"task": "react-component", "group_map": {"component_name": 1}},
+    ),
+    (
+        r"(?:build|create|make|generate|scaffold) (?:a |an )?(?:api|backend|server|endpoint)",
+        {"task": "api-scaffold"},
+    ),
+    (
+        r"(?:build|create|make|generate) (?:a |an )?(?:layout|grid|flex|sidebar)",
+        {"task": "css-layout"},
+    ),
+    (
+        r"(?:build|create|make|generate|design|code)\s+(?:a |an |the )?(?:responsive )?(?:web(?:site|.?page|.?app)?|page|dashboard|portfolio|blog|shop|store)",
+        {"task": "landing-page"},
+    ),
+    (
+        r"(?:build|create|make|generate|design|code)\s+.+",
+        {"task": "landing-page"},
+    ),
     (r".*", {"task": "unknown"}),
 ]
 
@@ -52,7 +77,6 @@ class TaskParser:
                 for param, idx in mapping.get("group_map", {}).items():
                     val = m.group(idx) if m.lastindex and idx <= m.lastindex else ""
                     task[param] = val.strip() if val else ""
-                # normalise props string → list
                 if "props" in task and task["props"]:
                     task["props"] = [p.strip() for p in task["props"].split(",")]
                 elif "props" in task:

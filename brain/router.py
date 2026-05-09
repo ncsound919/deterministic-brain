@@ -12,6 +12,10 @@ _DEFAULT_ROUTES: Dict[str, str] = {
     "generate-dockerfile":    "skill_packs/docker",
     "audit-repo":             "lanes/audit_repo",
     "live-docs-to-skill":     "lanes/live_docs_to_skill",
+    "landing-page":           "skill_packs/landing-page",
+    "react-component":        "skill_packs/react-component",
+    "api-scaffold":           "skill_packs/api-scaffold",
+    "css-layout":             "skill_packs/css-layout",
 }
 
 LANE_PATTERNS = [

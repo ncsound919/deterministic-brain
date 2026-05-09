@@ -4,10 +4,16 @@ import json
 import os
 import sqlite3
 import time
+import warnings
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from config import cfg
+
+warnings.filterwarnings("ignore", category=UserWarning,
+                        message=r"Api key is used with an insecure connection")
+warnings.filterwarnings("ignore", category=UserWarning,
+                        message=r"Failed to obtain server version")
 
 
 def _qdrant_client():
@@ -16,7 +22,8 @@ def _qdrant_client():
     try:
         from qdrant_client import QdrantClient
         if url:
-            return QdrantClient(url=url, api_key=key)
+            return QdrantClient(url=url, api_key=key, timeout=5,
+                                check_compatibility=False)
     except ImportError:
         pass
     return None
@@ -247,6 +254,84 @@ def analyze_and_correct(config_file: str = ".autodream_corrections.jsonl") -> Li
     return corrections
 
 
+def _run_swarm_cycle(dry_run: bool = False) -> Dict:
+    try:
+        from orchestration.swarm_worker import get_swarm_worker
+        worker = get_swarm_worker()
+        if dry_run:
+            queue = worker.get_queue()
+            pending = [t for t in queue if t.get("status") == "pending"]
+            return {"status": "dry_run", "pending_count": len(pending)}
+        result = worker.tick()
+        return result
+    except ImportError:
+        return {"status": "skipped", "reason": "swarm_worker_not_loaded"}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)}
+
+
+def _run_repo_inventory_cycle(dry_run: bool = False) -> Dict:
+    try:
+        from features.repo_inventory import get_repo_inventory
+        inventory = get_repo_inventory()
+        if dry_run:
+            return {"status": "dry_run", "total": inventory.get_stats()["total"]}
+        result = inventory.refresh()
+        if result.get("status") == "ok":
+            inventory.auto_queue(max_per_run=3)
+        return result
+    except ImportError:
+        return {"status": "skipped", "reason": "repo_inventory_not_loaded"}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)}
+
+
+def consolidate_knowledge_bank(dry_run: bool = False) -> Dict:
+    result = {"status": "skipped", "reason": "knowledge_bank_not_loaded"}
+
+    try:
+        from knowledge.bank import get_knowledge_bank
+        bank = get_knowledge_bank()
+        if not bank.loaded:
+            return result
+
+        dupes = bank.find_near_duplicates(threshold=0.92)
+        merged = 0
+        if not dry_run:
+            for group in dupes:
+                bank.merge_fragments(group)
+                merged += len(group) - 1
+        else:
+            merged = sum(len(g) - 1 for g in dupes)
+
+        if not dry_run:
+            bank.age_decay(stale_days=30, decay_factor=0.95)
+            pruned = bank.prune_stale(min_confidence=0.1)
+        else:
+            pruned = 0
+
+        refs_generated = 0
+        clusters = bank.cluster_by_tags(min_size=5)
+        if not dry_run:
+            for tag, frags in clusters.items():
+                bank.generate_ref_doc(tag, frags)
+                refs_generated += 1
+
+        result = {
+            "status": "ok",
+            "duplicate_groups_found": len(dupes),
+            "fragments_merged": merged,
+            "fragments_pruned": pruned,
+            "refs_generated": refs_generated,
+            "tag_clusters": {k: len(v) for k, v in clusters.items()},
+        }
+
+    except Exception as e:
+        result = {"status": "error", "reason": str(e)}
+
+    return result
+
+
 def run_autodream(dry_run: bool = False) -> Dict:
     results = {
         "timestamp": datetime.utcnow().isoformat(),
@@ -255,6 +340,7 @@ def run_autodream(dry_run: bool = False) -> Dict:
         "qdrant_dedup": {},
         "neo4j_optimize": {},
         "traces_vacuum": {},
+        "knowledge_bank_consolidation": {},
         "corrections": [],
     }
 
@@ -264,6 +350,11 @@ def run_autodream(dry_run: bool = False) -> Dict:
     results["neo4j_optimize"] = optimize_neo4j(dry_run)
     results["traces_vacuum"] = vacuum_traces(retention_days=cfg.trace_retention_days, dry_run=dry_run)
     results["corrections"] = analyze_and_correct()
+    
+    results["knowledge_bank_consolidation"] = consolidate_knowledge_bank(dry_run=dry_run)
+
+    results["swarm_work"] = _run_swarm_cycle(dry_run=dry_run)
+    results["repo_inventory"] = _run_repo_inventory_cycle(dry_run=dry_run)
 
     output_path = ".autodream_last_run.json"
     with open(output_path, "w") as f:

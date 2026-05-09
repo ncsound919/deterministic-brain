@@ -118,11 +118,13 @@ class SkillMetadata:
         env_requires = requires.get("env", []) if isinstance(requires, dict) else []
         bins_requires = requires.get("bins", []) if isinstance(requires, dict) else []
 
+        detected_backend = fm.get("backend", "local")
+
         return cls(
             skill_id=skill_id,
             skill_name=name,
             version=fm.get("version", "1.0"),
-            backend="local",
+            backend=detected_backend,
             backend_skill_id="",
             description=description,
             inputs={},
