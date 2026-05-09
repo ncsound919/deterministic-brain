@@ -11,14 +11,21 @@ import os
 from typing import Dict, List
 
 from tools.api_client import AuthenticatedClient
+from tools.vault_aware_api import get_key
 
 CF_BASE = "https://api.cloudflare.com/client/v4"
 
 
 class CloudflareClient:
     def __init__(self, token: str = "", account_id: str = ""):
-        self.token = token or os.environ.get("CF_API_TOKEN", "")
-        self.account_id = account_id or os.environ.get("CF_ACCOUNT_ID", "")
+        self.token = get_key(
+            vault_category="cloudflare", vault_key="api_token",
+            env_var="CF_API_TOKEN", explicit=token,
+        )
+        self.account_id = get_key(
+            vault_category="cloudflare", vault_key="account_id",
+            env_var="CF_ACCOUNT_ID", explicit=account_id,
+        )
         self.client = AuthenticatedClient(
             base_url=CF_BASE,
             api_key=self.token,

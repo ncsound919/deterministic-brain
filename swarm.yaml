@@ -35,6 +35,10 @@ bundles:
 routes:
   # ── Existing skills ──────────────────────────────────────────────────
   create-react-component:   skill_packs/react
+  landing-page:             skill_packs/landing-page
+  react-component:          skill_packs/react-component
+  api-scaffold:             skill_packs/api-scaffold
+  css-layout:               skill_packs/css-layout
   scaffold-rest-api:        skill_packs/rest_api
   add-auth:                 skill_packs/auth
   generate-dockerfile:      skill_packs/docker
@@ -188,6 +192,10 @@ aliases:
   screenshot:                   ["take screenshot", "capture page", "page screenshot"]
   systematic-debugging:         ["debug", "fix bug", "root cause", "traceback"]
   create-react-component:       ["react component", "create component", "react hook", "JSX"]
+  landing-page:                 ["build a website", "landing page", "homepage", "web page", "build page", "create website", "make a site", "design page"]
+  react-component:              ["react", "component", "tsx", "typescript component", "frontend component"]
+  api-scaffold:                 ["api", "backend", "server", "endpoint", "rest", "fastapi", "scaffold api"]
+  css-layout:                   ["layout", "grid", "flex", "sidebar", "css", "design layout"]
   scaffold-rest-api:            ["rest api", "CRUD endpoint", "FastAPI", "Express route"]
   add-auth:                     ["authentication", "JWT", "OAuth", "login", "auth middleware"]
   generate-dockerfile:          ["dockerfile", "docker", "containerize", "docker image"]

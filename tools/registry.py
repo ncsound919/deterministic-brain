@@ -12,15 +12,25 @@ class ToolRegistry:
         self._register_defaults()
 
     def _register_defaults(self):
-        from tools.file_io import file_write, file_read
-        from tools.linter import run_linter
+        import shlex
         import subprocess
-        
-        self.register("file_write",  file_write)
-        self.register("file_read",   file_read)
-        self.register("run_linter",   run_linter)
+
+        try:
+            from tools.file_io import file_write, file_read
+            self.register("file_write",  file_write)
+            self.register("file_read",   file_read)
+        except ImportError:
+            pass
+
+        try:
+            from tools.linter import run_linter
+            self.register("run_linter", run_linter)
+        except ImportError:
+            pass
+
         self.register("run_command", lambda cmd: subprocess.run(
-            cmd.split(), capture_output=True, text=True, check=True))
+            cmd, capture_output=True, text=True,
+            check=True, timeout=60, shell=True))
         
         self._register_optional_tools()
 
@@ -42,6 +52,21 @@ class ToolRegistry:
             logger.debug(f"fetch_news not available: {e}")
 
         try:
+            from tools.news_api_client import get_news, NewsAPIClient, GNewsClient
+            self.register("get_news", get_news)
+            na = NewsAPIClient()
+            if na.key:
+                self.register("newsapi_headlines",
+                             lambda **kw: na.top_headlines(**kw))
+            gn = GNewsClient()
+            if gn.key:
+                self.register("gnews_headlines",
+                             lambda **kw: gn.top_headlines(**kw))
+            logger.info("Registered tools: get_news, newsapi_*, gnews_*")
+        except ImportError as e:
+            logger.debug(f"news_api_client not available: {e}")
+
+        try:
             from tools.market_data import MarketDataClient
             mdc = MarketDataClient()
             self.register("market_summary", mdc.market_summary)
@@ -57,6 +82,158 @@ class ToolRegistry:
             logger.info("Registered tool: fetch_odds")
         except ImportError as e:
             logger.debug(f"fetch_odds not available: {e}")
+
+        try:
+            from tools.free_api_clients import (
+                CoinGeckoClient, OpenMeteoClient, OddsAPIClient,
+                AlphaVantageClient, get_market_data,
+            )
+            cg = CoinGeckoClient()
+            self.register("crypto_trending", cg.trending)
+            self.register("crypto_price", cg.price)
+            self.register("crypto_top", cg.top_coins)
+            om = OpenMeteoClient()
+            self.register("weather_forecast", om.forecast)
+            self.register("weather_current", om.current)
+            oa = OddsAPIClient()
+            if oa.key:
+                self.register("odds_sports", oa.sports)
+                self.register("odds_fetch", oa.odds)
+            av = AlphaVantageClient()
+            if av.key:
+                self.register("stock_quote", av.quote)
+                self.register("stock_daily", av.daily)
+            self.register("market_data_agg", get_market_data)
+            logger.info("Registered tools: crypto_*, weather_*, odds_*, stock_*")
+        except ImportError as e:
+            logger.debug(f"free_api_clients not available: {e}")
+
+        try:
+            from tools.finance_client import StripeClient, CoinbaseClient
+            sc = StripeClient()
+            if sc.client.api_key:
+                self.register("stripe_customers", sc.list_customers)
+                self.register("stripe_subscriptions", sc.list_subscriptions)
+                self.register("stripe_balance", sc.balance)
+            cb = CoinbaseClient()
+            self.register("coinbase_spot", cb.spot_price)
+            self.register("coinbase_rates", cb.exchange_rates)
+            logger.info("Registered tools: stripe_*, coinbase_*")
+        except ImportError as e:
+            logger.debug(f"finance_client not available: {e}")
+
+        try:
+            from tools.free_api_clients import (
+                FrankfurterClient, HackerNewsClient, WikipediaClient,
+                DatamuseClient, JokeAPIClient, NumbersAPIClient,
+                get_free_dashboard,
+            )
+            ff = FrankfurterClient()
+            self.register("exchange_latest", ff.latest)
+            self.register("exchange_currencies", ff.currencies)
+            hn = HackerNewsClient()
+            self.register("hn_top", hn.top_stories)
+            self.register("hn_best", hn.best_stories)
+            self.register("hn_new", hn.new_stories)
+            wp = WikipediaClient()
+            self.register("wiki_summary", wp.summary)
+            self.register("wiki_onthisday", wp.on_this_day)
+            dm = DatamuseClient()
+            self.register("word_rhymes", dm.rhymes)
+            self.register("word_synonyms", dm.synonyms)
+            jk = JokeAPIClient()
+            self.register("get_joke", jk.get)
+            nm = NumbersAPIClient()
+            self.register("number_fact", nm.fact)
+            self.register("free_dashboard", get_free_dashboard)
+            logger.info("Registered tools: exchange_*, hn_*, wiki_*, word_*, joke_*")
+        except ImportError as e:
+            logger.debug(f"free_api_clients (extended) not available: {e}")
+
+        try:
+            from tools.more_free_apis import (
+                ArxivClient, RedditClient, DevToClient,
+                ProductHuntClient, TechFeedClient, get_tech_dashboard,
+            )
+            ax = ArxivClient()
+            self.register("arxiv_search", ax.search)
+            self.register("arxiv_latest", ax.latest_in)
+            rd = RedditClient()
+            self.register("reddit_hot", rd.hot)
+            self.register("reddit_top", rd.top)
+            dv = DevToClient()
+            self.register("devto_top", dv.top_articles)
+            self.register("devto_tag", dv.by_tag)
+            ph = ProductHuntClient()
+            self.register("producthunt_trending", ph.trending)
+            tf = TechFeedClient()
+            self.register("tech_feeds", tf.fetch)
+            self.register("tech_dashboard", get_tech_dashboard)
+            logger.info("Registered tools: arxiv_*, reddit_*, devto_*, producthunt_*, tech_*")
+        except ImportError as e:
+            logger.debug(f"more_free_apis not available: {e}")
+
+        try:
+            from features.social_posting import SocialPoster, quick_post, crosspost
+            self.register("social_post", quick_post)
+            self.register("social_crosspost", crosspost)
+            logger.info("Registered tools: social_post, social_crosspost")
+        except ImportError as e:
+            logger.debug(f"social_posting not available: {e}")
+
+        try:
+            from tools.google_client import GoogleClient, google_status
+            gc = GoogleClient()
+            if gc.maps_key:
+                self.register("google_geocode", gc.geocode)
+                self.register("google_places", gc.places_search)
+            if gc.youtube_key:
+                self.register("youtube_search", gc.youtube_search)
+            if gc.calendar_id and gc.maps_key:
+                self.register("google_calendar", gc.calendar_events)
+            if gc.email and gc.app_password:
+                self.register("gmail_send", gc.send_email)
+            self.register("google_status", google_status)
+            logger.info("Registered tools: google_*, youtube_*, gmail_*")
+        except ImportError as e:
+            logger.debug(f"google_client not available: {e}")
+
+        try:
+            from tools.research_clients import GeminiClient, PerplexityClient, deep_research
+            gm = GeminiClient()
+            if gm.key:
+                self.register("gemini_research", gm.research)
+                self.register("gemini_summarize", gm.summarize)
+                self.register("gemini_analyze", gm.analyze)
+                self.register("gemini_brainstorm", gm.brainstorm)
+                self.register("gemini_quick", gm.quick_answer)
+            self.register("deep_research", deep_research)
+            logger.info("Registered tools: gemini_*, deep_research")
+        except ImportError as e:
+            logger.debug(f"research_clients not available: {e}")
+
+        try:
+            from tools.ollama_client import OllamaClient, get_ollama
+            oc = get_ollama()
+            self.register("ollama_chat", oc.chat)
+            self.register("ollama_scaffold", oc.scaffold)
+            self.register("ollama_quick_code", oc.quick_code)
+            self.register("ollama_explain", oc.explain)
+            self.register("ollama_models", oc.models)
+            self.register("ollama_status", oc.status)
+            logger.info("Registered tools: ollama_*")
+        except ImportError as e:
+            logger.debug(f"ollama_client not available: {e}")
+
+        try:
+            from tools.litellm_proxy import LiteLLMRouter
+            router = LiteLLMRouter()
+            self.register("llm_complete", router.complete)
+            self.register("llm_chat", router.chat)
+            self.register("llm_status", router.status)
+            logger.info("Registered tools: llm_complete, llm_chat, llm_status")
+        except ImportError as e:
+            logger.debug(f"litellm_proxy not available: {e}")
 
         try:
             from tools.github_client import GitHubClient
@@ -135,10 +312,18 @@ class ToolRegistry:
         
         try:
             import requests
-            def http_request(method: str, url: str, headers: Dict = None, 
+            def http_request(method: str, url: str, headers: Dict = None,
                            json: Dict = None, data: Any = None) -> Dict:
-                resp = requests.request(method, url, headers=headers, json=json, data=data)
-                return {"status": resp.status_code, "body": resp.text, "json": resp.json() if resp.headers.get("content-type","").startswith("application/json") else None}
+                resp = requests.request(method, url, headers=headers,
+                                       json=json, data=data, timeout=30)
+                result = {"status": resp.status_code, "body": resp.text[:50000]}
+                content_type = resp.headers.get("content-type", "")
+                if "application/json" in content_type:
+                    try:
+                        result["json"] = resp.json()
+                    except Exception:
+                        result["json"] = None
+                return result
             self.register("http_request", http_request)
             logger.info("Registered tool: http_request")
         except ImportError:

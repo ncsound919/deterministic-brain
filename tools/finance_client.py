@@ -1,23 +1,30 @@
-"""Stripe + Coinbase API clients — payments, subscriptions, crypto prices.
+"""Stripe + Coinbase API clients — payments, subscriptions, crypto.
 
-Token savings: ~400 tokens per payment/crypto call.
+Now vault-aware: checks explicit arg → env var → credential vault.
 """
 
 from __future__ import annotations
+import base64
 import os
 from typing import Dict
 
 from tools.api_client import AuthenticatedClient
+from tools.vault_aware_api import get_key
 
 
 class StripeClient:
     """Stripe API — payments, subscriptions, invoices."""
 
     def __init__(self, api_key: str = ""):
+        key = get_key(
+            vault_category="stripe", vault_key="secret_key",
+            env_var="STRIPE_API_KEY", explicit=api_key,
+        )
         self.client = AuthenticatedClient(
             base_url="https://api.stripe.com/v1",
-            api_key=api_key or os.environ.get("STRIPE_API_KEY", ""),
-            auth_prefix="",
+            api_key=key,
+            auth_header="Authorization",
+            auth_prefix="Bearer ",
         )
 
     def list_customers(self) -> Dict:
@@ -34,6 +41,9 @@ class StripeClient:
     def list_invoices(self, limit: int = 10) -> Dict:
         return self.client.get("/invoices", params={"limit": limit})
 
+    def balance(self) -> Dict:
+        return self.client.get("/balance")
+
 
 class CoinbaseClient:
     """Coinbase API — spot prices, accounts, transactions."""
@@ -41,13 +51,19 @@ class CoinbaseClient:
     BASE_URL = "https://api.coinbase.com/v2"
 
     def __init__(self, api_key: str = ""):
-        self.key = api_key or os.environ.get("COINBASE_API_KEY", "")
+        self.key = get_key(
+            vault_category="coinbase", vault_key="api_key",
+            env_var="COINBASE_API_KEY", explicit=api_key,
+        )
 
     def spot_price(self, currency_pair: str = "BTC-USD") -> Dict:
         import urllib.request, json
         try:
             url = f"{self.BASE_URL}/prices/{currency_pair}/spot"
-            with urllib.request.urlopen(url, timeout=10) as r:
+            req = urllib.request.Request(url)
+            if self.key:
+                req.add_header("Authorization", f"Bearer {self.key}")
+            with urllib.request.urlopen(req, timeout=10) as r:
                 return {"ok": True, "data": json.loads(r.read())}
         except Exception as e:
             return {"ok": False, "error": str(e)}
@@ -56,7 +72,10 @@ class CoinbaseClient:
         import urllib.request, json
         try:
             url = f"{self.BASE_URL}/exchange-rates?currency={currency}"
-            with urllib.request.urlopen(url, timeout=10) as r:
+            req = urllib.request.Request(url)
+            if self.key:
+                req.add_header("Authorization", f"Bearer {self.key}")
+            with urllib.request.urlopen(req, timeout=10) as r:
                 return {"ok": True, "data": json.loads(r.read())}
         except Exception as e:
             return {"ok": False, "error": str(e)}
