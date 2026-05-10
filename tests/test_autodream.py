@@ -4,8 +4,7 @@ import os
 import sqlite3
 import tempfile
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict
+from datetime import datetime, timezone
 
 import pytest
 
@@ -137,17 +136,108 @@ def test_analyze_and_correct(autodream_module, temp_db):
         os.unlink(config_file)
 
 
-def test_run_autodream(autodream_module, temp_db, monkeypatch):
-    monkeypatch.setenv('QDRANT_URL', '')
-    monkeypatch.setenv('NEO4J_URI', '')
+from brain.correction_detector import (
+    detect_corrections,
+    write_corrections,
+    run_correction_detection,
+    get_recent_corrections,
+    clear_corrections,
+)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        output = os.path.join(tmpdir, '.autodream_last_run.json')
-        monkeypatch.setattr(autodream_module, 'run_autodream', lambda dry_run=False: {
-            "timestamp": datetime.utcnow().isoformat(),
-            "dry_run": dry_run,
-        })
-        result = autodream_module.run_autodream(dry_run=True)
 
-        assert "timestamp" in result
-        assert result["dry_run"] is True
+def test_detect_corrections_regression():
+    trace = [
+        {"skill": "react_skill", "status": "error", "timestamp": datetime.now()},
+        {"skill": "react_skill", "status": "error", "timestamp": datetime.now()},
+        {"skill": "react_skill", "status": "ok", "timestamp": datetime.now()},
+    ]
+    result = detect_corrections(trace)
+    assert len(result) == 1
+    assert result[0]["type"] == "regression"
+    assert result[0]["skill"] == "react_skill"
+    assert result[0]["count"] == 2
+
+
+def test_detect_corrections_drift():
+    trace = [
+        {"skill": "python_skill", "status": "partial", "timestamp": datetime.now()},
+        {"skill": "python_skill", "status": "partial", "timestamp": datetime.now()},
+        {"skill": "python_skill", "status": "partial", "timestamp": datetime.now()},
+    ]
+    result = detect_corrections(trace)
+    assert len(result) == 1
+    assert result[0]["type"] == "drift"
+
+
+def test_detect_corrections_no_issues():
+    trace = [
+        {"skill": "react_skill", "status": "ok", "timestamp": datetime.now()},
+        {"skill": "python_skill", "status": "ok", "timestamp": datetime.now()},
+    ]
+    result = detect_corrections(trace)
+    assert len(result) == 0
+
+
+def test_write_corrections(tmp_path):
+    import sys
+    sys.path.insert(0, str(tmp_path.parent))
+    from pathlib import Path
+
+    class FakeCORRECTIONS_FILE:
+        pass
+
+    import brain.correction_detector as cd_module
+
+    test_file = tmp_path / ".test_corrections.jsonl"
+    original = cd_module.CORRECTIONS_FILE
+    cd_module.CORRECTIONS_FILE = test_file
+
+    try:
+        corrections = [
+            {"type": "regression", "skill": "test_skill", "timestamp": datetime.now(timezone.utc).isoformat()},
+            {"type": "drift", "skill": "test_skill2", "timestamp": datetime.now(timezone.utc).isoformat()},
+        ]
+        count = cd_module.write_corrections(corrections)
+        assert count == 2
+        assert test_file.exists()
+        lines = test_file.read_text().strip().split("\n")
+        assert len(lines) == 2
+    finally:
+        cd_module.CORRECTIONS_FILE = original
+        if test_file.exists():
+            test_file.unlink()
+
+
+def test_run_correction_detection(tmp_path):
+    import brain.correction_detector as cd_module
+
+    test_file = tmp_path / ".test_corrections.jsonl"
+    original = cd_module.CORRECTIONS_FILE
+    cd_module.CORRECTIONS_FILE = test_file
+
+    try:
+        trace = [
+            {"skill": "broken_skill", "status": "error", "timestamp": datetime.now()},
+        ]
+        count = cd_module.run_correction_detection(trace)
+        assert count == 1
+        assert test_file.exists()
+    finally:
+        cd_module.CORRECTIONS_FILE = original
+        if test_file.exists():
+            test_file.unlink()
+
+
+def test_clear_corrections(tmp_path):
+    import brain.correction_detector as cd_module
+
+    test_file = tmp_path / ".test_corrections.jsonl"
+    test_file.write_text("fake data\n")
+    original = cd_module.CORRECTIONS_FILE
+    cd_module.CORRECTIONS_FILE = test_file
+
+    try:
+        cd_module.clear_corrections()
+        assert not test_file.exists()
+    finally:
+        cd_module.CORRECTIONS_FILE = original

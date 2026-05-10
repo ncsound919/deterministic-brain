@@ -5,8 +5,8 @@ import os
 import sqlite3
 import time
 import warnings
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List
 
 from config import cfg
 
@@ -347,8 +347,33 @@ def run_autodream(dry_run: bool = False) -> Dict:
     for collection in ["code_kb", "policy_kb", "agent_kb", "tools_kb", "general_kb"]:
         results["qdrant_dedup"][collection] = deduplicate_qdrant(collection, dry_run)
 
+    from brain.correction_detector import run_correction_detection
+
+    session_trace = []
+    conn = sqlite3.connect("traces.db")
+    try:
+        rows = conn.execute(
+            "SELECT data FROM events WHERE event = 'handle'"
+        ).fetchall()
+        for r in rows:
+            try:
+                data = json.loads(r[0])
+                session_trace.append({
+                    "skill": data.get("task", {}).get("task", "unknown") if isinstance(data.get("task"), dict) else str(data.get("task", "unknown")),
+                    "status": data.get("status", "unknown"),
+                    "timestamp": datetime.utcnow(),
+                    "error": data.get("error"),
+                })
+            except Exception:
+                continue
+    finally:
+        conn.close()
+
+    corrections_written = run_correction_detection(session_trace)
+
     results["neo4j_optimize"] = optimize_neo4j(dry_run)
     results["traces_vacuum"] = vacuum_traces(retention_days=cfg.trace_retention_days, dry_run=dry_run)
+    results["corrections_written"] = corrections_written
     results["corrections"] = analyze_and_correct()
     
     results["knowledge_bank_consolidation"] = consolidate_knowledge_bank(dry_run=dry_run)
@@ -363,8 +388,11 @@ def run_autodream(dry_run: bool = False) -> Dict:
     # Emit event for cross-system listeners (skill evolver, runtime healer)
     try:
         from orchestration.event_bus import event_bus
+        if corrections_written > 0:
+            event_bus.emit("correction_found", {"count": corrections_written})
         event_bus.emit("autodream_run", dry_run=dry_run,
-                       corrections_count=len(results["corrections"]))
+                       corrections_count=len(results["corrections"]),
+                       corrections_written=corrections_written)
         for corr in results["corrections"]:
             event_bus.emit("skill_failure",
                 skill_id=corr.get("failed_skill", "unknown"),
