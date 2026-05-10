@@ -20,7 +20,14 @@ class BrainConfig:
     # --- Qdrant ---
     qdrant_url:       str  = field(default_factory=lambda: os.getenv('QDRANT_URL', ''))
     qdrant_api_key:   str  = field(default_factory=lambda: os.getenv('QDRANT_API_KEY', ''))
+    qdrant_collection: str  = field(default_factory=lambda: os.getenv('QDRANT_COLLECTION', 'brain_vectors'))
     retrieval_top_k:  int  = field(default_factory=lambda: int(os.getenv('RETRIEVAL_TOP_K', '5')))
+
+    # --- Gemma (local GGUF) ---
+    gemma_base_url:   str  = field(default_factory=lambda: os.getenv('GEMMA_BASE_URL', 'http://localhost:8080'))
+
+    # --- Skills base path ---
+    skills_base_path: Path = field(default_factory=lambda: Path(os.getenv('SKILLS_BASE_PATH', r'C:\Users\User\Documents\skills')))
 
     # --- Neo4j ---
     neo4j_uri:        str  = field(default_factory=lambda: os.getenv('NEO4J_URI', ''))
@@ -104,7 +111,6 @@ class BrainConfig:
 
 def reload_config() -> BrainConfig:
     """Re-read environment variables and return a fresh BrainConfig."""
-    import os
     try:
         from dotenv import load_dotenv as _reload
         _reload(override=True)
