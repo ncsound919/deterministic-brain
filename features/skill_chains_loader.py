@@ -40,19 +40,13 @@ def _load_yaml() -> Dict:
 
 
 def _execute_skill(skill_name: str, inputs: Dict = None) -> Dict:
-    """Execute a single skill via the DCA engine."""
+    """Execute a single skill via the SkillResolver (bypasses semantic router)."""
     try:
-        from orchestration.dca_engine import DeterministicCodingAgent
-        agent = DeterministicCodingAgent()
-        query = skill_name
-        if inputs:
-            extra = " ".join(f"{k}={v}" for k, v in inputs.items() if v)
-            if extra:
-                query = f"{skill_name} {extra}"
-        result = agent.handle(query)
-        return {"status": result.get("status", "unknown"), "output": result}
+        from tools.skill_resolver import get_resolver
+        resolver = get_resolver()
+        return resolver.execute(skill_name, inputs or {})
     except Exception as e:
-        logger.error(f"Skill execution failed: {skill_name} - {e}")
+        logger.error("Skill execution failed: %s - %s", skill_name, e)
         return {"status": "error", "error": str(e)}
 
 
