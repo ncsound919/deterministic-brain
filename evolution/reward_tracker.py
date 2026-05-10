@@ -267,6 +267,10 @@ class RewardTracker:
         """Directly credit a reward to an arm (for manual overrides)."""
         self._attributions[arm_id] += reward
 
+    def record(self, arm_id: str, reward: float, context: Optional[Dict] = None) -> None:
+        """Record a reward for immediate attribution feedback."""
+        self.manual_attribute(arm_id, reward)
+
     def _replay_all(self) -> None:
         """Re-attribute all conversions (e.g. after model change)."""
         self._attributions.clear()

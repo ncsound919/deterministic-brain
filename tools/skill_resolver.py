@@ -88,7 +88,20 @@ class SkillResolver:
             task = {"raw": skill_name, "task": skill_name, **(inputs or {})}
             context = {}
             result = registry.execute(skill_id, task, context)
-            return {"status": "ok" if result.get("success") else "partial", "output": result}
+
+            # Record reward for bandit feedback loop
+            status = "ok" if result.get("success") else "partial"
+            try:
+                from evolution.reward_tracker import get_reward_tracker
+                rt = get_reward_tracker()
+                # Arm format: skill:{skill_name}
+                arm_id = f"skill:{skill_id}"
+                reward = 1.0 if status == "ok" else 0.0
+                rt.record(arm_id, reward, context={"status": status, "inputs": inputs or {}})
+            except Exception as rt_err:
+                logger.warning("Reward tracking failed: %s", rt_err)
+
+            return {"status": status, "output": result}
         except FileNotFoundError:
             return {"status": "error", "error": f"Skill file not found: {path}"}
         except Exception as e:
