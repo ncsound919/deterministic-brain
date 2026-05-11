@@ -1,7 +1,6 @@
 """Skill backend adapters — unified interface for local and external skill systems."""
 from __future__ import annotations
 import os
-import json
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
@@ -59,7 +58,7 @@ class LocalSkillBackend(SkillBackend):
         return "local"
 
     def run(self, skill_id: str, task: Dict, context: Dict) -> Dict[str, Any]:
-        from tools.file_io import file_write, file_read
+        from tools.file_io import file_write
         from jinja2 import Template
         import re
 
@@ -155,7 +154,7 @@ class LocalSkillBackend(SkillBackend):
             import yaml
             try:
                 front_matter = yaml.safe_load(fm_match.group(1)) or {}
-            except:
+            except Exception:
                 pass
 
         step_pattern = r'## Step (\d+)\n(.*?)(?=\n## |\Z)'
@@ -198,18 +197,6 @@ class LocalSkillBackend(SkillBackend):
         import time
         import re
 
-        llm_enabled = os.getenv("LLM_ENABLED", "").lower() == "true"
-        if not llm_enabled:
-            llm_enabled = bool(os.getenv("OPENROUTER_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
-
-        if not llm_enabled:
-            return {
-                "success": True,
-                "output": f"Skill: {skill_id} — documentation (no code blocks, LLM off)",
-                "artifacts": [{"lang": "text", "content": f"#[LLM OFF] {skill_content[:500]}...\n\nSet OPENROUTER_API_KEY to generate code."}],
-                "logs": ["LLM is OFF — set OPENROUTER_API_KEY in .env to enable code generation"],
-            }
-
         user_query = task.get("raw", task.get("task", "build something"))
         soul_context = task.get("soul_context", "")
         kb_context = ""
@@ -244,44 +231,61 @@ If writing HTML, include ALL styles inline in <style> tags — make it look prod
         result = None
         logs = []
 
+        # 1. Try local Gemma first (fastest, free, deterministic)
         try:
-            from tools.llm.openrouter_client import get_client
-            client = get_client()
-            if client.available:
-                logs.append("Using OpenRouter for code generation")
-                response = client.generate_text(prompt, lane="coding", max_tokens=4096)
-                result = response
-            else:
-                raise Exception("OpenRouter not available")
-        except Exception:
+            from tools.local_gemma import get_gemma
+            gemma = get_gemma()
+            if gemma.is_available():
+                result = gemma.complete(prompt, n_predict=512, temperature=0.1)
+                if result:
+                    logs.append("Using local Gemma for code generation")
+        except Exception as gemma_err:
+            logs.append(f"Gemma unavailable: {gemma_err}")
+
+        # 2. OpenRouter fallback
+        if not result:
             try:
-                import os as _os
-                ak = _os.getenv("ANTHROPIC_API_KEY", "")
-                if ak:
-                    import anthropic
-                    cl = anthropic.Anthropic(api_key=ak)
-                    resp = cl.messages.create(
-                        model="claude-sonnet-4-5-20250514",
-                        max_tokens=4096,
-                        system=prompt,
-                        messages=[{"role": "user", "content": user_query}],
-                    )
-                    result = resp.content[0].text if resp.content else ""
-                    logs.append("Using Anthropic for code generation")
+                from tools.llm.openrouter_client import get_client
+                client = get_client()
+                if client.available:
+                    logs.append("Using OpenRouter for code generation")
+                    response = client.generate_text(prompt, lane="coding", max_tokens=4096)
+                    result = response
                 else:
+                    raise Exception("OpenRouter not available")
+            except Exception:
+                pass
+
+            # 3. Anthropic fallback
+            if not result:
+                try:
+                    import os as _os
+                    ak = _os.getenv("ANTHROPIC_API_KEY", "")
+                    if ak:
+                        import anthropic
+                        cl = anthropic.Anthropic(api_key=ak)
+                        resp = cl.messages.create(
+                            model="claude-sonnet-4-5-20250514",
+                            max_tokens=4096,
+                            system=prompt,
+                            messages=[{"role": "user", "content": user_query}],
+                        )
+                        result = resp.content[0].text if resp.content else ""
+                        logs.append("Using Anthropic for code generation")
+                    else:
+                        return {
+                            "success": False,
+                            "output": "No LLM API key configured",
+                            "artifacts": [],
+                            "logs": ["ERROR: Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env"],
+                        }
+                except Exception as e2:
                     return {
                         "success": False,
-                        "output": "No LLM API key configured",
+                        "output": f"LLM call failed: {str(e2)}",
                         "artifacts": [],
-                        "logs": ["ERROR: Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env"],
+                        "logs": [f"ERROR: {str(e2)}"],
                     }
-            except Exception as e2:
-                return {
-                    "success": False,
-                    "output": f"LLM call failed: {str(e2)}",
-                    "artifacts": [],
-                    "logs": [f"ERROR: {str(e2)}"],
-                }
 
         if not result:
             return {
@@ -401,7 +405,7 @@ class ClaudeSkillBackend(SkillBackend):
             }
         except ImportError:
             return self._fallback_to_openrouter(skill_id, task, context)
-        except Exception as e:
+        except Exception:
             return self._fallback_to_openrouter(skill_id, task, context)
 
     def _fallback_to_openrouter(self, skill_id: str, task: Dict, context: Dict) -> Dict[str, Any]:
@@ -536,7 +540,7 @@ class OpenClawSkillBackend(SkillBackend):
             response = requests.get(f"{self.api_url}/skills", headers=headers, timeout=10)
             if response.status_code == 200:
                 return response.json().get("skills", [])
-        except:
+        except Exception:
             pass
         return [
             {"id": "openclaw-web", "name": "Web Scraper", "description": "Scrape web content"},
@@ -623,7 +627,7 @@ class HermesSkillBackend(SkillBackend):
             response = requests.get(f"{self.agent_url}/api/skills", headers=headers, timeout=10)
             if response.status_code == 200:
                 return response.json().get("skills", [])
-        except:
+        except Exception:
             pass
         return [
             {"id": "hermes-planner", "name": "Hermes Planner", "description": "Multi-step planning"},
