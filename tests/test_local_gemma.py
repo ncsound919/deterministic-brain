@@ -25,6 +25,15 @@ class TestLocalGemmaClient:
         assert result == ""
 
 
+@pytest.mark.skip(reason="llama-server not running on port 8088 in CI")
+class TestLiveGemma:
+    def test_live_inference(self):
+        client = LocalGemmaClient(base_url="http://localhost:8088")
+        assert client.is_available(), "llama-server must be running at localhost:8088"
+        result = client.complete("Hello", n_predict=32, temperature=0.1)
+        assert result != "", "Gemma inference should return non-empty text"
+
+
 class TestGetGemma:
     def test_get_gemma_returns_client(self):
         client = get_gemma()
