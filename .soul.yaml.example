@@ -1,0 +1,62 @@
+# .soul.yaml — User identity and mission configuration
+# Copy this file to .soul.yaml and fill in your details
+
+identity:
+  name: "Your Name"  # e.g., "Alex Developer"
+  role: "developer"   # e.g., "developer", "data scientist", "founder"
+  timezone: "UTC"     # e.g., "America/New_York", "Europe/London"
+  pronouns: ""        # e.g., "they/them", "she/her", "he/him"
+
+agenda:
+  mission: ""  # Your primary goal — what you're building and why
+  goals:
+    - "Build scalable systems"
+    - "Ship fast, iterate faster"
+  anti_goals:
+    - "Over-engineering"
+    - "Technical debt"
+  autonomous_directives:
+    - "Prefer simple, tested solutions"
+    - "Document as you go"
+
+context:
+  expertise:
+    - "Python"
+    - "TypeScript"
+  learning:
+    - "Rust"
+    - "Kubernetes"
+  stack:
+    languages:
+      - "Python"
+      - "JavaScript"
+    frameworks:
+      - "FastAPI"
+      - "React"
+    tools:
+      - "Docker"
+      - "GitHub Actions"
+  notes: "Working on a personal automation project"
+
+preferences:
+  code_style: "PEP 8 for Python, Prettier for JS"
+  naming: "snake_case for Python, camelCase for JS"
+  testing: "pytest + unit tests required before commit"
+  deploy: "Containerized via Docker"
+  communication:
+    verbosity: "concise"  # concise | verbose | minimal
+    tone: "direct"        # direct | friendly | formal
+
+knowledge_sources:
+  - "~/notes/work_journal.md"
+  - "~/docs/project_specs/"
+
+project_templates:
+  - "~/templates/fastapi_starter/"
+  - "~/templates/react_component/"
+
+meta:
+  version: "1.0"
+  created: ""
+  updated: ""
+  sessions: 0
