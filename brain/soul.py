@@ -1,5 +1,4 @@
 """Soul manager — reads .soul.yaml, exposes identity/agenda/context to the brain.
-
 All autonomous systems (AutoDream, KAIROS, template builder) pull from this.
 The soul is the heartbeat — it tells the brain WHO to serve and WHY.
 """
@@ -13,23 +12,46 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Schema: required keys and their expected types for .soul.yaml validation
+# ---------------------------------------------------------------------------
+_SOUL_SCHEMA: Dict[str, type] = {
+    "identity": dict,
+    "agenda": dict,
+    "context": dict,
+    "preferences": dict,
+}
+
+
+def _validate_soul_yaml(data: Dict) -> List[str]:
+    """Return a list of validation error messages, empty if clean."""
+    errors: List[str] = []
+    if not isinstance(data, dict):
+        return ["soul.yaml root must be a YAML mapping"]
+    for key, expected_type in _SOUL_SCHEMA.items():
+        if key not in data:
+            errors.append(f"Missing required section: '{key}'")
+        elif not isinstance(data[key], expected_type):
+            errors.append(
+                f"Section '{key}' must be a {expected_type.__name__}, "
+                f"got {type(data[key]).__name__}"
+            )
+    return errors
+
 
 @dataclass
 class Soul:
     path: str = ".soul.yaml"
-
     # identity
     name: str = ""
     role: str = "developer"
     timezone: str = "UTC"
     pronouns: str = ""
-
     # agenda
     mission: str = ""
     goals: List[str] = field(default_factory=list)
     anti_goals: List[str] = field(default_factory=list)
     autonomous_directives: List[str] = field(default_factory=list)
-
     # context
     expertise: List[str] = field(default_factory=list)
     learning: List[str] = field(default_factory=list)
@@ -37,7 +59,6 @@ class Soul:
     stack_frameworks: List[str] = field(default_factory=list)
     stack_tools: List[str] = field(default_factory=list)
     notes: str = ""
-
     # preferences
     code_style: str = ""
     naming: str = ""
@@ -45,11 +66,9 @@ class Soul:
     deploy: str = ""
     verbosity: str = "concise"
     tone: str = "direct"
-
     # knowledge
     knowledge_sources: List[str] = field(default_factory=list)
     project_templates: List[str] = field(default_factory=list)
-
     # meta
     meta_version: str = "1.0"
     meta_created: str = ""
@@ -57,14 +76,36 @@ class Soul:
     meta_sessions: int = 0
 
     def load(self) -> bool:
+        # FIX: warn explicitly when .soul.yaml is missing instead of silent False
         if not os.path.exists(self.path):
+            logger.warning(
+                "[soul] .soul.yaml not found at '%s'. "
+                "Copy .soul.yaml.example to .soul.yaml and fill in your details. "
+                "Running with empty soul defaults.",
+                os.path.abspath(self.path),
+            )
             return False
         try:
             with open(self.path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
-        except Exception as e:
-            logger.warning(f"Soul load failed: {e}")
+        except yaml.YAMLError as e:
+            logger.error("[soul] Failed to parse .soul.yaml: %s", e)
             return False
+        except Exception as e:
+            logger.warning("[soul] Soul load failed: %s", e)
+            return False
+
+        # FIX: schema validation — log all issues before aborting
+        errors = _validate_soul_yaml(data)
+        if errors:
+            for err in errors:
+                logger.warning("[soul] Validation error: %s", err)
+            logger.warning(
+                "[soul] .soul.yaml has %d validation error(s). "
+                "Check .soul.yaml.example for the expected structure.",
+                len(errors),
+            )
+            # Non-fatal: continue loading what we can
 
         idn = data.get("identity", {})
         self.name = idn.get("name", "")
@@ -105,6 +146,8 @@ class Soul:
         self.meta_updated = meta.get("updated", "")
         self.meta_sessions = meta.get("sessions", 0)
 
+        if self.name:
+            logger.info("[soul] Loaded soul for '%s' (%s)", self.name, self.role)
         return True
 
     def save(self) -> bool:
@@ -155,7 +198,7 @@ class Soul:
                 yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
             return True
         except Exception as e:
-            logger.error(f"Soul save failed: {e}")
+            logger.error("[soul] Soul save failed: %s", e)
             return False
 
     def pulse(self) -> Dict:
@@ -197,6 +240,9 @@ class Soul:
             parts.append(f"Testing: {self.testing}")
         if self.deploy:
             parts.append(f"Deploy: {self.deploy}")
+        if self.autonomous_directives:
+            # FIX: autonomous_directives were stored but never surfaced — expose them
+            parts.append("Directives: " + "; ".join(self.autonomous_directives))
         if self.notes:
             parts.append(f"Notes: {self.notes}")
         return "\n".join(parts)
