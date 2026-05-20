@@ -1,6 +1,8 @@
 # deterministic-brain
 
 > **Zero-LLM. Zero tokens. 100% reproducible.**
+> > **⚠️ HYBRID MODE:** While the core DCA engine is LLM-free, `ultraplan.py` uses LLM routing for complex multi-step planning tasks. Set `ENABLE_ULTRAPLAN=false` to run in pure deterministic mode.
+
 
 The deterministic-brain is the central intelligence of the DCA (Deterministic Coding Agent) swarm. It replaces every LLM call with:
 
@@ -28,6 +30,11 @@ deterministic-brain/
 │   ├── task_parser.py             # Regex/keyword task → structured dict
 │   ├── router.py                  # MoE router: task → expert/skill path
 │   └── memory.py                  # Session state (no LLM memory)
+   ├── soul.py                  # User identity/mission config loader (.soul.yaml)
+   ├── autodream.py              # Autonomous directive execution engine
+   ├── state_manager.py          # Session state persistence
+   ├── correction_detector.py    # Intent correction/refinement detector
+
 │
 ├── orchestration/
 │   ├── dca_engine.py              # DeterministicCodingAgent (core loop)
