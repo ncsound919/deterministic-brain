@@ -9,6 +9,10 @@ ULTRAPLAN handles complex planning tasks that require:
 - Session persistence and resumption
 - Resource-intensive computation
 """
+⚠️ WARNING: This module uses LLM routing via router.execute_with_routing().
+This contradicts the repo's README claim of "zero LLM" architecture.
+ULTRAPLAN is effectively a **HYBRID MODE** component.
+
 import json
 import uuid
 from datetime import datetime
@@ -312,6 +316,22 @@ class UltraPlanEngine:
         # ... implementation continues from checkpoint_data
 
         return plan
+
+            # FIX: Implementation stub - reconstruct session state from checkpoint
+        if plan.checkpoint_data:
+            # Restore session state
+            session_id = plan.checkpoint_data.get("plan_state", str(uuid.uuid4()))
+            session = PlanningSession(
+                session_id=session_id,
+                plan=plan,
+                current_phase=plan.checkpoint_data.get("current_phase", 0),
+                current_milestone=plan.checkpoint_data.get("current_milestone", 0),
+                is_paused=False
+            )
+            self.active_sessions[session_id] = session
+            logger.info(f"Session resumed from checkpoint at phase {session.current_phase}")
+        else:
+            logger.warning("No checkpoint data found - restarting from beginning")
 
     async def pause_plan(self, session_id: str) -> bool:
         """Pause an active planning session"""
