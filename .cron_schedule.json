@@ -1,0 +1,408 @@
+{
+    "tasks": {
+        "midnight-deep-work": {
+            "name": "midnight-deep-work",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 22 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "midnight-deep-work"
+            },
+            "enabled": true,
+            "description": "10 PM EST \u00e2\u20ac\u201d Tap's peak coding window. Fire resource-heavy tasks."
+        },
+        "learning-consolidation": {
+            "name": "learning-consolidation",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 3 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "learning-consolidation"
+            },
+            "enabled": true,
+            "description": "3 AM EST \u00e2\u20ac\u201d Full learning loop. Bandit evolve, autodream, reward attribution, skill expansion."
+        },
+        "morning-kickstart": {
+            "name": "morning-kickstart",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 7 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "morning-kickstart"
+            },
+            "enabled": true,
+            "description": "7 AM EST \u00e2\u20ac\u201d Tap wakes up. News, market data, agent health, social queue."
+        },
+        "content-publish-morning": {
+            "name": "content-publish-morning",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 9 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "content-publish",
+                "slot": "morning"
+            },
+            "enabled": true,
+            "description": "9 AM EST \u00e2\u20ac\u201d Morning social posts across Twitter, LinkedIn, Bluesky."
+        },
+        "marketing-autopilot": {
+            "name": "marketing-autopilot",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 10 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "marketing-autopilot"
+            },
+            "enabled": true,
+            "description": "10 AM EST \u00e2\u20ac\u201d SEO analysis, AEO tracking, content audit."
+        },
+        "content-publish-midday": {
+            "name": "content-publish-midday",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 12 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "content-publish",
+                "slot": "midday"
+            },
+            "enabled": true,
+            "description": "12 PM EST \u00e2\u20ac\u201d Midday social posts. Tap's lunch break."
+        },
+        "content-publish-afternoon": {
+            "name": "content-publish-afternoon",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 16 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "content-publish",
+                "slot": "afternoon"
+            },
+            "enabled": true,
+            "description": "4 PM EST \u00e2\u20ac\u201d Afternoon social posts. Tap's kids time."
+        },
+        "ncsound-branding-wed": {
+            "name": "ncsound-branding-wed",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 12 * * 3",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "ncsound-branding-post"
+            },
+            "enabled": true,
+            "description": "Wednesday 12 PM EST \u00e2\u20ac\u201d NCSOUND Publishing music branding post."
+        },
+        "ncsound-branding-sat": {
+            "name": "ncsound-branding-sat",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 12 * * 6",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "ncsound-branding-post"
+            },
+            "enabled": true,
+            "description": "Saturday 12 PM EST \u00e2\u20ac\u201d NCSOUND Publishing music branding post."
+        },
+        "weekly-report": {
+            "name": "weekly-report",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 8 * * 1",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "weekly-report"
+            },
+            "enabled": true,
+            "description": "Monday 8 AM EST \u00e2\u20ac\u201d Full cross-vertical report: revenue, health, learning, suggestions."
+        },
+        "repo-health": {
+            "name": "repo-health",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 2 * * 0",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "repo-health"
+            },
+            "enabled": true,
+            "description": "Sunday 2 AM EST \u00e2\u20ac\u201d Audit all 7 business vertical repos."
+        },
+        "agent-health-check": {
+            "name": "agent-health-check",
+            "skill": "agent-orchestrate",
+            "trigger_type": "interval",
+            "interval_seconds": 1800,
+            "inputs": {
+                "action": "run_chain",
+                "chain": "agent-health-check"
+            },
+            "enabled": true,
+            "description": "Every 30 minutes \u00e2\u20ac\u201d Check all daemons, heal failures, verify circuit breakers."
+        },
+        "swarm-inventory-refresh": {
+            "name": "swarm-inventory-refresh",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 4 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "swarm-inventory-refresh"
+            },
+            "enabled": true,
+            "description": "4 AM EST daily \u00e2\u20ac\u201d Discover all repos from tap919 + ncsound919, auto-queue un-audited."
+        },
+        "swarm-repo-audit": {
+            "name": "swarm-repo-audit",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 5 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "swarm-repo-audit"
+            },
+            "enabled": true,
+            "description": "5 AM EST daily \u00e2\u20ac\u201d Process swarm queue: clone, audit, fix, commit, open PRs."
+        },
+        "nightly-financial-sweep": {
+            "name": "nightly-financial-sweep",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 1 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "nightly-financial-sweep"
+            },
+            "enabled": true,
+            "description": "1 AM EST daily \u00e2\u20ac\u201d Market data fetch, odds analysis, betting recs."
+        },
+        "news-briefing": {
+            "name": "news-briefing",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 */6 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "news-briefing"
+            },
+            "enabled": true,
+            "description": "Every 6 hours \u00e2\u20ac\u201d Fetch latest news from NewsAPI, GNews, WorldNews, RSS."
+        },
+        "market-pulse": {
+            "name": "market-pulse",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 */4 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "market-pulse"
+            },
+            "enabled": true,
+            "description": "Every 4 hours \u00e2\u20ac\u201d Crypto trends, stock quotes, financial overview."
+        },
+        "morning-briefing": {
+            "name": "morning-briefing",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 7 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "morning-briefing"
+            },
+            "enabled": true,
+            "description": "7 AM EST daily \u00e2\u20ac\u201d Weather, news, HN, exchange rates, crypto."
+        },
+        "knowledge-scan": {
+            "name": "knowledge-scan",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 8 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "knowledge-scan"
+            },
+            "enabled": true,
+            "description": "8 AM EST daily \u00e2\u20ac\u201d HN best, Wikipedia on-this-day, number facts -> knowledge bank."
+        },
+        "revenue-check": {
+            "name": "revenue-check",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 9 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "revenue-check"
+            },
+            "enabled": true,
+            "description": "9 AM EST daily \u00e2\u20ac\u201d Stripe balance, customers, subscriptions snapshot."
+        },
+        "auto-social-post": {
+            "name": "auto-social-post",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 9,16 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "auto-social-post"
+            },
+            "enabled": false,
+            "description": "9 AM + 4 PM EST daily \u00e2\u20ac\u201d Auto-post to Facebook, Instagram, X, Discord. Enable after storing credentials."
+        },
+        "tech-scan": {
+            "name": "tech-scan",
+            "skill": "agent-orchestrate",
+            "trigger_type": "cron",
+            "cron_expr": "0 */6 * * *",
+            "inputs": {
+                "action": "run_chain",
+                "chain": "tech-scan"
+            },
+            "enabled": true,
+            "description": "Every 6 hours \u00e2\u20ac\u201d arXiv papers, Reddit hot, Dev.to, Product Hunt, RSS feeds."
+        },
+        "content-creation-ai-disruption": {
+            "name": "content-creation-ai-disruption",
+            "skill": "content-creation",
+            "trigger_type": "cron",
+            "cron_expr": "0 9 * * 1",
+            "inputs": {
+                "topic": "AI Disruption",
+                "format": "podcast",
+                "schedule_cron": "0 9 * * 1"
+            },
+            "enabled": true,
+            "description": "Monday 9 AM EST \u00e2\u20ac\u201d Auto-scheduled podcast: AI Disruption"
+        },
+        "coo-portfolio-health-check": {
+            "name": "coo-portfolio-health-check",
+            "skill": "coo-health-check",
+            "trigger_type": "interval",
+            "interval_seconds": 900,
+            "inputs": {
+                "action": "run_health_check",
+                "products": [
+                    "claw-protect",
+                    "openhub",
+                    "ul2",
+                    "aetherdesk",
+                    "bbtech"
+                ]
+            },
+            "enabled": true,
+            "description": "Every 15 minutes \u2014 Check all portfolio products for build failures, exceptions, and security alerts."
+        },
+        "coo-github-issue-triage": {
+            "name": "coo-github-issue-triage",
+            "skill": "coo-issue-triage",
+            "trigger_type": "interval",
+            "interval_seconds": 1800,
+            "inputs": {
+                "action": "triage_open_issues",
+                "labels": [
+                    "coo-brain",
+                    "yellow",
+                    "red"
+                ]
+            },
+            "enabled": true,
+            "description": "Every 30 minutes \u2014 Triage open COO Brain issues, auto-close resolved, escalate stale."
+        },
+        "coo-stripe-revenue-check": {
+            "name": "coo-stripe-revenue-check",
+            "skill": "coo-revenue-check",
+            "trigger_type": "cron",
+            "cron_expr": "0 */4 * * *",
+            "inputs": {
+                "action": "check_revenue",
+                "products": [
+                    "claw-protect",
+                    "ul2"
+                ]
+            },
+            "enabled": true,
+            "description": "Every 4 hours \u2014 Check Stripe for payment failures, cancellations, and MRR changes."
+        },
+        "coo-dependency-security-scan": {
+            "name": "coo-dependency-security-scan",
+            "skill": "coo-security-scan",
+            "trigger_type": "cron",
+            "cron_expr": "0 3 * * *",
+            "inputs": {
+                "action": "scan_dependencies",
+                "products": [
+                    "claw-protect",
+                    "openhub",
+                    "ul2"
+                ]
+            },
+            "enabled": true,
+            "description": "3 AM EST daily \u2014 Scan all repos for dependency vulnerabilities and security advisories."
+        },
+        "coo-daily-briefing": {
+            "name": "coo-daily-briefing",
+            "skill": "coo-daily-briefing",
+            "trigger_type": "cron",
+            "cron_expr": "0 7 * * *",
+            "inputs": {
+                "action": "generate_briefing",
+                "include": [
+                    "health",
+                    "revenue",
+                    "momentum",
+                    "pending_decisions"
+                ]
+            },
+            "enabled": true,
+            "description": "7 AM EST daily \u2014 Generate daily portfolio briefing: health, revenue, open issues, pending decisions."
+        },
+        "coo-weekly-audit": {
+            "name": "coo-weekly-audit",
+            "skill": "coo-weekly-audit",
+            "trigger_type": "cron",
+            "cron_expr": "0 2 * * 0",
+            "inputs": {
+                "action": "full_audit",
+                "products": [
+                    "claw-protect",
+                    "openhub",
+                    "ul2",
+                    "aetherdesk",
+                    "bbtech"
+                ]
+            },
+            "enabled": true,
+            "description": "Sunday 2 AM EST \u2014 Full portfolio audit: code quality, security, dependencies, CI status."
+        },
+        "coo-auto-fix-green": {
+            "name": "coo-auto-fix-green",
+            "skill": "coo-auto-fix",
+            "trigger_type": "interval",
+            "interval_seconds": 300,
+            "inputs": {
+                "action": "execute_green_zone",
+                "max_fixes_per_run": 5
+            },
+            "enabled": true,
+            "description": "Every 5 minutes \u2014 Auto-execute green-zone fixes: cache clears, dependency updates, lint fixes."
+        },
+        "coo-stale-issue-cleanup": {
+            "name": "coo-stale-issue-cleanup",
+            "skill": "coo-cleanup",
+            "trigger_type": "cron",
+            "cron_expr": "0 4 * * *",
+            "inputs": {
+                "action": "cleanup_stale_issues",
+                "stale_days": 7
+            },
+            "enabled": true,
+            "description": "4 AM EST daily \u2014 Close stale COO Brain issues older than 7 days with no human response."
+        }
+    }
+}

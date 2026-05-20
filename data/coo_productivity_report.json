@@ -1,0 +1,419 @@
+{
+  "total": 100,
+  "green": 22,
+  "yellow": 71,
+  "red": 7,
+  "skipped": 0,
+  "by_product": {
+    "claw-protect": 39,
+    "ul2": 19,
+    "aetherdesk": 11,
+    "openhub": 28,
+    "bbtech": 3
+  },
+  "by_type": {
+    "exception": 30,
+    "security_alert": 7,
+    "stripe_subscription_canceled": 4,
+    "cache_clear": 9,
+    "build_failure": 26,
+    "stripe_payment_failed": 8,
+    "dependency_update": 13,
+    "ci_failure": 3
+  },
+  "issues": [
+    {
+      "number": 101,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 102,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 103,
+      "title": "Stripe Subscription Canceled in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 104,
+      "title": "Build Failure in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 105,
+      "title": "Stripe Payment Failed in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 106,
+      "title": "Build Failure in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 107,
+      "title": "Stripe Payment Failed in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 108,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 109,
+      "title": "Exception in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 110,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 111,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 112,
+      "title": "Build Failure in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 113,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 114,
+      "title": "Exception in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 115,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 116,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 117,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 118,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 119,
+      "title": "Build Failure in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 120,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 121,
+      "title": "Stripe Payment Failed in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 122,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 123,
+      "title": "Ci Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 124,
+      "title": "Exception in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 125,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 126,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 127,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 128,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 129,
+      "title": "Stripe Subscription Canceled in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 130,
+      "title": "Stripe Payment Failed in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 131,
+      "title": "Stripe Payment Failed in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 132,
+      "title": "Exception in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 133,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 134,
+      "title": "Stripe Payment Failed in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 135,
+      "title": "Exception in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 136,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 137,
+      "title": "Ci Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 138,
+      "title": "Stripe Subscription Canceled in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 139,
+      "title": "Stripe Payment Failed in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 140,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 141,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 142,
+      "title": "Build Failure in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 143,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 144,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 145,
+      "title": "Exception in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 146,
+      "title": "Stripe Payment Failed in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 147,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 148,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 149,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 150,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 151,
+      "title": "Exception in bbtech",
+      "product_id": "bbtech"
+    },
+    {
+      "number": 152,
+      "title": "Build Failure in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 153,
+      "title": "Exception in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 154,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 155,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 156,
+      "title": "Build Failure in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 157,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 158,
+      "title": "Build Failure in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 159,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 160,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 161,
+      "title": "Stripe Subscription Canceled in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 162,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 163,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 164,
+      "title": "Exception in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 165,
+      "title": "Exception in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 166,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 167,
+      "title": "Exception in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 168,
+      "title": "Exception in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 169,
+      "title": "Exception in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 170,
+      "title": "Exception in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 171,
+      "title": "Exception in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 172,
+      "title": "Build Failure in aetherdesk",
+      "product_id": "aetherdesk"
+    },
+    {
+      "number": 173,
+      "title": "Build Failure in ul2",
+      "product_id": "ul2"
+    },
+    {
+      "number": 174,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 175,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 176,
+      "title": "Security Alert in claw-protect",
+      "product_id": "claw-protect"
+    },
+    {
+      "number": 177,
+      "title": "Build Failure in openhub",
+      "product_id": "openhub"
+    },
+    {
+      "number": 178,
+      "title": "Ci Failure in openhub",
+      "product_id": "openhub"
+    }
+  ],
+  "elapsed_seconds": 0.0,
+  "events_per_second": 100000.0,
+  "projected_2h_events": 720000000
+}
