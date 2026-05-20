@@ -82,3 +82,10 @@ open-multi-agent-main/
 *.log
 logs/
 datasets/nba_players_game_stats.csv
+
+
+# Binary skill index
+skill_index.npy
+
+# User soul config (contains personal info)
+.soul.yaml
