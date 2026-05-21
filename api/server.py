@@ -1103,6 +1103,96 @@ def hermes_assign_model(body: Dict) -> Dict:
         return {"_error": str(e)}
 
 
+# ── Local Model (Gemma-4 via llama.cpp) ────────────────────────
+@app.get("/models/local/status")
+def local_model_status() -> Dict:
+    """Check if the local Gemma-4 model is running."""
+    try:
+        import httpx
+        with httpx.Client(timeout=3) as client:
+            resp = client.get(f"{LOCAL_MODEL_URL}/v1/models")
+            if resp.status_code >= 400:
+                return {"connected": False, "models": []}
+            return {"connected": True, "models": resp.json()}
+    except Exception:
+        return {"connected": False, "models": []}
+
+
+@app.post("/models/local/chat")
+def local_model_chat(req: ChatRequest) -> Dict:
+    """Chat directly with the local Gemma-4 model."""
+    try:
+        import httpx
+        with httpx.Client(timeout=120) as client:
+            resp = client.post(f"{LOCAL_MODEL_URL}/v1/chat/completions", json={
+                "model": "gemma-4",
+                "messages": [{"role": "user", "content": req.text}],
+                "stream": False,
+            })
+            if resp.status_code >= 400:
+                return {"_error": f"Model returned {resp.status_code}"}
+            return resp.json()
+    except Exception as e:
+        return {"_error": f"Model unavailable: {str(e)}"}
+
+
+# ── Tool Registration (command-code, opencode) ─────────────────
+_REGISTERED_TOOLS: Dict[str, Dict] = {}
+
+
+@app.post("/tools/register")
+def register_tool(body: Dict) -> Dict:
+    """Register a tool (command-code, opencode, etc.)."""
+    name = body.get("name")
+    tool_type = body.get("type", "subprocess")
+    config = body.get("config", {})
+    _REGISTERED_TOOLS[name] = {"type": tool_type, "config": config}
+    return {"status": "ok", "registered": name, "tools": list(_REGISTERED_TOOLS.keys())}
+
+
+@app.get("/tools")
+def list_tools() -> Dict:
+    """List registered tools."""
+    tools = []
+    for name, info in _REGISTERED_TOOLS.items():
+        tools.append({"name": name, "type": info["type"], "status": "registered"})
+    return {"tools": tools}
+
+
+@app.post("/tools/{tool_name}/execute")
+def execute_tool(tool_name: str, body: Dict) -> Dict:
+    """Execute a registered tool."""
+    if tool_name not in _REGISTERED_TOOLS:
+        raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not registered")
+    
+    tool = _REGISTERED_TOOLS[tool_name]
+    if tool["type"] == "subprocess":
+        import subprocess
+        cmd = tool["config"].get("command", [])
+        if not cmd:
+            raise HTTPException(status_code=400, detail="No command configured for tool")
+        try:
+            result = subprocess.run(
+                cmd,
+                input=body.get("input", ""),
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            return {
+                "tool": tool_name,
+                "stdout": result.stdout[:10000],
+                "stderr": result.stderr[:10000],
+                "returncode": result.returncode,
+            }
+        except subprocess.TimeoutExpired:
+            return {"tool": tool_name, "error": "Tool execution timed out (60s)"}
+        except Exception as e:
+            return {"tool": tool_name, "error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail=f"Tool type '{tool['type']}' not supported")
+
+
 # ── Dialogue ───────────────────────────────────────────────────────
 @app.post("/dialogue/process")
 def dialogue_process(req: DialogueRequest) -> Dict:
