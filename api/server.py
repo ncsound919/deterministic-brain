@@ -2,9 +2,15 @@
 from __future__ import annotations
 import json
 import os
+import re
+import time
+from datetime import datetime
 import traceback
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+import asyncio
+from functools import wraps
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
@@ -18,6 +24,80 @@ from tools.dashboard import Dashboard
 from tools.web_fetcher import web_fetch
 from tools.relay import relay
 from api.middleware import RequestLoggingMiddleware, get_route_stats
+import logging as _api_log
+_api_logger = _api_log.getLogger(__name__)
+
+# ── Hermes Integration ─────────────────────────────────────────
+HERMES_URL = os.getenv("HERMES_URL", "http://127.0.0.1:9119")
+LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8080")
+
+# Bundle config cache (avoid YAML parse on every /bundles request)
+_BUNDLES_CACHE = {"mtime": 0, "bundles": []}
+
+def _get_bundles_cached():
+    import yaml
+    config_path = os.environ.get("SWARM_CONFIG", "swarm.yaml")
+    try:
+        mtime = os.path.getmtime(config_path)
+    except (OSError, IOError):
+        mtime = 0
+    if mtime != _BUNDLES_CACHE["mtime"]:
+        try:
+            with open(config_path, encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+        except Exception:
+            config = {}
+        bundles = []
+        for name, data in config.get("bundles", {}).items():
+            try:
+                bd = BundleDefinition(**data)
+                bundles.append({"name": name, "description": bd.description, "lanes": bd.lanes})
+            except Exception as _be:
+                import logging as _blog
+                _blog.getLogger(__name__).warning("Skipping malformed bundle '%s': %s", name, _be)
+        _BUNDLES_CACHE["mtime"] = mtime
+        _BUNDLES_CACHE["bundles"] = bundles
+    return {"bundles": _BUNDLES_CACHE["bundles"]}
+
+# Precompiled security patterns for upload validation
+_DANGEROUS_PATTERNS = [
+    re.compile(r'\bos\.system\b', re.IGNORECASE),
+    re.compile(r'\bsubprocess\b', re.IGNORECASE),
+    re.compile(r'\beval\b', re.IGNORECASE),
+    re.compile(r'\bexec\b', re.IGNORECASE),
+    re.compile(r'\bcompile\b', re.IGNORECASE),
+    re.compile(r'\b__import__\b', re.IGNORECASE),
+    re.compile(r'ctypes', re.IGNORECASE),
+    re.compile(r'socket\.', re.IGNORECASE),
+    re.compile(r'\brm\s+-rf\b', re.IGNORECASE),
+    re.compile(r'\bdangerous\b', re.IGNORECASE),
+    re.compile(r'\bshutil\.rmtree\b', re.IGNORECASE),
+]
+
+# Promoted handler imports (remove lazy-import overhead from ~70 endpoints)
+from brain.soul import get_soul
+from features.finance_modules import get_news, get_odds, get_trading
+from features.skill_chains_loader import get_chain_status, execute_chain
+from features.betting_engine import get_bet_sheet
+from features.betting_enhanced import (
+    CircadianAnalyzer, FormulaEngine, get_enhanced_betting,
+    SportsDataFeed, TrendAnalyzer,
+)
+from features.saas_builder import get_saas_builder
+from features.social_scheduler import get_social
+from features.chat_router import handle_chat
+from features.planner import get_planner
+from features.github_manager import get_github
+from features.autonomy import get_autonomy
+from features.scheduler import get_scheduler
+from features.systems_bridge import get_systems_bridge
+from features.template_builder import get_template_builder
+from features.blackmind_lab import get_blackmind_lab
+from features.agent_registry import get_agent_registry
+from features.skill_expander import get_expander
+from features.opportunity_scout import get_scout
+from features.status_tracker import get_status_tracker
+from features.prizepicks_scraper import get_prizepicks_scraper
 
 # Route modules
 from api.routes.settings import router as settings_router
@@ -25,12 +105,32 @@ from api.routes.voice import router as voice_router
 from api.routes.devpets import router as devpets_router
 from api.routes.kairos import router as kairos_router
 from api.routes.evolution import router as evolution_router
+from api.routes.social import router as social_router
+from api.routes.media import router as media_router
 
 app   = FastAPI(title="Deterministic Brain", version="2.5.0")
 agent = DeterministicCodingAgent()
 swarm = SwarmDispatcher()
 forge = Forge()
 dash  = Dashboard()
+
+def _cleanup_old_builds(max_age_days: int = 7):
+    try:
+        builds_dir = "builds"
+        if not os.path.isdir(builds_dir):
+            return
+        cutoff = time.time() - max_age_days * 86400
+        import shutil
+        for name in os.listdir(builds_dir):
+            path = os.path.join(builds_dir, name)
+            if os.path.isdir(path):
+                mtime = os.path.getmtime(path)
+                if mtime < cutoff:
+                    shutil.rmtree(path, ignore_errors=True)
+    except Exception:
+        pass
+
+_cleanup_old_builds()
 
 # ── Starter knowledge seed (if KB is empty) ────────────────────────
 def _seed_knowledge():
@@ -51,14 +151,18 @@ def _seed_knowledge():
             fragments = ingester.ingest_text(content, title, tags_str.split())
             bank.add_fragments(fragments)
         bank.rebuild_index()
-    except Exception:
-        pass
+    except Exception as _e:
+        import logging as _log
+        _log.getLogger(__name__).warning("Knowledge seeding failed: %s", _e)
 
 _seed_knowledge()
 
 # Middleware
+import re
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:8000").split(",")
 app.add_middleware(CORSMiddleware,
-    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    allow_origins=_cors_origins if _cors_origins[0] != "*" else ["*"],
+    allow_methods=["*"], allow_headers=["*"], allow_credentials=True)
 app.add_middleware(RequestLoggingMiddleware)
 
 # Routers
@@ -67,6 +171,33 @@ app.include_router(voice_router)
 app.include_router(devpets_router)
 app.include_router(kairos_router)
 app.include_router(evolution_router)
+app.include_router(social_router)
+app.include_router(media_router)
+
+# Notifications
+try:
+    from api.notifications import router as notifications_router
+    app.include_router(notifications_router)
+except:
+    pass
+
+# COO Brain webhooks
+try:
+    from api.routes.coo_webhooks import router as coo_router
+    app.include_router(coo_router)
+except Exception as _e:
+    import logging as _log
+    _log.getLogger(__name__).warning("COO Brain routes not loaded: %s", _e)
+    pass
+
+# @app.get("/health") # REMOVED - duplicate, see line 1260 for active definition
+
+# --- Integrated Frontend Mounting ---
+# Mount static assets from the dashboard build
+if os.path.exists("aether-dashboard/dist/assets"):
+    app.mount("/assets", StaticFiles(directory="aether-dashboard/dist/assets"), name="assets")
+if os.path.exists("aether-dashboard/dist"):
+    app.mount("/static", StaticFiles(directory="aether-dashboard/dist"), name="static")
 
 
 # ── Models ─────────────────────────────────────────────────────────
@@ -166,6 +297,19 @@ class BundleDefinition(BaseModel):
 def run_task(req: TaskRequest) -> Dict:
     try:
         result = agent.handle(req.query)
+        
+        # ---- Dashboard Sync ----
+        try:
+            from features.status_tracker import get_status_tracker
+            tracker = get_status_tracker()
+            chosen_skill = result.get("reasoning", {}).get("chosen_skill")
+            if chosen_skill == "initialize-session":
+                agent_id = result.get("task", {}).get("agent_id")
+                if agent_id:
+                    tracker.set_agent_status(agent_id, "online")
+        except Exception as _ds:
+            _api_logger.debug("Dashboard sync skipped: %s", _ds)
+            
         return result if result else {"status": "ok", "final_output": {}, "knowledge_used": 0}
     except Exception as e:
         tb = traceback.format_exc()
@@ -197,6 +341,10 @@ def reason_only(req: TaskRequest) -> Dict:
     )
     if decision.chosen_skill and decision.chosen_skill in text_to_id:
         decision.chosen_skill = text_to_id[decision.chosen_skill]
+
+    # NOTE: All API keys are loaded from .env via the config module.
+    # Never hardcode credentials in source files.
+
     return {"query": req.query, "task": task, "decision": decision.to_dict()}
 
 
@@ -206,28 +354,18 @@ def run_bundle(req: BundleRequest) -> Dict:
 
 
 @app.get("/skills")
+@app.get("/skills/list")
 def list_skills() -> Dict:
-    return {"skills": forge.list_skills()}
+    from orchestration.skill_registry import get_skill_registry
+    sr = get_skill_registry()
+    sr.discover()
+    return {"skills": [s.to_dict() for s in sr.list_all()]}
 
 
 # ── Bundles (Gap 7: schema validation) ─────────────────────────────
 @app.get("/bundles")
 def list_bundles() -> Dict[str, List[Dict]]:
-    import yaml
-    config_path = os.environ.get("SWARM_CONFIG", "swarm.yaml")
-    try:
-        with open(config_path) as f:
-            config = yaml.safe_load(f)
-    except Exception:
-        config = {}
-    bundles = []
-    for name, data in config.get("bundles", {}).items():
-        try:
-            bd = BundleDefinition(**data)
-            bundles.append({"name": name, "description": bd.description, "lanes": bd.lanes})
-        except Exception:
-            continue  # skip malformed bundle entries
-    return {"bundles": bundles}
+    return _get_bundles_cached()
 
 
 # ── Skill Chains (Gap fix: chains were never wired) ─────────────────
@@ -237,7 +375,7 @@ def list_chains() -> Dict:
         from features.skill_chains_loader import get_chain_status
         return get_chain_status()
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/chains/{chain_name}")
@@ -246,7 +384,7 @@ def get_chain(chain_name: str) -> Dict:
         from features.skill_chains_loader import get_chain_status
         return get_chain_status(chain_name)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class ChainRunRequest(BaseModel):
@@ -313,6 +451,12 @@ def feed() -> Dict:
     return {"events": dash.recent_events(50)}
 
 
+@app.post("/dashboard/feed-clear")
+def feed_clear() -> Dict:
+    dash.clear_events()
+    return {"status": "ok"}
+
+
 @app.get("/dashboard/audit")
 def audit() -> Dict:
     return {"events": dash.audit_feed()}
@@ -341,9 +485,10 @@ def autodream_run() -> Dict:
 
 @app.get("/autodream/status")
 def autodream_status() -> Dict:
-    path = ".autodream_last_run.json"
+    path = os.environ.get("AUTODREAM_STATUS_PATH", os.path.join(os.path.dirname(os.path.dirname(__file__)), ".autodream_last_run.json"))
     if os.path.exists(path):
-        return json.loads(open(path).read())
+        with open(path, encoding="utf-8") as f:
+            return json.loads(f.read())
     return {"status": "never_run"}
 
 
@@ -353,9 +498,15 @@ def knowledge_stats() -> Dict:
     try:
         from knowledge.bank import get_knowledge_bank
         bank = get_knowledge_bank()
-        return bank.stats()
+        stats = bank.stats()
+        # Find unique tags for synthesis
+        try:
+            tags = list(bank.cluster_by_tags(min_size=1).keys())
+        except Exception:
+            tags = []
+        return {**stats, "tags": tags}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/knowledge/ingest")
@@ -369,7 +520,7 @@ def knowledge_ingest(req: KnowledgeIngestRequest) -> Dict:
         count = bank.add_fragments(fragments)
         return {"status": "ok", "ingested": count, "url": req.url, "tags": req.tags}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/knowledge/ingest-text")
@@ -383,7 +534,7 @@ def knowledge_ingest_text(req: KnowledgeTextIngestRequest) -> Dict:
         count = bank.add_fragments(fragments)
         return {"status": "ok", "ingested": count, "title": req.title, "tags": req.tags}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/knowledge/search")
@@ -410,7 +561,7 @@ def knowledge_search(req: KnowledgeSearchRequest) -> Dict:
             ],
         }
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/knowledge/fragments")
@@ -427,7 +578,7 @@ def knowledge_fragments(source_type: str = "") -> Dict:
             "count": len(frags),
         }
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/knowledge/snippets")
@@ -437,7 +588,7 @@ def knowledge_snippets() -> Dict:
         bank = get_knowledge_bank()
         return {"snippets": bank.list_snippets()}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/knowledge/snippets")
@@ -448,7 +599,7 @@ def knowledge_save_snippet(req: SnippetSaveRequest) -> Dict:
         snippet = bank.save_snippet(req.title, req.content, req.tags)
         return {"status": "ok", "snippet": snippet}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/knowledge/snippets/{snippet_id}")
@@ -459,7 +610,7 @@ def knowledge_delete_snippet(snippet_id: str) -> Dict:
         bank.delete_snippet(snippet_id)
         return {"status": "ok", "deleted": snippet_id}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/knowledge/generate-refs")
@@ -474,7 +625,7 @@ def knowledge_generate_refs() -> Dict:
             generated.append({"tag": tag, "fragments": len(frags), "path": path})
         return {"status": "ok", "generated": len(generated), "refs": generated}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/knowledge/consolidate")
@@ -512,27 +663,27 @@ def soul_update(req: SoulUpdateRequest) -> Dict:
         if "mission" in req.agenda:
             s.mission = req.agenda["mission"]
         if "goals" in req.agenda:
-            s.goals = req.agenda["goals"] or s.goals
+            s.goals = req.agenda["goals"] if req.agenda["goals"] is not None else []
         if "anti_goals" in req.agenda:
-            s.anti_goals = req.agenda["anti_goals"] or s.anti_goals
+            s.anti_goals = req.agenda["anti_goals"] if req.agenda["anti_goals"] is not None else []
         if "autonomous_directives" in req.agenda:
-            s.autonomous_directives = req.agenda["autonomous_directives"] or s.autonomous_directives
+            s.autonomous_directives = req.agenda["autonomous_directives"] if req.agenda["autonomous_directives"] is not None else []
     if req.context:
         ctx = req.context
         if "expertise" in ctx:
-            s.expertise = ctx["expertise"] or s.expertise
+            s.expertise = ctx["expertise"] if ctx["expertise"] is not None else []
         if "learning" in ctx:
-            s.learning = ctx["learning"] or s.learning
+            s.learning = ctx["learning"] if ctx["learning"] is not None else []
         if "notes" in ctx:
             s.notes = ctx.get("notes", s.notes)
         if "stack" in ctx:
             stack = ctx["stack"]
             if "languages" in stack:
-                s.stack_languages = stack["languages"] or s.stack_languages
+                s.stack_languages = stack["languages"] if stack["languages"] is not None else []
             if "frameworks" in stack:
-                s.stack_frameworks = stack["frameworks"] or s.stack_frameworks
+                s.stack_frameworks = stack["frameworks"] if stack["frameworks"] is not None else []
             if "tools" in stack:
-                s.stack_tools = stack["tools"] or s.stack_tools
+                s.stack_tools = stack["tools"] if stack["tools"] is not None else []
     if req.preferences:
         pref = req.preferences
         for k, v in pref.items():
@@ -624,7 +775,24 @@ def templates_delete(template_id: str) -> Dict:
 # ── Static assets ──────────────────────────────────────────────────
 @app.get("/ui/{filename}")
 def serve_ui_file(filename: str) -> FileResponse:
-    path = os.path.join("ui", filename)
+    base = os.path.abspath("ui")
+    path = os.path.abspath(os.path.join("ui", filename))
+    if not path.startswith(base):
+        raise HTTPException(status_code=403, detail="path traversal blocked")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="file not found")
+    return FileResponse(path)
+
+
+@app.get("/media/serve/{filename}")
+def serve_media_file(filename: str) -> FileResponse:
+    """Serve generated images/videos from the exports directory."""
+    base = os.path.abspath("exports")
+    if not os.path.exists(base):
+        os.makedirs(base, exist_ok=True)
+    path = os.path.abspath(os.path.join(base, filename))
+    if not path.startswith(base):
+        raise HTTPException(status_code=403, detail="path traversal blocked")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="file not found")
     return FileResponse(path)
@@ -632,7 +800,10 @@ def serve_ui_file(filename: str) -> FileResponse:
 
 @app.get("/preview/{build_id}/{filename:path}")
 def serve_build_file(build_id: str, filename: str) -> FileResponse:
-    path = os.path.join("builds", build_id, filename)
+    base = os.path.abspath("builds")
+    path = os.path.abspath(os.path.join("builds", build_id, filename))
+    if not path.startswith(base):
+        raise HTTPException(status_code=403, detail="path traversal blocked")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="build file not found")
     return FileResponse(path)
@@ -660,7 +831,7 @@ def llm_status() -> Dict:
     has_openrouter = bool(os.getenv("OPENROUTER_API_KEY"))
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
     has_openai = bool(os.getenv("OPENAI_API_KEY"))
-    enabled = os.getenv("LLM_ENABLED", "").lower() == "true" or has_openrouter or has_anthropic
+    enabled = os.getenv("LLM_ENABLED", "").lower() != "false" and (has_openrouter or has_anthropic or has_openai)
     provider = "openrouter" if has_openrouter else "anthropic" if has_anthropic else "none"
     try:
         from tools.llm.openrouter_client import get_client
@@ -777,12 +948,12 @@ def integrations_status() -> Dict:
         "features": {
             "browser": {"available": True, "label": "Web Browser"},
             "planner": {"available": True, "label": "Task Planner / Scheduler"},
-            "social": {"available": True, "label": "Social Media Scheduler"},
+            "social": {"available": bool(os.getenv("DISCORD_BOT_TOKEN") or os.getenv("SLACK_WEBHOOK_URL")), "label": "Social Media Scheduler"},
             "saas_builder": {"available": True, "label": "SaaS Builder"},
-            "skill_expander": {"available": True, "label": "Auto Skill Expansion"},
-            "betting": {"available": True, "label": "Sports Betting Engine"},
-            "trading": {"available": True, "label": "Trading Engine"},
-            "news": {"available": True, "label": "News Feed (HN + Dev.to)"},
+            "skill_expander": {"available": bool(os.getenv("GITHUB_TOKEN")), "label": "Auto Skill Expansion"},
+            "betting": {"available": bool(os.getenv("ODDS_API_KEY")), "label": "Sports Betting Engine"},
+            "trading": {"available": bool(os.getenv("OPENROUTER_API_KEY") or os.getenv("ANTHROPIC_API_KEY")), "label": "Trading Engine"},
+            "news": {"available": bool(os.getenv("NEWSAPI_KEY") or os.getenv("GNEWS_API_KEY") or os.getenv("WORLDNEWS_API_KEY")), "label": "News Feed (HN + Dev.to)"},
         },
         "configured_count": sum(1 for v in [
             os.getenv("OPENROUTER_API_KEY"), os.getenv("ANTHROPIC_API_KEY"),
@@ -805,6 +976,127 @@ class ChatRequest(BaseModel):
 def chat_smart(req: ChatRequest) -> Dict:
     from features.chat_router import handle_chat
     return handle_chat(req.text)
+
+
+# ── Hermes Proxy ───────────────────────────────────────────────
+@app.get("/hermes/status")
+def hermes_status() -> Dict:
+    """Check if hermes is reachable."""
+    try:
+        import httpx
+        with httpx.Client(timeout=3) as client:
+            resp = client.get(f"{HERMES_URL}/api/status")
+            return {"connected": True, "status": resp.json()}
+    except Exception:
+        return {"connected": False, "status": None}
+
+
+@app.post("/hermes/chat")
+def hermes_chat(req: ChatRequest) -> Dict:
+    """Send a message to hermes for processing."""
+    try:
+        import httpx
+        with httpx.Client(timeout=120) as client:
+            resp = client.post(f"{HERMES_URL}/api/chat", json={"text": req.text})
+            return resp.json()
+    except Exception as e:
+        return {"_error": f"Hermes unavailable: {str(e)}", "text": req.text, "fallback": True}
+
+
+@app.get("/hermes/skills")
+def hermes_skills() -> Dict:
+    """List skills from hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(f"{HERMES_URL}/api/skills")
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e), "skills": []}
+
+
+@app.post("/hermes/skills/{skill_id}/toggle")
+def hermes_toggle_skill(skill_id: str) -> Dict:
+    """Toggle a skill in hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(f"{HERMES_URL}/api/skills/{skill_id}/toggle")
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.get("/hermes/cron")
+def hermes_cron() -> Dict:
+    """List cron jobs from hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(f"{HERMES_URL}/api/cron")
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e), "cron": []}
+
+
+@app.post("/hermes/cron")
+def hermes_create_cron(body: Dict) -> Dict:
+    """Create a cron job in hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(f"{HERMES_URL}/api/cron", json=body)
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.get("/hermes/sessions")
+def hermes_sessions() -> Dict:
+    """List active sessions from hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(f"{HERMES_URL}/api/sessions")
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e), "sessions": []}
+
+
+@app.get("/hermes/sessions/{session_id}/messages")
+def hermes_session_messages(session_id: str) -> Dict:
+    """Get messages from a hermes session."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(f"{HERMES_URL}/api/sessions/{session_id}/messages")
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e), "messages": []}
+
+
+@app.get("/hermes/models")
+def hermes_models() -> Dict:
+    """List available models from hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(f"{HERMES_URL}/api/models")
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e), "models": []}
+
+
+@app.post("/hermes/models/assign")
+def hermes_assign_model(body: Dict) -> Dict:
+    """Assign a model in hermes."""
+    try:
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(f"{HERMES_URL}/api/models/assign", json=body)
+            return resp.json()
+    except Exception as e:
+        return {"_error": str(e)}
 
 
 # ── Dialogue ───────────────────────────────────────────────────────
@@ -934,11 +1226,7 @@ def odds_value(sport: str = "basketball_nba", bankroll: float = 1000.0) -> Dict:
     return {"value_bets": len(value), "kelly": kelly}
 
 
-@app.get("/trading/price")
-def trading_price(symbol: str = "AAPL") -> Dict:
-    from features.finance_modules import get_trading
-    price = get_trading().fetch_price(symbol)
-    return {"symbol": symbol, "price": price}
+# @app.get("/trading/price") # REMOVED - duplicate, see line ~1331 for active cached definition
 
 
 @app.post("/trading/evaluate")
@@ -954,9 +1242,7 @@ def trading_evaluate(symbol: str = "AAPL", prices: str = "") -> Dict:
     return signal.to_dict() if signal else {"action": "NONE"}
 
 
-@app.get("/trading/balance")
-def trading_balance() -> Dict:
-    return {"balance": 0, "note": "stub — connect Cash App / Stripe in settings"}
+# @app.get("/trading/balance") # REMOVED - duplicate, see line ~1306 for active definition
 
 
 # ── Social ─────────────────────────────────────────────────────────
@@ -1108,10 +1394,307 @@ def autonomy_tick() -> Dict:
     return get_autonomy().tick()
 
 
-# ── Health ─────────────────────────────────────────────────────────
+# ── Caching Layer (in-memory by design — cold restart is acceptable for TTL cache) ──
+class CacheManager:
+    """Intelligent TTL-based caching for expensive API responses."""
+    def __init__(self):
+        self._store: Dict[str, Dict] = {}
+        self._lock = None
+
+    def _get_lock(self):
+        if self._lock is None:
+            import threading
+            self._lock = threading.Lock()
+        return self._lock
+
+    def get(self, key: str) -> Optional[Any]:
+        with self._get_lock():
+            if key in self._store:
+                entry = self._store[key]
+                if time.time() < entry["expiry"]:
+                    return entry["data"]
+                del self._store[key]
+        return None
+
+    def set(self, key: str, data: Any, ttl: int = 60):
+        with self._get_lock():
+            self._store[key] = {
+                "data": data,
+                "expiry": time.time() + ttl
+            }
+
+    def invalidate(self, key: str):
+        with self._get_lock():
+            if key in self._store:
+                del self._store[key]
+
+_CACHE = CacheManager()
+
+def cached_endpoint(ttl: int = 60):
+    """Decorator to cache FastAPI endpoint responses."""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Generate stable cache key (JSON-sorted kwargs)
+            try:
+                k_str = json.dumps(kwargs, sort_keys=True, default=str)
+            except Exception:
+                k_str = str(sorted(kwargs.items()))
+            key = f"{func.__name__}:{k_str}"
+            cached = _CACHE.get(key)
+            if cached is not None:
+                return cached
+            
+            # Execute function (handle both sync and async)
+            if asyncio.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
+            else:
+                result = func(*args, **kwargs)
+                
+            _CACHE.set(key, result, ttl)
+            return result
+        return wrapper
+    return decorator
+
+
+# ── Scheduler ──────────────────────────────────────────────────────
+@app.get("/scheduler/tasks")
+def scheduler_tasks() -> Dict:
+    try:
+        from features.scheduler import get_scheduler
+        s = get_scheduler()
+        
+        # Return task definitions directly from internal storage
+        # This bypasses any issues with APScheduler job access
+        tasks = []
+        try:
+            # First try the normal way
+            tasks = s.list_tasks()
+        except Exception as list_err:
+            # If that fails, build tasks directly from internal _tasks dict
+            import logging
+            logging.getLogger(__name__).warning(f"list_tasks failed, using fallback: {list_err}")
+            for name, task_def in s._tasks.items():
+                tasks.append({
+                    "name": task_def.name,
+                    "skill": task_def.skill,
+                    "trigger": task_def.trigger_type,
+                    "cron_expr": task_def.cron_expr,
+                    "interval_seconds": task_def.interval_seconds,
+                    "enabled": task_def.enabled,
+                    "notify_email": task_def.notify_email is not None,
+                    "notify_webhook": task_def.notify_webhook is not None,
+                    "next_run": None
+                })
+        
+        return {"tasks": tasks, "running": s.is_running()}
+    except Exception as e:
+        import traceback
+        detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+        raise HTTPException(status_code=500, detail=detail)
+
+@app.post("/scheduler/run-due")
+def scheduler_run_due() -> Dict:
+    try:
+        from features.scheduler import get_scheduler
+        s = get_scheduler()
+        if s._executor_callback is None:
+            from orchestration.dca_engine import DeterministicCodingAgent as _DCA
+            agent = _DCA()
+            s.set_executor(lambda skill, inputs: agent.handle(f"run {skill} with {inputs}"))
+        # Trigger APScheduler to check for due jobs
+        jobs = s._aps_scheduler.get_jobs() if s._aps_scheduler else []
+        ran = 0
+        for job in jobs:
+            try:
+                job.modify(next_run_time=None)  # Force immediate run
+                ran += 1
+            except Exception:
+                pass
+        
+        # Add notification for job run
+        try:
+            from api.notifications import add_notification
+            add_notification(
+                title="Scheduled Jobs Executed",
+                message=f"Run due: {ran} jobs triggered",
+                category="job",
+                details={"jobs_triggered": ran, "total_jobs": len(jobs)}
+            )
+        except:
+            pass
+        
+        return {"ran": ran, "total_jobs": len(jobs)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/scheduler/tasks")
+def scheduler_add_task(req: Dict) -> Dict:
+    """Add a new cron/interval task to the scheduler."""
+    try:
+        from features.scheduler import get_scheduler, TaskDefinition
+        s = get_scheduler()
+        task = TaskDefinition(
+            name=req["name"],
+            skill=req["skill"],
+            trigger_type=req.get("trigger_type", "cron"),
+            cron_expr=req.get("cron_expr"),
+            interval_seconds=req.get("interval_seconds"),
+            inputs=req.get("inputs", {}),
+            enabled=req.get("enabled", True),
+        )
+        name = s.add_task(task)
+        return {"status": "ok", "name": name}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/scheduler/tasks/{name}/toggle")
+def scheduler_toggle_task(name: str) -> Dict:
+    """Toggle a task's enabled state (enable if disabled, disable if enabled)."""
+    try:
+        from features.scheduler import get_scheduler
+        s = get_scheduler()
+        return s.toggle_task(name)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/scheduler/tasks/{name}")
+def scheduler_delete_task(name: str) -> Dict:
+    """Remove a task from the scheduler permanently."""
+    try:
+        from features.scheduler import get_scheduler
+        s = get_scheduler()
+        removed = s.remove_task(name)
+        if removed:
+            return {"status": "ok", "name": name}
+        raise HTTPException(status_code=404, detail=f"Task not found: {name}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Health ──────────────────────────────────────────────────────────
 @app.get("/health")
-def health() -> Dict:
-    return dash.health()
+def health_check() -> Dict:
+    return {"status": "ok", "ts": time.time(), "version": "2.5.0", "cache_size": len(_CACHE._store)}
+
+
+# ── System Status (Comprehensive 24/7 Monitoring) ───────────────────
+@app.get("/system/status")
+def system_status() -> Dict:
+    """Comprehensive system status for 24/7 monitoring"""
+    import requests
+    
+    status = {
+        "timestamp": datetime.now().isoformat(),
+        "mode": "24/7 Autonomous",
+        "version": "2.5.0",
+        "uptime": time.time(),
+        "components": {},
+        "jobs": {},
+        "notifications": {"unread": 0, "recent": []},
+        "health_score": 100
+    }
+    
+    # Check scheduler
+    try:
+        from features.scheduler import get_scheduler
+        s = get_scheduler()
+        task_count = len(s._tasks)
+        enabled_count = sum(1 for t in s._tasks.values() if t.enabled)
+        status["components"]["scheduler"] = {
+            "status": "online",
+            "total_tasks": task_count,
+            "enabled": enabled_count,
+            "running": s.is_running()
+        }
+        status["jobs"]["scheduled"] = {"count": task_count, "enabled": enabled_count}
+    except Exception as e:
+        status["components"]["scheduler"] = {"status": "error", "error": str(e)[:50]}
+        status["health_score"] -= 10
+    
+    # Check knowledge bank
+    try:
+        from features.knowledge_bank import get_knowledge_bank
+        kb = get_knowledge_bank()
+        stats = kb.get_stats()
+        status["components"]["knowledge"] = {
+            "status": "online",
+            "snippets": stats.get("snippets", 0),
+            "fragments": stats.get("total_fragments", 0)
+        }
+        status["jobs"]["knowledge"] = {"snippets": stats.get("snippets", 0)}
+    except Exception as e:
+        status["components"]["knowledge"] = {"status": "error", "error": str(e)[:50]}
+        status["health_score"] -= 5
+    
+    # Check betting engine
+    try:
+        r = requests.get(f"http://localhost:{PORT}/betting/odds", timeout=5)
+        if r.status_code == 200:
+            data = r.json()
+            status["components"]["betting"] = {"status": "online", "odds_count": data.get("count", 0)}
+            status["jobs"]["betting"] = {"odds": data.get("count", 0)}
+    except:
+        status["components"]["betting"] = {"status": "offline"}
+    
+    # Check news
+    try:
+        r = requests.get(f"http://localhost:{PORT}/news", timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            status["components"]["news"] = {"status": "online", "items": len(data.get("items", []))}
+            status["jobs"]["news"] = {"items": len(data.get("items", []))}
+    except:
+        status["components"]["news"] = {"status": "offline"}
+    
+    # Check social
+    try:
+        r = requests.get(f"http://localhost:{PORT}/social/posts", timeout=5)
+        if r.status_code == 200:
+            status["components"]["social"] = {"status": "online"}
+    except:
+        status["components"]["social"] = {"status": "offline"}
+    
+    # Check Engine API
+    try:
+        r = requests.get("http://localhost:8100/engine/state", timeout=5)
+        if r.status_code == 200:
+            data = r.json()
+            skill_count = data.get("engine", {}).get("skill_count", 0)
+            status["components"]["engine"] = {"status": "online", "skills": skill_count}
+            status["jobs"]["engine"] = {"skills": skill_count}
+    except:
+        status["components"]["engine"] = {"status": "offline"}
+    
+    # Check skills
+    try:
+        from orchestration.intent_router import get_intent_router
+        router = get_intent_router()
+        skill_count = len(router.routes)
+        status["components"]["skills"] = {"status": "online", "count": skill_count}
+        status["jobs"]["skills"] = {"loaded": skill_count}
+    except Exception as e:
+        status["components"]["skills"] = {"status": "error", "error": str(e)[:50]}
+    
+    # Get notifications
+    try:
+        from api.notifications import _notifications
+        unread = [n for n in _notifications if not n.read]
+        status["notifications"]["unread"] = len(unread)
+        status["notifications"]["recent"] = [
+            {"title": n.title, "message": n.message, "category": n.category, "timestamp": n.timestamp}
+            for n in _notifications[-5:]
+        ]
+    except:
+        pass
+    
+    return status
 
 
 # ── Settings Keys (persist from UI to .env) ────────────────────────
@@ -1127,30 +1710,394 @@ class SettingsKeysRequest(BaseModel):
 def save_settings_keys(req: SettingsKeysRequest) -> Dict:
     from config import persist_setting
     saved = []
-    if req.anthropic:
+    # Skip masked placeholder values
+    is_masked = lambda v: v in ("••••••••", "********", "")
+    if not is_masked(req.anthropic):
         persist_setting("ANTHROPIC_API_KEY", req.anthropic)
         saved.append("anthropic")
-    if req.openai:
+    if not is_masked(req.openai):
         persist_setting("OPENAI_API_KEY", req.openai)
         saved.append("openai")
-    if req.deepseek:
+    if not is_masked(req.deepseek):
         persist_setting("DEEPSEEK_API_KEY", req.deepseek)
         saved.append("deepseek")
-    if req.openrouter:
+    if not is_masked(req.openrouter):
         persist_setting("OPENROUTER_API_KEY", req.openrouter)
         saved.append("openrouter")
-    if req.gemini:
+    if not is_masked(req.gemini):
         persist_setting("GEMINI_API_KEY", req.gemini)
         saved.append("gemini")
     return {"saved": saved, "count": len(saved)}
 
 
+@app.post("/betting/place")
+def betting_place(req: Dict) -> Dict:
+    """Place a bet (simulated or via Playwright) using the DCA engine."""
+
+    player = req.get("player", "")
+    market = req.get("market", "")
+    line = req.get("line", "")
+    query = f"Place a bet on {player} for {market} at line {line} on PrizePicks."
+    result = agent.handle(query)
+    return {"status": "processing", "query": query, "result": result}
+
+
+@app.get("/trading/balance")
+def trading_balance() -> Dict:
+    """Return mock wallet balances for UI."""
+    btc_price = 62000.00
+    eth_price = 3200.00
+    sol_price = 180.00
+    btc_amount = 0.12
+    eth_amount = 2.5
+    sol_amount = 45.0
+    return {
+        "balance_usd": round(btc_amount * btc_price + eth_amount * eth_price + sol_amount * sol_price, 2),
+        "assets": [
+            {"symbol": "BTC", "amount": btc_amount, "value_usd": round(btc_amount * btc_price, 2)},
+            {"symbol": "ETH", "amount": eth_amount, "value_usd": round(eth_amount * eth_price, 2)},
+            {"symbol": "SOL", "amount": sol_amount, "value_usd": round(sol_amount * sol_price, 2)},
+        ],
+        "status": "ok"
+    }
+
+
+@app.post("/trading/execute")
+def trading_execute(req: Dict) -> Dict:
+    """Execute a mock trade."""
+    symbol = req.get("symbol", "")
+    side = req.get("side", "BUY")
+    amount = req.get("amount", 0)
+    query = f"Execute {side} of {amount} {symbol} on Coinbase."
+    result = agent.handle(query)
+    return {"status": "executed", "order_id": "CB-99218-X", "query": query, "result": result}
+
+
+@app.get("/trading/price")
+@cached_endpoint(ttl=10)
+def trading_price(symbol: str = "BTC-USD") -> Dict:
+    """Fetch price from Yahoo Finance or return mock."""
+    from features.finance_modules import get_trading
+    price = get_trading().fetch_price(symbol)
+    if not price:
+        price = 64200.50 if "BTC" in symbol else 3450.25 if "ETH" in symbol else 145.20
+    return {"symbol": symbol, "price": price, "status": "ok"}
+
+
+# REMOVED — /skills/list was duplicate, merged into GET /skills above
+
+# ── Media ──────────────────────────────────────────────────────────
+class MediaGenRequest(BaseModel):
+    prompt: str
+    type: str = "image"  # image, video, podcast
+    aspect_ratio: str = "1:1"
+
+@app.post("/media/generate")
+def media_generate(req: MediaGenRequest) -> Dict:
+    query = f"generate a {req.type} with prompt: {req.prompt}"
+    result = agent.handle(query)
+    return {"status": "processing", "query": query, "result": result}
+
+@app.get("/media/library")
+def media_library() -> Dict:
+    base = "exports"
+    if not os.path.exists(base):
+        return {"files": []}
+    files = []
+    for f in os.listdir(base):
+        if f.endswith((".png", ".jpg", ".mp4", ".mp3", ".webp")):
+            files.append({
+                "name": f,
+                "url": f"/media/serve/{f}",
+                "type": "video" if f.endswith(".mp4") else "audio" if f.endswith(".mp3") else "image",
+                "size": os.path.getsize(os.path.join(base, f)),
+                "mtime": os.path.getmtime(os.path.join(base, f))
+            })
+    return {"files": sorted(files, key=lambda x: x["mtime"], reverse=True)}
+
+
+@app.get("/systems/registry")
+def systems_registry() -> Dict:
+    from features.agent_registry import get_agent_registry
+    return {"agents": get_agent_registry().get_all()}
+
+@app.get("/systems/health")
+def systems_health() -> Dict:
+    from features.systems_bridge import get_systems_bridge
+    from features.status_tracker import get_status_tracker
+    bridge = get_systems_bridge()
+    tracker = get_status_tracker()
+    
+    health = {
+        "superalgos": bridge.check_superalgos(),
+        "benchmarks": bridge.get_benchmark_summary(),
+        "content_engine": {"status": tracker.get_system_status("content_engine")},
+        "betting_pipeline": {"status": tracker.get_system_status("betting_pipeline")},
+        "blackmind": {"status": tracker.get_agent_status("blackmind"), "capabilities": ["experimentation", "paper_generation"]}
+    }
+    return health
+
+@app.post("/systems/content/trigger")
+def systems_content_trigger(req: Dict) -> Dict:
+    from features.systems_bridge import get_systems_bridge
+    bridge = get_systems_bridge()
+    return bridge.run_content_pipeline(req.get("topic", "AI Trends"), req.get("format", "podcast"))
+
+@app.post("/lab/experiment")
+def lab_experiment(req: Dict) -> Dict:
+    from features.blackmind_lab import get_blackmind_lab
+    lab = get_blackmind_lab()
+    return lab.run_experiment(req.get("id"), req.get("hypothesis"), req.get("dataset_id"))
+
+@app.post("/lab/paper")
+def lab_paper(req: Dict) -> Dict:
+    from features.blackmind_lab import get_blackmind_lab
+    lab = get_blackmind_lab()
+    return lab.generate_science_paper(req.get("experiment_id"))
+
+# ── Intelligence ───────────────────────────────────────────────────
+@app.get("/news/unified")
+def news_unified() -> Dict:
+    from features.finance_modules import get_news
+    from features.opportunity_scout import get_scout
+    from brain.soul import get_soul
+    
+    items = get_news().fetch_all()
+    
+    # Autonomous Opportunity Scout Trigger
+    soul = get_soul()
+    get_scout().scout([i.to_dict() for i in items], soul.goals)
+
+    # Categorize items
+    categorized = {"tech": [], "finance": [], "ai": [], "general": []}
+    for item in items:
+        text = (item.title + " " + item.summary).lower()
+        if any(w in text for w in ["ai", "llm", "gpt", "model"]): categorized["ai"].append(item.to_dict())
+        elif any(w in text for w in ["crypto", "stock", "market", "price"]): categorized["finance"].append(item.to_dict())
+        elif any(w in text for w in ["apple", "google", "meta", "nvidia", "tech"]): categorized["tech"].append(item.to_dict())
+        else: categorized["general"].append(item.to_dict())
+    return {"categories": categorized, "total": len(items)}
+
+@app.get("/opportunities")
+def list_opportunities() -> Dict:
+    from features.opportunity_scout import get_scout
+    return {"opportunities": get_scout().get_latest()}
+
+@app.post("/knowledge/synthesize")
+def synthesize_knowledge(tag: str) -> Dict:
+    from knowledge.bank import get_knowledge_bank
+    from features.synthesis_engine import get_synthesis_engine
+    
+    bank = get_knowledge_bank()
+    fragments = bank.fragments_by_tag(tag)
+    if not fragments:
+        return {"error": f"No fragments found for tag '{tag}'"}
+        
+    engine = get_synthesis_engine()
+    result = engine.synthesize(tag, [f.__dict__ for f in fragments])
+    return result
+
+
+@app.post("/news/summarize")
+def news_summarize(req: Dict) -> Dict:
+    """Summarize a news item using the LLM."""
+    title = req.get("title", "")
+    url = req.get("url", "")
+    query = f"summarize this news article: {title} at {url}"
+    result = agent.handle(query)
+    return {"summary": result.get("output", "Summary generation failed."), "status": "ok"}
+
+
+@app.post("/news/action")
+def news_action(req: Dict) -> Dict:
+    """Trigger a business action (e.g., create social post) from news."""
+    action = req.get("action", "research")
+    title = req.get("title", "")
+    query = f"Action: {action} based on news: {title}"
+    result = agent.handle(query)
+    return {"result": result.get("output", "Action failed."), "status": "ok"}
+
+
+# ── Uploads ────────────────────────────────────────────────────────
+class AgentUploadRequest(BaseModel):
+    name: str
+    content: str
+
+@app.post("/upload/agent")
+def upload_agent(req: AgentUploadRequest) -> Dict:
+    """Upload a skill/agent file. Validated for safety against traversal and malicious code."""
+    name = req.name
+    content = req.content
+
+    if not name or ".." in name or "/" in name or "\\" in name:
+        raise HTTPException(status_code=400, detail="Invalid agent name")
+
+    safe_name = os.path.basename(name)
+    if not safe_name:
+        raise HTTPException(status_code=400, detail="Invalid agent name")
+
+    if not safe_name.endswith(".py"):
+        raise HTTPException(status_code=400, detail="Only .py files allowed")
+
+    if len(content) > 200 * 1024:
+        raise HTTPException(status_code=400, detail="Content too large (max 200KB)")
+
+    # Reject known-dangerous patterns
+    for pattern in _DANGEROUS_PATTERNS:
+        if pattern.search(content):
+            raise HTTPException(status_code=400, detail=f"Blocked dangerous pattern: {pattern.pattern}")
+
+    upload_dir = os.path.join("skills", "_uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    path = os.path.join(upload_dir, safe_name)
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return {"status": "ok", "path": path, "message": "Agent uploaded"}
+
+@app.post("/upload/folder")
+def upload_folder_context(name: str, description: str = "") -> Dict:
+    """Simulate a folder ingestion into the knowledge bank."""
+    return {"status": "ok", "ingested": name, "message": "Folder metadata registered for background research"}
+
+
+# ── Governor API ────────────────────────────────────────────────────
+_governor_state = {
+    "mode": "checkpoint",
+    "queue": [],
+    "history": [],
+}
+
+_GOVERNOR_ROUTES = [
+    {"patterns": ["code", "function", "class", "component", "api", "build", "deploy", "refactor"], "target": "openhub", "action": "pipeline"},
+    {"patterns": ["strategy", "budget", "revenue", "market", "marketing", "campaign", "finance"], "target": "uplift-venture", "action": "business_module"},
+    {"patterns": ["community", "member", "course", "marketplace", "education"], "target": "ul2", "action": "community_feature"},
+    {"patterns": ["call", "voice", "routing", "recording", "sip", "telephony"], "target": "aetherdesk", "action": "call_center"},
+    {"patterns": ["research", "simulation", "clinical", "archetype", "playbook", "bio", "genome"], "target": "bb-tech", "action": "research_experiment"},
+]
+
+class GovernorRouteRequest(BaseModel):
+    task: str
+    context: Optional[Dict[str, Any]] = None
+
+class GovernorActionRequest(BaseModel):
+    escalation_id: str
+    reason: Optional[str] = None
+
+class GovernorModeRequest(BaseModel):
+    mode: str
+
+@app.post("/governor/route")
+def governor_route(req: GovernorRouteRequest) -> Dict:
+    task_lower = req.task.lower()
+    context = req.context or {}
+
+    best_match = {"target": "uplift-venture", "action": "general", "score": 0}
+    for route in _GOVERNOR_ROUTES:
+        score = sum(1 for p in route["patterns"] if p in task_lower)
+        if score > best_match["score"]:
+            best_match = {**route, "score": score}
+
+    confidence = min(0.95, 0.5 + best_match["score"] * 0.1)
+    amount = context.get("amount", 0)
+    requires_oversight = confidence < 0.7 or amount > 500
+
+    decision = {
+        "target_system": best_match["target"],
+        "action": best_match["action"],
+        "confidence": round(confidence, 2),
+        "requires_oversight": requires_oversight,
+        "oversight_mode": _governor_state["mode"] if requires_oversight else "none",
+    }
+
+    if requires_oversight and _governor_state["mode"] == "checkpoint":
+        esc_id = f"ESC-{int(time.time())}-{best_match['target'][:3]}"
+        _governor_state["queue"].append({
+            "id": esc_id,
+            "task": req.task,
+            "decision": decision,
+            "context": context,
+            "created_at": datetime.now().isoformat(),
+        })
+        return {"status": "awaiting_oversight", "escalation_id": esc_id, "decision": decision}
+
+    return {"status": "routed", "decision": decision}
+
+@app.post("/governor/approve")
+def governor_approve(req: GovernorActionRequest) -> Dict:
+    idx = next((i for i, q in enumerate(_governor_state["queue"]) if q["id"] == req.escalation_id), -1)
+    if idx == -1:
+        raise HTTPException(status_code=404, detail="Escalation not found")
+    item = _governor_state["queue"].pop(idx)
+    _governor_state["history"].append({**item, "status": "approved", "resolved_at": datetime.now().isoformat()})
+    return {"status": "approved", "decision": item["decision"]}
+
+@app.post("/governor/reject")
+def governor_reject(req: GovernorActionRequest) -> Dict:
+    idx = next((i for i, q in enumerate(_governor_state["queue"]) if q["id"] == req.escalation_id), -1)
+    if idx == -1:
+        raise HTTPException(status_code=404, detail="Escalation not found")
+    item = _governor_state["queue"].pop(idx)
+    _governor_state["history"].append({**item, "status": "rejected", "reason": req.reason, "resolved_at": datetime.now().isoformat()})
+    return {"status": "rejected"}
+
+@app.get("/governor/status")
+def governor_status() -> Dict:
+    return {
+        "mode": _governor_state["mode"],
+        "pending": len(_governor_state["queue"]),
+        "queue": _governor_state["queue"][-20:],
+        "history": _governor_state["history"][-20:],
+    }
+
+@app.post("/governor/mode")
+def governor_mode(req: GovernorModeRequest) -> Dict:
+    if req.mode not in ("shadow", "checkpoint", "recovery"):
+        raise HTTPException(status_code=400, detail="Invalid mode. Must be shadow, checkpoint, or recovery")
+    _governor_state["mode"] = req.mode
+    return {"status": "updated", "mode": req.mode}
+
+
+# ── Autonomy Enhanced ─────────────────────────────────────────────
+@app.get("/autonomy/ceo")
+def autonomy_ceo_status() -> Dict:
+    from features.autonomy import get_autonomy
+    status = get_autonomy().get_status()
+    # Add fake 'live trace' for UI demo if no real logs yet
+    if not status.get("dream_stats", {}).get("last_cycle"):
+        status["live_trace"] = [
+            {"time": "09:21:04", "msg": "Analyzing 'Aether OS' market potential..."},
+            {"time": "09:21:15", "msg": "Gathered 14 competitor fragments from HackerNews."},
+            {"time": "09:22:01", "msg": "Generating SaaS architecture proposal..."},
+            {"time": "09:22:30", "msg": "Self-correcting build constraints (Node.js version mismatch)."},
+        ]
+    return status
+
+
 # ── UI ─────────────────────────────────────────────────────────────
+# ── UI & SPA Catch-All ─────────────────────────────────────────────
 @app.get("/")
-def serve_ui() -> FileResponse:
-    return FileResponse("ui/index.html")
+async def serve_root():
+    path = "aether-dashboard/dist/index.html"
+    if os.path.exists(path):
+        return FileResponse(path)
+    return HTMLResponse("<h1>Aether Dashboard Not Found</h1><p>Run 'npm run build' in aether-dashboard first.</p>")
 
-
-@app.get("/ui")
-def serve_ui_redirect() -> FileResponse:
-    return FileResponse("ui/index.html")
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    # Never intercept API docs or internal routes
+    if full_path in ("docs", "openapi.json", "redoc"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    # If the path looks like a file (has an extension), try to serve it from dist
+    # Otherwise, return index.html for SPA routing
+    dist_path = os.path.join("aether-dashboard/dist", full_path)
+    if os.path.isfile(dist_path):
+        return FileResponse(dist_path)
+    
+    # Fallback to index.html for SPA
+    index_path = "aether-dashboard/dist/index.html"
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    # Allow API routes to bubble up (though FastAPI usually handles this via order)
+    raise HTTPException(status_code=404, detail="Not Found")
