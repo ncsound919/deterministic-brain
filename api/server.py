@@ -986,6 +986,8 @@ def hermes_status() -> Dict:
         import httpx
         with httpx.Client(timeout=3) as client:
             resp = client.get(f"{HERMES_URL}/api/status")
+            if resp.status_code >= 400:
+                return {"connected": False, "status": {"error": f"Hermes returned {resp.status_code}"}}
             return {"connected": True, "status": resp.json()}
     except Exception:
         return {"connected": False, "status": None}
@@ -998,6 +1000,8 @@ def hermes_chat(req: ChatRequest) -> Dict:
         import httpx
         with httpx.Client(timeout=120) as client:
             resp = client.post(f"{HERMES_URL}/api/chat", json={"text": req.text})
+            if resp.status_code >= 400:
+                return {"_error": f"Hermes returned {resp.status_code}", "text": req.text, "fallback": True}
             return resp.json()
     except Exception as e:
         return {"_error": f"Hermes unavailable: {str(e)}", "text": req.text, "fallback": True}
