@@ -8,7 +8,7 @@ from datetime import datetime
 import traceback
 import asyncio
 from functools import wraps
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -1191,6 +1191,39 @@ def execute_tool(tool_name: str, body: Dict) -> Dict:
             return {"tool": tool_name, "error": str(e)}
     else:
         raise HTTPException(status_code=400, detail=f"Tool type '{tool['type']}' not supported")
+
+
+# ── WebSocket Chat ─────────────────────────────────────────────
+@app.websocket("/ws/chat")
+async def chat_websocket(ws: WebSocket):
+    """WebSocket endpoint for streaming chat with hermes."""
+    await ws.accept()
+    try:
+        while True:
+            message = await ws.receive_text()
+            data = json.loads(message)
+            text = data.get("text", "")
+            
+            # Forward to hermes and stream response
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=120) as client:
+                    async with client.stream(
+                        "POST",
+                        f"{HERMES_URL}/api/chat/stream",
+                        json={"text": text}
+                    ) as resp:
+                        async for chunk in resp.aiter_text():
+                            await ws.send_text(chunk)
+            except Exception as e:
+                await ws.send_text(json.dumps({"_error": str(e), "text": text, "fallback": True}))
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        try:
+            await ws.close()
+        except Exception:
+            pass
 
 
 # ── Dialogue ───────────────────────────────────────────────────────
