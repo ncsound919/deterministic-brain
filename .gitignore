@@ -99,6 +99,9 @@ skill_index.npy
 *.db-wal
 *.db.bak
 
+# Scraped data (fetched at runtime)
+backtesting/prizepicks_props.json
+
 # Coverage
 .coverage
 htmlcov/
