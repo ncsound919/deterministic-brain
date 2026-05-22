@@ -1,6 +1,4 @@
 """Tests for evolution/ — skill evolver, weight store, nightly scorer."""
-import json
-import time
 from pathlib import Path
 
 import pytest

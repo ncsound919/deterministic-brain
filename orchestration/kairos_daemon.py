@@ -1,11 +1,15 @@
 from __future__ import annotations
+import logging
 import threading
 import time
-from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from datetime import datetime, timezone
+from typing import Callable, Dict, Optional
 
 from config import cfg
 from brain.autodream import run_autodream
+from features.autonomy import get_autonomy
+
+logger = logging.getLogger(__name__)
 
 
 class KairosDaemon:
@@ -38,7 +42,7 @@ class KairosDaemon:
 
     def _run_maintenance(self) -> None:
         """Execute maintenance tasks."""
-        self._stats["last_maintenance"] = datetime.utcnow().isoformat()
+        self._stats["last_maintenance"] = datetime.now(timezone.utc).isoformat()
         self._stats["total_runs"] += 1
 
         run_autodream(dry_run=False)
@@ -46,8 +50,13 @@ class KairosDaemon:
         if self._maintenance_callback:
             try:
                 self._maintenance_callback()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Maintenance callback failed: %s", e)
+
+        try:
+            get_autonomy().tick()
+        except Exception as e:
+            logger.warning("Autonomy tick failed: %s", e)
 
         self._cleanup_cache()
 
@@ -70,12 +79,12 @@ class KairosDaemon:
             try:
                 shutil.rmtree(cache_dir)
                 os.makedirs(cache_dir, exist_ok=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Cache cleanup failed: %s", e)
 
     def run_maintenance_loop(self) -> None:
         """Main daemon loop - runs when idle."""
-        self._stats["start_time"] = datetime.utcnow().isoformat()
+        self._stats["start_time"] = datetime.now(timezone.utc).isoformat()
 
         while self.running:
             if self.is_idle():

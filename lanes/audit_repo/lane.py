@@ -2,7 +2,7 @@
 from __future__ import annotations
 import os
 import re
-from typing import Dict, List
+from typing import Dict
 
 def run(state: dict) -> dict:
     """Run repository audit.
@@ -163,14 +163,14 @@ def _generate_summary(results: Dict) -> str:
 def _format_audit_report(results: Dict) -> str:
     """Format audit results as readable report."""
     lines = [
-        f"# Repository Audit Report",
-        f"",
+        "# Repository Audit Report",
+        "",
         f"Path: {results['repo_path']}",
         f"Files Analyzed: {results['files_analyzed']}",
-        f"",
-        f"## Summary",
+        "",
+        "## Summary",
         f"{results['summary']}",
-        f"",
+        "",
     ]
     
     if results['security_issues']:

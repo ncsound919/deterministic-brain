@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Dict, List
 
 from tools.vault_aware_api import get_key
+from tools.circuit_breaker import circuit_breaker
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -31,10 +32,11 @@ class AlphaVantageClient:
             env_var="ALPHA_VANTAGE_API_KEY", explicit=api_key,
         )
 
+    @circuit_breaker(name="alphavantage", threshold=3, cooldown_s=60, retries=1)
     def _query(self, **params) -> Dict:
         params["apikey"] = self.key
         qs = "&".join(f"{k}={urllib.request.quote(str(v))}"
-                      for k, v in params.items() if v)
+                       for k, v in params.items() if v)
         try:
             with urllib.request.urlopen(f"{self.BASE}?{qs}", timeout=15) as r:
                 return json.loads(r.read())
@@ -89,6 +91,7 @@ class CoinGeckoClient:
             env_var="COINGECKO_API_KEY", explicit=api_key,
         )
 
+    @circuit_breaker(name="coingecko", threshold=3, cooldown_s=60, retries=1)
     def _get(self, path: str, params: Dict = None) -> Dict:
         url = f"{self.BASE}{path}"
         if params:

@@ -6,9 +6,8 @@ Token savings: ~500 tokens per API call that would otherwise go through an LLM.
 
 from __future__ import annotations
 import json
-import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode

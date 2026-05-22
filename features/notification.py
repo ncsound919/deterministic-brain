@@ -4,13 +4,11 @@ import json
 import logging
 import os
 import smtplib
-import threading
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

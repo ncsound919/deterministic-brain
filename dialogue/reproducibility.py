@@ -83,7 +83,6 @@ class ReproducibilityManager:
 
     def start_session(self, seed: Optional[int] = None) -> str:
         """Start a new session with optional seed."""
-        import uuid
         session_id = hashlib.sha256(f"{datetime.utcnow().isoformat()}{seed}".encode()).hexdigest()[:16]
         
         self._seed = seed

@@ -1,10 +1,7 @@
 """Database client tools — SQL execution and schema inspection."""
 from __future__ import annotations
-import os
-import json
 import logging
-from typing import Any, Dict, List, Optional
-from contextlib import contextmanager
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -125,11 +122,11 @@ class DatabaseClient:
                 
                 schema = {"tables": [], "views": []}
                 for t in tables:
-                    cursor.execute(f"""
+                    cursor.execute("""
                         SELECT column_name, data_type 
                         FROM information_schema.columns 
-                        WHERE table_name = '{t['name']}'
-                    """)
+                        WHERE table_name = %s
+                    """, (t['name'],))
                     columns = [{"name": c[0], "type": c[1]} for c in cursor.fetchall()]
                     if t["type"] == "BASE TABLE":
                         schema["tables"].append({"name": t["name"], "columns": columns})
@@ -161,6 +158,8 @@ def db_connect(db_type: str, host: Optional[str] = None, port: Optional[int] = N
     params = {"host": host, "port": port, "database": database, "user": user, "password": password}
     client = DatabaseClient(db_type, {k: v for k, v in params.items() if v is not None})
     success = client.connect()
+    if success:
+        _set_client(client)
     return {"connected": success, "db_type": db_type, "database": database}
 
 

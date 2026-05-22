@@ -16,7 +16,6 @@ class TFIDFSearch:
         self._load()
 
     def _load(self):
-        from sklearn.feature_extraction.text import TfidfVectorizer
         matrix_path = os.path.join(self.index_dir, "tfidf.pkl")
         docs_path   = os.path.join(self.index_dir, "docs.txt")
         vect_path   = os.path.join(self.index_dir, "vectorizer.pkl")

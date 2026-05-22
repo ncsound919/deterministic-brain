@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from typing import Dict
 
 from tools.vault_aware_api import get_key
+from tools.browser.live_controller import LiveBrowser
 
 
 class GoogleClient:
@@ -65,6 +66,7 @@ class GoogleClient:
             "youtube_configured": bool(self.youtube_key),
             "oauth_configured": bool(self.client_id and self.client_secret and self.refresh_token),
             "calendar_configured": bool(self.calendar_id),
+            "playwright_auth_available": True, # Available via .browser_sessions
         }
 
     # ── Gmail SMTP (delegates to email_sender) ─────────────────────
@@ -73,6 +75,72 @@ class GoogleClient:
                    html: bool = False) -> Dict:
         from tools.email_sender import send_email as _send
         return _send(to, subject, body, html=html)
+
+    # ── Gmail Reading (Playwright Fallback) ─────────────────────────
+
+    def read_gmail(self, limit: int = 5) -> Dict:
+        """Reads recent emails using Playwright session cookies."""
+        try:
+            with LiveBrowser(headless=True) as b:
+                # Assuming google_auth_playwright.py saved cookies under 'google' platform
+                res = b.navigate("google", "https://mail.google.com/mail/u/0/#inbox", wait_until="networkidle")
+                if not res.get("ok"):
+                    return {"ok": False, "error": res.get("error")}
+                
+                page = b._get_page("google")
+                # Wait for any typical Gmail inbox element
+                page.wait_for_selector("tr.zA", timeout=10000)
+                
+                # Simple extraction of email subjects (this relies on standard Gmail DOM)
+                # The class 'bog' is often used for unread subjects, 'y6' for read, but we'll grab generic spans inside the row
+                page = b._get_page("google")
+                rows = page.locator("tr.zA").all()
+                
+                emails = []
+                for row in rows[:limit]:
+                    try:
+                        subject = row.locator("span.bog").inner_text()
+                        sender = row.locator("span.bA4 span[email]").get_attribute("name") or row.locator("span.zF").inner_text()
+                        emails.append({"sender": sender, "subject": subject})
+                    except Exception:
+                        pass
+                
+                return {"ok": True, "emails": emails}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    # ── Google Drive (Playwright Fallback) ──────────────────────────
+
+    def drive_list(self, limit: int = 5) -> Dict:
+        """Lists recent Drive files using Playwright session cookies."""
+        try:
+            with LiveBrowser(headless=True) as b:
+                res = b.navigate("google", "https://drive.google.com/drive/my-drive", wait_until="networkidle")
+                if not res.get("ok"):
+                    return {"ok": False, "error": res.get("error")}
+                
+                page = b._get_page("google")
+                # Wait for rows to appear
+                try:
+                    page.wait_for_selector("div[role='row']", timeout=10000)
+                except Exception:
+                    pass
+                
+                page = b._get_page("google")
+                rows = page.locator("div[role='row']").all()
+                
+                files = []
+                for row in rows[:limit]:
+                    try:
+                        name = row.locator("div[aria-label]").first.get_attribute("aria-label")
+                        if name:
+                            files.append({"name": name.replace("File name: ", "").strip()})
+                    except Exception:
+                        pass
+                
+                return {"ok": True, "files": files}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
 
     # ── Google Maps ─────────────────────────────────────────────────
 

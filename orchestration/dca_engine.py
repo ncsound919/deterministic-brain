@@ -4,7 +4,8 @@ import glob
 import math
 import os
 import re
-import signal
+import threading
+import time
 from contextlib import contextmanager
 
 _RE_STEP_SPLIT = re.compile(r"## Step \d+")
@@ -22,18 +23,22 @@ from brain.memory import init_state
 from planners.monte_carlo import MonteCarloScaffolder
 from reasoning.auditor import DeterministicAuditor
 from reasoning.math_engine import ReasoningEngine, Constraint
+from reasoning.context_graph import get_context_graph
 from tools.registry import ToolRegistry
 from tools.tracing import log_event
 
 from orchestration import get_skill_registry, get_skill_executor
 from reasoning.priority_engine import PriorityEngine
 from orchestration.resource_allocator import ResourceAllocator
+from orchestration.confidence_routing import MultiLayerConfidenceRouter
+from orchestration.event_bus import event_bus, connect_all_learning
+from tools.tracing import checkpoint_state
 
 logger = logging.getLogger(__name__)
 
 
 # -------------------------------------------------------------------
-# Timeout wrapper for skill execution
+# Timeout wrapper for skill execution (cross-platform: Windows + Unix)
 # -------------------------------------------------------------------
 class TimeoutException(Exception):
     pass
@@ -41,18 +46,25 @@ class TimeoutException(Exception):
 
 @contextmanager
 def timeout(seconds: int):
-    """Context manager for timeouts on Unix-like systems."""
+    """Cross-platform timeout using threading.Timer + _thread.interrupt_main."""
+    import _thread
 
-    def _timeout_handler(signum, frame):
-        raise TimeoutException(f"Operation timed out after {seconds}s")
+    timer = None
 
-    original_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(seconds)
+    def _raise_timeout():
+        _thread.interrupt_main()
+
+    timer = threading.Timer(seconds, _raise_timeout)
+    timer.daemon = True
+    timer.start()
     try:
         yield
+    except KeyboardInterrupt:
+        timer.cancel()
+        raise TimeoutException(f"Operation timed out after {seconds}s")
     finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, original_handler)
+        if timer:
+            timer.cancel()
 
 
 class SkillExecutor:
@@ -141,6 +153,7 @@ class DeterministicCodingAgent:
     SKILL_EXECUTION_TIMEOUT_SECONDS = 300  # FIX: 5 minutes timeout
 
     def __init__(self, skills_root: str = "skill_packs", routes_path: Optional[str] = None):
+        self._shutdown_check = lambda: False
         self.parser = TaskParser()
         self.router = MoERouter(routes_path or "swarm.yaml")
         self.tools = ToolRegistry()
@@ -202,6 +215,35 @@ class DeterministicCodingAgent:
         except (ImportError, Exception) as e:
             logger.debug("Intent router not wired: %s", e)
 
+        # Hybrid confidence stacking (lazy-registered on first handle)
+        self.confidence_router = MultiLayerConfidenceRouter()
+        try:
+            self.context_graph = get_context_graph()
+        except Exception as e:
+            logger.debug("Context graph not wired: %s", e)
+            self.context_graph = None
+
+        # Wire EventBus learning loop (SkillEvolver + RuntimeHealer)
+        try:
+            connect_all_learning()
+        except Exception as e:
+            logger.debug("Learning loop not wired: %s", e)
+
+        # Wire TaskQueue as a background handler
+        try:
+            from tools.task_queue import get_task_queue
+            self.task_queue = get_task_queue()
+            self.task_queue.register_handler("process_task", self.handle)
+            if os.environ.get("TASK_WORKER", "").lower() in ("1", "true", "yes"):
+                self.task_queue.start_worker("default")
+        except Exception as e:
+            logger.debug("Task queue not wired: %s", e)
+            self.task_queue = None
+
+    def register_shutdown_check(self, check_fn):
+        """Register a callable that returns True if shutdown is requested."""
+        self._shutdown_check = check_fn
+
     def _handle_via_dca(self, query: str) -> Dict:
         """FIX: Intent handler now delegates to full DCA handle loop."""
         return self.handle(query)
@@ -221,38 +263,196 @@ class DeterministicCodingAgent:
             score += 0.1
         return score
 
+    def _stack_confidence(self, decision, task: Dict, enriched: list, state: Dict):
+        """Layer L1 (rule-based) + L2 (semantic) + L3 (evidence) into stacked confidence."""
+        skill_id = decision.chosen_skill
+        l1_score = decision.confidence if decision.confidence > 0 else 0.5
+
+        # L2: semantic similarity from knowledge bank
+        l2_score = 0.5
+        try:
+            from knowledge.bank import get_knowledge_bank
+            bank = get_knowledge_bank()
+            if bank.loaded:
+                raw = task.get("raw", task.get("task", ""))
+                fragments = bank.query(raw, top_k=3) if raw else []
+                if fragments:
+                    l2_score = sum(getattr(f, "confidence", 0.5) for f, _ in fragments) / len(fragments)
+        except Exception:
+            pass
+
+        # L3: evidence from session history
+        l3_score = 0.5
+        try:
+            sid = state.get("session_id", "")
+            if sid:
+                session_data = sm.load_session(sid)
+                history = session_data.get("history", []) if session_data else []
+                if history:
+                    successes = sum(1 for h in history if h.get("status") == "ok")
+                    l3_score = min(1.0, successes / max(len(history), 1))
+        except Exception:
+            pass
+
+        # L3b: bias from ContextGraph causal history
+        try:
+            if self.context_graph and skill_id:
+                raw_text = task.get("raw", task.get("task", ""))
+                historical = self.context_graph.why_this_skill(
+                    raw_text[:200], skill_id
+                )
+                sample_count = historical.get("sample_count", 0)
+                factor_weights = historical.get("factor_weights", {})
+                if sample_count > 0 and factor_weights:
+                    avg_weight = sum(factor_weights.values()) / max(len(factor_weights), 1)
+                    # Blend: L3 (session-local) + CG (cross-session historical)
+                    l3_score = 0.7 * l3_score + 0.3 * min(1.0, avg_weight)
+        except Exception:
+            pass
+
+        # Only apply stacking if router has a matching route
+        route_name = skill_id or "default"
+        if route_name not in self.confidence_router.routes:
+            def passthrough_primary(x):
+                return x, l1_score
+            self.confidence_router.register_route(
+                route_name,
+                primary_fn=passthrough_primary,
+                fallback_fn=lambda x: x,
+                semantic_fn=lambda x: l2_score,
+                evidence_fn=lambda x: l3_score,
+            )
+
+        raw_query = task.get("raw", task.get("task", ""))
+        result = self.confidence_router.execute(
+            route_name, raw_query,
+            semantic_score=l2_score,
+            evidence_score=l3_score,
+        )
+
+        if result.layer_scores:
+            decision.confidence = result.layer_scores["final"]
+            state["confidence_stacked"] = {
+                "layer_scores": result.layer_scores,
+                "weights_used": result.weights_used,
+                "fallback_triggered": result.fallback_triggered,
+            }
+
     def _build_constraints(self, task: Dict):
-        # FIX: Stub implementation — convert task constraints to Z3 constraints
-        # TODO: parse task['constraints'] if present and build Z3 rules
         constraints = []
         task_type = task.get("task", "")
-        if "security" in task_type.lower():
-            # Example: require SSL if security task
-            constraints.append(
-                Constraint(
-                    expr="use_ssl == True",
-                    weight=1.0,
-                    description="Security tasks must use SSL",
-                )
+        raw_text = task.get("raw", "")
+
+        # Security: no dangerous patterns in generated code
+        constraints.append(
+            Constraint(
+                "allow_eval",
+                lambda v: v is False,
+                "eval() is prohibited for security",
             )
+        )
+        constraints.append(
+            Constraint(
+                "allow_shell",
+                lambda v: v is False,
+                "shell=True is prohibited for security",
+            )
+        )
+
+        # Resource limits must be positive
+        constraints.append(
+            Constraint(
+                "memory_limit",
+                lambda v: v is None or v > 0,
+                "Memory limit must be positive if set",
+            )
+        )
+        constraints.append(
+            Constraint(
+                "timeout",
+                lambda v: v is None or v > 0,
+                "Timeout must be positive if set",
+            )
+        )
+
+        # Auth requirement
         if task.get("requires_auth"):
             constraints.append(
                 Constraint(
-                    expr="auth_enabled == True",
-                    weight=1.0,
-                    description="Task requires authentication",
+                    "auth_enabled",
+                    lambda v: v is True,
+                    "Task requires authentication",
                 )
             )
+
+        # Security tasks must use SSL
+        if "security" in task_type.lower():
+            constraints.append(
+                Constraint(
+                    "use_ssl",
+                    lambda v: v is True,
+                    "Security tasks must use SSL",
+                )
+            )
+
+        # File operations must not traverse outside project
+        if "file" in task_type.lower() or "write" in task_type.lower():
+            constraints.append(
+                Constraint(
+                    "allow_path_traversal",
+                    lambda v: v is False,
+                    "Path traversal is prohibited",
+                )
+            )
+
+        # Learned constraints from RuntimeHealer corrections
+        try:
+            from orchestration.runtime_healer import runtime_healer
+            for lc in runtime_healer.get_learned_constraints():
+                pattern = lc.get("pattern", "")
+                skill_ref = lc.get("skill_id", "")
+                if pattern and skill_ref:
+                    constraints.append(
+                        Constraint(
+                            f"healer_{skill_ref}",
+                            lambda v, p=pattern: p.lower() not in str(v).lower() if v else True,
+                            f"Healer learned constraint: avoid '{pattern[:80]}' from {skill_ref}",
+                        )
+                    )
+        except Exception:
+            pass
+
         return constraints
 
     def _variable_domains(self, task: Dict):
-        # FIX: Stub implementation — define variable domain spaces for MCTS
-        # TODO: extract choice variables from task spec and define valid ranges
         domains = {}
-        if task.get("task") == "deploy":
+        task_type = task.get("task", "")
+
+        # All tasks define security posture
+        domains["allow_eval"] = [False]
+        domains["allow_shell"] = [False]
+        domains["memory_limit"] = [None, 128, 256, 512]
+        domains["timeout"] = [None, 30, 60, 120, 300]
+        domains["auth_enabled"] = [True, False]
+        domains["use_ssl"] = [True, False]
+        domains["allow_path_traversal"] = [False]
+
+        # Task-specific domains
+        if task_type == "deploy":
             domains["environment"] = ["dev", "staging", "prod"]
+            domains["rollback_strategy"] = ["immediate", "gradual", "manual"]
+        elif task_type in ("create-api", "scaffold"):
+            domains["framework"] = ["fastapi", "express", "flask", "gin"]
+            domains["database"] = ["none", "postgres", "sqlite", "mysql"]
+        elif task_type in ("create-react-component", "ui"):
+            domains["framework"] = ["react", "vue", "svelte"]
+            domains["styling"] = ["css", "tailwind", "styled-components"]
+        elif task_type == "docker":
+            domains["base_image"] = ["python:3.11-slim", "node:20-alpine", "alpine:latest"]
+
         if task.get("framework"):
-            domains["version"] = ["latest", "stable", "lts"]
+            domains["framework_version"] = ["latest", "stable", "lts"]
+
         return domains
 
     # ------------------------------------------------------------------
@@ -281,8 +481,14 @@ class DeterministicCodingAgent:
     # Main entry point
     # ------------------------------------------------------------------
     def handle(self, user_input: str) -> Dict:
+        if self._shutdown_check():
+            return {
+                "status": "shutdown",
+                "final_output": {"error": "Shutdown in progress — rejecting new work"},
+            }
         task = self.parser.parse(user_input)
         state = init_state(user_input, task)
+        checkpoint_state("parse", state)
 
         # ---- Intent router: keyword-first parallel path ----
         if self.intent_router:
@@ -322,6 +528,7 @@ class DeterministicCodingAgent:
                 decision.confidence = max(decision.confidence, 0.85)
 
         state["reasoning"] = decision.to_dict()
+        checkpoint_state("reasoning", state)
         log_event(
             "reasoning",
             {
@@ -334,6 +541,33 @@ class DeterministicCodingAgent:
                 "status": "ok" if decision.audit_ok else "blocked",
             },
         )
+
+        # ---- Hybrid confidence stacking ------------------------------
+        self._stack_confidence(decision, task, enriched, state)
+        checkpoint_state("confidence", state)
+
+        # Record decision in context graph for causal analysis
+        try:
+            cg = self.context_graph
+            if cg and decision.chosen_skill:
+                stacked = state.get("confidence_stacked", {})
+                factors = {}
+                if stacked.get("layer_scores"):
+                    for k, v in stacked["layer_scores"].items():
+                        factors[k] = v
+                if not factors:
+                    factors["l1_raw"] = decision.confidence
+                    factors["n_candidates"] = len(enriched) if enriched else 1
+                cg.record_decision(
+                    session_id=state.get("session_id", ""),
+                    decision_type="skill_selection",
+                    factors=factors,
+                    outcome="accepted" if decision.audit_ok else "rejected",
+                    chosen=decision.chosen_skill,
+                    confidence=decision.confidence,
+                )
+        except Exception as e:
+            logger.debug("Context graph record failed: %s", e)
 
         # ---- Pre-audit block -----------------------------------------
         if not decision.audit_ok:
@@ -505,6 +739,7 @@ class DeterministicCodingAgent:
         state["final_output"] = result
         state["status"] = "ok" if result.get("success") else "failed"
         state["score"] = decision.confidence
+        checkpoint_state("execute", state)
         log_event(
             "handle",
             {
@@ -515,4 +750,15 @@ class DeterministicCodingAgent:
                 "confidence": decision.confidence,
             },
         )
+
+        # Emit skill execution events for EventBus learning loop
+        try:
+            latency_ms = int((time.time() - getattr(self, "_exec_start", time.time())) * 1000)
+            if state["status"] == "ok":
+                event_bus.emit("skill_success", skill_id=skill_id, latency_ms=latency_ms, confidence=decision.confidence)
+            else:
+                event_bus.emit("skill_failure", skill_id=skill_id, latency_ms=latency_ms, confidence=decision.confidence)
+        except Exception as e:
+            logger.debug("EventBus emission failed: %s", e)
+
         return self._persist(state, user_input)

@@ -504,11 +504,14 @@ def print_final_report(report: Dict):
 # MAIN RUNNER
 # ─────────────────────────────────────────────────────────────────────
 
-def run_long_test(hours: float = 0.5):
+def run_long_test(hours: float = 0.5, start_cycle: int = 1):
     cycle_duration_s = 120  # ~2 minutes per cycle
     total_cycles = max(1, int((hours * 3600) / cycle_duration_s))
 
-    print_banner(f"LONG-RUN BENCHMARK: {hours}h ({total_cycles} cycles)")
+    if start_cycle > 1:
+        print_banner(f"LONG-RUN BENCHMARK: {hours}h ({total_cycles} cycles) [RESUMING from cycle {start_cycle}]")
+    else:
+        print_banner(f"LONG-RUN BENCHMARK: {hours}h ({total_cycles} cycles)")
     print(f"  Start: {datetime.now(timezone.utc).isoformat()}")
     print("  Phases per cycle: ACTIVE -> PASSIVE -> HEALING -> LEARNING")
     print(f"  Cycle duration: ~{cycle_duration_s}s\n")
@@ -521,7 +524,7 @@ def run_long_test(hours: float = 0.5):
     phase_order = ["active", "passive", "healing", "learning"]
 
     try:
-        for cycle in range(1, total_cycles + 1):
+        for cycle in range(start_cycle, total_cycles + 1):
             cycle_start = time.time()
             phase = phase_order[(cycle - 1) % len(phase_order)]
 
@@ -567,14 +570,21 @@ def main():
                         help="Hours to run (default: 0.5)")
     parser.add_argument("--report-only", action="store_true",
                         help="Print last report and exit")
+    parser.add_argument("--resume", type=int, metavar="N",
+                        help="Resume from cycle N (reads .long_run/report.json to auto-detect)")
     args = parser.parse_args()
+
+    if args.resume:
+        start_cycle = args.resume
+    else:
+        start_cycle = 1
 
     if args.report_only:
         show_last_report()
         return
 
     try:
-        run_long_test(hours=args.hours)
+        run_long_test(hours=args.hours, start_cycle=start_cycle)
     except KeyboardInterrupt:
         print("\nDone.")
     except Exception as e:

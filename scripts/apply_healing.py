@@ -1,8 +1,8 @@
 """Apply healing based on benchmark findings."""
-import json, sys
+import json
+import sys
 sys.path.insert(0, ".")
 from evolution.skill_evolver import SkillEvolver
-from evolution.weight_store import WeightStore
 
 report = json.loads(open(".benchmark_report.json").read())
 evolver = SkillEvolver()
@@ -39,5 +39,5 @@ for query, data in report.get("reasoning", {}).items():
             print(f"  DEPRECATED: {skill} (0.0 confidence across {s['runs']} runs)")
 
 print(f"\nDeprecated: {deprecations} skills")
-print(f"Report: .skill_performance.json")
-print(f"Weights: .skill_weights.json")
+print("Report: .skill_performance.json")
+print("Weights: .skill_weights.json")

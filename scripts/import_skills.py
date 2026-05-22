@@ -11,16 +11,12 @@ Converts all to the brain's YAML frontmatter + Markdown format under skill_packs
 """
 
 from __future__ import annotations
-import json
-import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional
-from urllib.request import urlretrieve
+from typing import List
 
 
 SKILL_PACKS_DIR = Path("skill_packs")
@@ -93,7 +89,7 @@ def normalize_frontmatter(yaml_text: str, backend: str) -> str:
     # Extract inputs from description heuristics
     inputs = _infer_inputs(description)
     if inputs:
-        lines.append(f"inputs:")
+        lines.append("inputs:")
         for inp in inputs:
             lines.append(f"  {inp}: string")
     lines.append("tools: []")
@@ -314,7 +310,7 @@ def main():
 
     print(f"\nTotal skills imported: {total}")
     print(f"   Location: {SKILL_PACKS_DIR.resolve()}")
-    print(f"   Run `python main.py` to use them")
+    print("   Run `python main.py` to use them")
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size
 .n-i:hover .tip{opacity:1}
 
 #main{grid-area:main;overflow-y:auto;padding:18px 22px;background:var(--bg2)}
+.lucide { width: 18px; height: 18px; stroke-width: 2; }
 .pg{display:none;flex-direction:column;gap:16px}
 .pg.on{display:flex}
 
@@ -127,6 +128,7 @@ textarea.inp{resize:vertical;min-height:60px}
 .int-row .int-name{flex:1}
 .int-row .int-status{font-size:10px;color:var(--dim)}
 </style>
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 <div id="app">
@@ -144,12 +146,12 @@ textarea.inp{resize:vertical;min-height:60px}
 </header>
 
 <nav id="nav">
-  <div class="n-i on" data-p="home" title="Home"><span>&#x2302;</span><span class="tip">Home</span></div>
-  <div class="n-i" data-p="pipe" title="Pipeline"><span>&#x2B9F;</span><span class="tip">Pipeline</span></div>
-  <div class="n-i" data-p="browser" title="Browser"><span>&#x1F310;</span><span class="tip">Browser</span></div>
-  <div class="n-i" data-p="betting" title="Betting"><span>&#x1F3B2;</span><span class="tip">Betting</span></div>
-  <div class="n-i" data-p="kb" title="Knowledge"><span>&#x1F4DA;</span><span class="tip">Knowledge</span></div>
-  <div class="n-i" data-p="settings" title="Settings"><span>&#x2699;</span><span class="tip">Settings</span></div>
+  <div class="n-i on" data-p="home" title="Home"><i data-lucide="home"></i><span class="tip">Home</span></div>
+  <div class="n-i" data-p="pipe" title="Pipeline"><i data-lucide="workflow"></i><span class="tip">Pipeline</span></div>
+  <div class="n-i" data-p="browser" title="Browser"><i data-lucide="globe"></i><span class="tip">Browser</span></div>
+  <div class="n-i" data-p="betting" title="Betting"><i data-lucide="circle-dollar-sign"></i><span class="tip">Betting</span></div>
+  <div class="n-i" data-p="kb" title="Knowledge"><i data-lucide="book-open"></i><span class="tip">Knowledge</span></div>
+  <div class="n-i" data-p="settings" title="Settings"><i data-lucide="settings"></i><span class="tip">Settings</span></div>
 </nav>
 
 <main id="main">
@@ -259,9 +261,12 @@ textarea.inp{resize:vertical;min-height:60px}
 
 </div>
 
+<!-- Skill Info Modal -->
+<div id="smodal" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);align-items:center;justify-content:center;"></div>
+
 <script src="/ui/devpet-n64.js"></script>
 <script>
-const A='http://localhost:8000',$=id=>document.getElementById(id),esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const A='http://localhost:8000',$=id=>document.getElementById(id),esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
 async function api(p,m='GET',b=null){try{const o={method:m,headers:{'Content-Type':'application/json'}};if(b)o.body=JSON.stringify(b);const r=await fetch(A+p,o);return await r.json()}catch(e){return{error:String(e)}}}
 const LS={get(k,d){try{return JSON.parse(localStorage.getItem('db_'+k))??d}catch{return d}},set(k,v){localStorage.setItem('db_'+k,JSON.stringify(v))}};
 
@@ -311,21 +316,48 @@ $('pc').addEventListener('click',async()=>{const n=$('pn').value.trim(),i=$('pi'
 loadHome();
 
 // pipeline
-let _pl=[],_chains={};
-async function loadPipe(){const r=await api('/skills');const el=$('plp');el.innerHTML='';(r.skills||[]).forEach(s=>{const d=document.createElement('div');d.className='pl-skill';d.draggable=true;d.dataset.skill=s.skill||s;d.textContent=(s.skill||s).replace(/-/g,' ');d.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',d.dataset.skill)});el.appendChild(d)});await loadChains();rChain()}
-async function loadChains(){const r=await api('/chains');_chains=r.chains||{};const sel=$('plchain');sel.innerHTML='<option value="">— Prebuilt Chains ('+Object.keys(_chains).length+') —</option>';Object.entries(_chains).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=k.replace(/-/g,' ')+' ('+(v.trigger||'manual')+')';sel.appendChild(o)});sel.addEventListener('change',()=>{if(sel.value)_pl=[];rChain()})}
+let _pl=[],_plInputs={},_chains={},_skillsMap={};
+async function loadPipe(){const r=await api('/skills');const el=$('plp');_skillsMap={};el.innerHTML='';(r.skills||[]).forEach(s=>{const sid=s.skill_id||s.skill||s;_skillsMap[sid]=s;const d=document.createElement('div');d.className='pl-skill';d.draggable=true;d.dataset.skill=sid;d.dataset.hasDesc=!!s.description;d.textContent=(s.skill||s.skill_name||sid).replace(/-/g,' ');if(s.description)d.title=s.description;d.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',sid)});d.addEventListener('click',()=>showSkillInfo(s));el.appendChild(d)});await loadChains();rChain()}
+function showSkillInfo(s){const sid=s.skill_id||s.skill||'';const disp=s.skill||s.skill_name||sid;const m=$('smodal');m.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);max-width:480px;width:90vw;max-height:80vh;overflow-y:auto;">'
++'<div style="padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">'
++'<span style="font-family:var(--mono);font-weight:700;">'+esc(disp)+'</span>'
++'<span class="pill p-dim">'+esc(s.version||'1.0')+'</span>'
++(s.backend?'<span class="pill p-dim">'+esc(s.backend)+'</span>':'')
++'<span style="margin-left:auto;cursor:pointer;color:var(--dim);font-size:18px;" onclick="closeSkillInfo()">&times;</span></div>'
++'<div style="padding:14px;font-size:12px;color:var(--dim);line-height:1.6;">'
++esc(s.description||'No description')+'</div>'
++(Object.keys(s.inputs||{}).length?'<div style="padding:0 14px 10px;"><div style="font-size:10px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Inputs</div>'
++Object.entries(s.inputs).map(([k,v])=>'<div style="display:flex;gap:8px;margin-bottom:4px;font-size:11px;"><span style="font-family:var(--mono);color:var(--accent);min-width:80px;">'+esc(k)+'</span><span style="color:var(--dim)">'+esc(v)+'</span></div>').join('')
++'</div>':'')
++(s.tools&&s.tools.length?'<div style="padding:0 14px 10px;"><div style="font-size:10px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Tools</div><div style="display:flex;gap:4px;flex-wrap:wrap;">'
++s.tools.map(t=>'<span class="pill p-dim">'+esc(t)+'</span>').join('')
++'</div></div>':'')
++(s.requires?.env?.length?'<div style="padding:0 14px 14px;"><div style="font-size:10px;color:var(--dim);text-transform:uppercase;margin-bottom:3px;">Requires Env</div><div style="font-size:11px;font-family:var(--mono);color:var(--amber);">'+s.requires.env.join(', ')+'</div></div>':'')
++'<div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">'
++'<button class="btn btn-o btn-sm" onclick="addSkillToChain(\''+esc(sid)+'\')">Add to Chain</button>'
++'<button class="btn btn-a btn-sm" onclick="runSkillDirect(\''+esc(sid)+'\')">Execute</button></div></div>';m.style.display='flex'}
+function closeSkillInfo(){$('smodal').style.display='none'}
+function addSkillToChain(sid){if(!_pl.includes(sid)){_pl.push(sid);_plInputs[sid]={}}closeSkillInfo();rChain()}
+async function runSkillDirect(sid){closeSkillInfo();const log=$('plog');log.style.display='block';log.innerHTML='<span class="hl">$</span> '+esc(sid)+'\n';const ts=Date.now();const r=await api('/task','POST',{query:sid});log.innerHTML+='  <span class="'+(r.status==='ok'?'ok':'err')+'">'+(r.status==='ok'?'OK':'ERR')+'</span> <span class="ts">('+((Date.now()-ts)/1000).toFixed(1)+'s)</span>\n'+esc(r.final_output?.output||r.output||JSON.stringify(r));petXP(20)}
+async function loadChains(){const r=await api('/chains');_chains=r.chains||{};const sel=$('plchain');sel.innerHTML='<option value="">— Prebuilt Chains ('+Object.keys(_chains).length+') —</option>';Object.entries(_chains).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=k.replace(/-/g,' ')+' ('+(v.trigger||'manual')+')';sel.appendChild(o)});sel.addEventListener('change',()=>{if(sel.value)_pl=[];_plInputs={};rChain()})}
 function pla(e){e.preventDefault();$('plc').classList.add('drag')}
 function pll(e){$('plc').classList.remove('drag')}
-function pld(e){e.preventDefault();$('plc').classList.remove('drag');const s=e.dataTransfer.getData('text/plain');if(s&&!_pl.includes(s)){_pl.push(s);rChain()}}
-function rChain(){const el=$('plc');if(!_pl.length){el.innerHTML='<div class="pl-empty"><b>+</b> Drop skills here or select a chain above</div>';return}el.innerHTML='';_pl.forEach((s,i)=>{const d=document.createElement('div');d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;';d.innerHTML='<div class="pl-node-b" onclick="rmN('+i+')">'+esc(s.replace(/-/g,' '))+'</div>'+(i<_pl.length-1?'<div class="pl-arr">&darr;</div>':'');el.appendChild(d)})}
-function rmN(i){_pl.splice(i,1);rChain()}
-$('plr').addEventListener('click',async()=>{if(!_pl.length)return;const log=$('plog');log.style.display='block';log.innerHTML='';const ns=document.querySelectorAll('#plc .pl-node-b');for(let i=0;i<_pl.length;i++){const s=_pl[i];if(ns[i]){ns[i].style.borderColor='var(--amber)';ns[i].style.color='var(--amber)'}log.innerHTML+='<span class="hl">$</span> '+esc(s)+'\n';const ts=Date.now();const r=await api('/task','POST',{query:s});const ok=r.status==='ok';if(ns[i]){ns[i].style.borderColor=ok?'var(--green)':'var(--red)';ns[i].style.color=ok?'var(--green)':'var(--red)'}log.innerHTML+='  <span class="'+(ok?'ok':'err')+'">'+(ok?'OK':'ERR')+'</span> <span class="ts">('+((Date.now()-ts)/1000).toFixed(1)+'s)</span>\n';if(!ok){log.innerHTML+='<span class="err">stopped</span>\n';break}}petXP(_pl.length*10)});
+function pld(e){e.preventDefault();$('plc').classList.remove('drag');const s=e.dataTransfer.getData('text/plain');if(s&&!_pl.includes(s)){_pl.push(s);_plInputs[s]={};rChain()}}
+function rChain(){const el=$('plc');if(!_pl.length){el.innerHTML='<div class="pl-empty"><b>+</b> Drop skills here or select a chain above</div>';return}el.innerHTML='';_pl.forEach((s,i)=>{const meta=_skillsMap[s]||{};const inp=meta.inputs||{};const hasInputs=Object.keys(inp).length>0;const con=document.createElement('div');con.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;';let html='<div class="pl-node-b" style="position:relative;" onclick="showChainSkill('+i+')">'+esc(s.replace(/-/g,' '))+'<div style="margin-top:2px;font-size:8px;color:var(--dim)">'+esc((meta.description||'').slice(0,50))+'</div></div>';if(hasInputs)html+=('<div style="font-size:8px;color:var(--accent);cursor:pointer;" onclick="configureSkill('+i+')">config</div>');if(i<_pl.length-1)html+='<div class="pl-arr">&darr;</div>';con.innerHTML=html;el.appendChild(con)})}
+function showChainSkill(i){const sid=_pl[i];const meta=_skillsMap[sid];if(meta)showSkillInfo(meta)}
+function configureSkill(i){const sid=_pl[i];const meta=_skillsMap[sid]||{};const inp=meta.inputs||{};let html='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);max-width:400px;width:80vw;padding:14px;">'
++'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-family:var(--mono);font-weight:700;font-size:13px;">'+esc(sid)+'</span><span style="margin-left:auto;cursor:pointer;font-size:18px;color:var(--dim)" onclick="closeSkillInfo()">&times;</span></div>'
++Object.entries(inp).map(([k,v])=>'<div style="margin-bottom:6px;"><label style="font-size:10px;color:var(--dim);display:block;margin-bottom:2px;">'+esc(k)+' <small style="color:var(--dim)">'+esc(v)+'</small></label><input class="inp" id="cfg-'+esc(sid)+'-'+esc(k)+'" placeholder="'+esc(v)+'" style="font-size:11px;" value="'+esc(_plInputs[sid]?.[k]||'')+'"></div>').join('')
++'<div style="margin-top:10px;text-align:right;"><button class="btn btn-a btn-sm" onclick="saveConfig(\''+esc(sid)+'\')">Save Config</button></div></div>';$('smodal').innerHTML=html;$('smodal').style.display='flex'}
+function saveConfig(sid){const meta=_skillsMap[sid]||{};const inp=meta.inputs||{};if(!_plInputs[sid])_plInputs[sid]={};Object.keys(inp).forEach(k=>{const el=$('cfg-'+sid+'-'+k);if(el)_plInputs[sid][k]=el.value});closeSkillInfo();rChain()}
+function rmN(i){_pl.splice(i,1);delete _plInputs[_pl[i]];rChain()}
+$('plr').addEventListener('click',async()=>{if(!_pl.length)return;const log=$('plog');log.style.display='block';log.innerHTML='';const ns=document.querySelectorAll('#plc .pl-node-b');for(let i=0;i<_pl.length;i++){const s=_pl[i];if(ns[i]){ns[i].style.borderColor='var(--amber)';ns[i].style.color='var(--amber)'}log.innerHTML+='<span class="hl">$</span> '+esc(s)+'\n';const ts=Date.now();const r=await api('/task','POST',{query:s+(_plInputs[s]?' with '+JSON.stringify(_plInputs[s]):'')});const ok=r.status==='ok';if(ns[i]){ns[i].style.borderColor=ok?'var(--green)':'var(--red)';ns[i].style.color=ok?'var(--green)':'var(--red)'}log.innerHTML+='  <span class="'+(ok?'ok':'err')+'">'+(ok?'OK':'ERR')+'</span> <span class="ts">('+((Date.now()-ts)/1000).toFixed(1)+'s)</span>\n';if(!ok){log.innerHTML+='<span class="err">stopped</span>\n';break}}petXP(_pl.length*10)});
 $('plrc').addEventListener('click',async()=>{const ch=$('plchain').value;if(!ch)return;const log=$('plog');log.style.display='block';log.innerHTML='<span class="hl">$ chain</span> '+esc(ch)+'\n<span class="ts">executing...</span>\n';$('plrc').disabled=true;const ts=Date.now();const r=await api('/chains/'+encodeURIComponent(ch)+'/run','POST');const dur=((Date.now()-ts)/1000).toFixed(1);log.innerHTML=log.innerHTML.replace('executing...','');const ok=r.status==='ok';log.innerHTML+='<span class="'+(ok?'ok':'err')+'">'+(ok?'CHAIN OK':'CHAIN ERR')+'</span> <span class="ts">('+dur+'s)</span>\n';if(r.step_results)r.step_results.forEach(s=>{const so=s.status==='ok';log.innerHTML+='  <span class="'+(so?'ok':'err')+'">'+(so?'pass':'fail')+'</span> '+esc(s.output?.skill||s.output?.task||'?')+'\n'});log.innerHTML+='<span class="'+(ok?'hl':'err')+'">steps: '+r.steps_ok+'/'+r.steps_total+' OK</span>\n';$('plrc').disabled=false;petXP(30)});
 $('pls').addEventListener('click',()=>{LS.set('pipeline',_pl);$('pls').textContent='SAVED';setTimeout(()=>{$('pls').textContent='SAVE PIPELINE'},1500)});
 const sv=LS.get('pipeline',[]);if(sv.length)_pl=sv;
 
 // browser
-$('bwgo').addEventListener('click',()=>{const u=$('bwurl').value.trim();if(!u)return;const f=$('bwframe');const url=u.startsWith('http')?u:'https://'+u;f.innerHTML='<iframe src="'+url+'" style="width:100%;height:100%;border:none;border-radius:6px;"></iframe>'});
+$('bwgo').addEventListener('click',()=>{const u=$('bwurl').value.trim();if(!u)return;const f=$('bwframe');const url=u.startsWith('http')?u:'https://'+u;f.innerHTML='';const ifr=document.createElement('iframe');ifr.src=url;ifr.style.cssText='width:100%;height:100%;border:none;border-radius:6px;';f.appendChild(ifr)});
 $('bwurl').addEventListener('keydown',e=>{if(e.key==='Enter')$('bwgo').click()});
 $('bwingest').addEventListener('click',async()=>{const u=$('bwurl').value.trim();if(!u)return;$('bwingest').disabled=true;const r=await api('/knowledge/ingest','POST',{url:u,tags:['web']});$('bwingest').disabled=false;addChat('bot','Ingested '+r.ingested+' fragments from '+u)});
 
@@ -339,9 +371,9 @@ $('kbsv').addEventListener('click',async()=>{const t=$('kbst').value.trim(),c=$(
 $('kbb').addEventListener('click',async()=>{const q=$('kbs').value.trim();if(!q)return;$('kbb').disabled=true;const r=await api('/knowledge/search','POST',{query:q,top_k:5});$('kbb').disabled=false;const el=$('kbr');el.innerHTML='';(r.results||[]).forEach(f=>{const d=document.createElement('div');d.style.cssText='background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;margin-bottom:5px;';d.innerHTML='<div style="color:var(--accent);font-size:10px;">'+esc(f.source_title||'')+' <span style="color:var(--dim)">'+f.score+'</span></div><div style="font-size:10px;color:var(--dim);">'+esc((f.chunk_text||'').slice(0,150))+'</div>';el.appendChild(d)})});
 
 // settings
-async function loadSettings(){const s=await api('/soul');if(s&&!s.error){$('sn').value=s.identity?.name||'';$('sr').value=s.identity?.role||'';$('sm').value=s.agenda?.mission||'';$('ss').value=(s.context?.stack?.languages||[]).join(', ')}const k=LS.get('llm_keys',{});$('sa').value=k.anthropic||'';$('so').value=k.openai||'';$('sd').value=k.deepseek||'';$('sor').value=k.openrouter||'';$('sg').value=k.gemini||'';$('sllm').checked=LS.get('llm',false);const ak=LS.get('api_keys',{});$('sodds').value=ak.odds||'';$('stav').value=ak.tavily||'';$('sgh').value=ak.github||'';$('sred').value=ak.reddit||'';$('sdsc').value=ak.discord||'';$('sstr').value=ak.stripe||'';loadIntegrations()}
-$('skv').addEventListener('click',async()=>{LS.set('llm_keys',{anthropic:$('sa').value,openai:$('so').value,deepseek:$('sd').value,openrouter:$('sor').value,gemini:$('sg').value});await api('/settings/keys','POST',{anthropic:$('sa').value,openai:$('so').value,deepseek:$('sd').value,openrouter:$('sor').value,gemini:$('sg').value});$('skv').textContent='SAVED';setTimeout(()=>{$('skv').textContent='SAVE KEYS'},1500)});
-$('siv').addEventListener('click',async()=>{LS.set('api_keys',{odds:$('sodds').value,tavily:$('stav').value,github:$('sgh').value,reddit:$('sred').value,discord:$('sdsc').value,stripe:$('sstr').value});await api('/settings/keys','POST',{openrouter:$('sor').value});$('siv').textContent='SAVED';setTimeout(()=>{$('siv').textContent='SAVE API KEYS'},1500)});
+async function loadSettings(){const s=await api('/soul');if(s&&!s.error){$('sn').value=s.identity?.name||'';$('sr').value=s.identity?.role||'';$('sm').value=s.agenda?.mission||'';$('ss').value=(s.context?.stack?.languages||[]).join(', ')}const llm=await api('/llm-status');$('sa').value=llm.has_keys?.anthropic?'••••••••':'';$('so').value=llm.has_keys?.openai?'••••••••':'';$('sd').value=llm.has_keys?.deepseek?'••••••••':'';$('sor').value=llm.has_keys?.openrouter?'••••••••':'';$('sg').value=llm.has_keys?.gemini?'••••••••':'';$('sllm').checked=LS.get('llm',false);const ak=LS.get('api_keys_configured',{});$('sodds').value=ak.odds?'••••••••':'';$('stav').value=ak.tavily?'••••••••':'';$('sgh').value=ak.github?'••••••••':'';$('sred').value=ak.reddit?'••••••••':'';$('sdsc').value=ak.discord?'••••••••':'';$('sstr').value=ak.stripe?'••••••••':'';loadIntegrations()}
+$('skv').addEventListener('click',async(){const a=$('sa').value.trim(),o=$('so').value.trim(),d=$('sd').value.trim(),or=$('sor').value.trim(),g=$('sg').value.trim();LS.set('api_keys_configured',{anthropic:!!a,openai:!!o,deepseek:!!d,openrouter:!!or,gemini:!!g});await api('/settings/keys','POST',{anthropic:a,openai:o,deepseek:d,openrouter:or,gemini:g});if(a)$('sa').value='••••••••';if(o)$('so').value='••••••••';if(d)$('sd').value='••••••••';if(or)$('sor').value='••••••••';if(g)$('sg').value='••••••••';$('skv').textContent='SAVED';setTimeout(()=>{$('skv').textContent='SAVE KEYS'},1500)});
+$('siv').addEventListener('click',async(){const od=$('sodds').value.trim(),tv=$('stav').value.trim(),gh=$('sgh').value.trim(),rd=$('sred').value.trim(),ds=$('sdsc').value.trim(),st=$('sstr').value.trim();LS.set('api_keys_configured',{odds:!!od,tavily:!!tv,github:!!gh,reddit:!!rd,discord:!!ds,stripe:!!st});if(od)$('sodds').value='••••••••';if(tv)$('stav').value='••••••••';if(gh)$('sgh').value='••••••••';if(rd)$('sred').value='••••••••';if(ds)$('sdsc').value='••••••••';if(st)$('sstr').value='••••••••';$('siv').textContent='SAVED';setTimeout(()=>{$('siv').textContent='SAVE API KEYS'},1500)});
 $('sllm').addEventListener('change',()=>{LS.set('llm',$('sllm').checked);$('h-llm').textContent=$('sllm').checked?'ON':'OFF'});
 $('ssv').addEventListener('click',async()=>{const b={identity:{name:$('sn').value,role:$('sr').value},agenda:{mission:$('sm').value,goals:[]},context:{stack:{languages:$('ss').value.split(',').map(s=>s.trim()).filter(Boolean)}}};await api('/soul','POST',b);$('ssv').textContent='SAVED';setTimeout(()=>{$('ssv').textContent='SAVE'},1500)});
 async function loadIntegrations(){const r=await api('/integrations');const el=$('ints');let h='';const apis=r.apis||{};Object.entries(apis).forEach(([k,v])=>{h+='<div class="int-row"><div class="int-dot" style="background:'+(v.configured?'var(--green)':'var(--dim)')+';box-shadow:0 0 4px '+(v.configured?'var(--green)':'none')+'"></div><div class="int-name">'+esc(v.label)+'</div><div class="int-status">'+(v.configured?'Connected':'Not set')+'</div></div>'});h+='<div style="font-size:10px;color:var(--dim);margin-top:6px;">Features: ';Object.values(r.features||{}).forEach(f=>{h+='<span class="pill p-dim" style="margin:2px;">'+esc(f.label)+'</span>'});h+='</div>';el.innerHTML=h}
@@ -351,7 +383,8 @@ $('h-int').textContent=0;
 async function loadNews(){const r=await api('/news');const el=$('nl');el.innerHTML='';(r.items||[]).forEach(n=>{const d=document.createElement('div');d.style.cssText='padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;';d.innerHTML='<div style="color:var(--text);font-size:10px;">'+esc(n.title.slice(0,70))+'</div><div style="font-size:9px;color:var(--dim)">'+esc(n.source)+'</div>';d.addEventListener('click',()=>{if(n.url)window.open(n.url,'_blank')});el.appendChild(d)})}
 async function loadFeed(){const r=await api('/dashboard/feed');const el=$('sf');el.innerHTML='';(r.events||[]).slice(0,30).forEach(e=>{const d=document.createElement('div');d.className='fe';d.innerHTML='<span class="fe-ts">'+new Date(e.ts*1000).toLocaleTimeString()+'</span><span>'+esc(e.event)+'</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((e.data?.task||e.data?.skill||'—').slice(0,30))+'</span>';el.appendChild(d)})}
 async function poll(){await api('/health');const llm=await api('/llm-status');$('h-llm').textContent=llm.available?'ON':'OFF';const int=await api('/integrations');$('h-int').textContent=int.configured_count||0}
-setInterval(poll,20000);poll();loadFeed();loadNews();
+poll();loadFeed();loadNews();
+lucide.createIcons();
 </script>
 </body>
 </html>

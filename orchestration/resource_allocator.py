@@ -25,37 +25,25 @@ class ResourceAllocator:
 
     def __init__(self, max_units: int = 8):
         self.max_units = max_units
-        self._lock = threading.Lock()
         self._available = max_units
         self._allocations: Dict[str, int] = {}
+        self._condition = threading.Condition()
 
     def allocate(self, key: str, units: int = 1, timeout: float = None) -> bool:
         """Attempt to allocate `units` for `key`. Returns True on success."""
-        end = None
-        if timeout is not None:
-            import time
-            end = time.time() + timeout
-
-        with self._lock:
-            while self._available < units:
-                if end is not None and time.time() > end:
-                    return False
-                # release the lock briefly to avoid deadlock
-                self._lock.release()
-                try:
-                    import time
-                    time.sleep(0.01)
-                finally:
-                    self._lock.acquire()
-
-            # allocate
+        with self._condition:
+            if not self._condition.wait_for(
+                lambda: self._available >= units,
+                timeout=timeout,
+            ):
+                return False
             self._available -= units
             self._allocations[key] = self._allocations.get(key, 0) + units
             return True
 
     def release(self, key: str, units: int = 1) -> None:
         """Release previously allocated units for `key`."""
-        with self._lock:
+        with self._condition:
             held = self._allocations.get(key, 0)
             release_units = min(units, held)
             if release_units <= 0:
@@ -66,13 +54,14 @@ class ResourceAllocator:
             else:
                 self._allocations.pop(key, None)
             self._available = min(self.max_units, self._available + release_units)
+            self._condition.notify_all()
 
     def get_allocations(self) -> Dict[str, int]:
-        with self._lock:
+        with self._condition:
             return dict(self._allocations)
 
     def get_available(self) -> int:
-        with self._lock:
+        with self._condition:
             return int(self._available)
 
     @contextmanager

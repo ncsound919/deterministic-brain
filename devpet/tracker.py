@@ -3,10 +3,9 @@ from __future__ import annotations
 import json
 import time
 import sqlite3
-from typing import Dict, Optional
-from pathlib import Path
+from typing import Dict
 
-from .models import DevPet, ToolBranch, BattleStats, WorkFingerprint, Tier
+from .models import DevPet, ToolBranch, WorkFingerprint, Tier
 
 
 # Tool → branch mapping
@@ -101,8 +100,10 @@ class DevPetTracker:
 
     def _get_conn(self):
         if self._conn is None:
-            self._conn = sqlite3.connect(self.db_path)
+            self._conn = sqlite3.connect(self.db_path, timeout=5.0)
             self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA synchronous=NORMAL")
         return self._conn
 
     def close(self):

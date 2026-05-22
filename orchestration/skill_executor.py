@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 from orchestration.skill_registry import (
     get_skill_registry,
     SkillRegistry,
-    SkillMetadata,
 )
 
 logger = logging.getLogger(__name__)
@@ -82,11 +81,17 @@ class SkillExecutor:
 
 
 _EXECUTOR: Optional[SkillExecutor] = None
+_EXECUTOR_LOCK = None
 
 
 def get_skill_executor() -> SkillExecutor:
-    """Get the global skill executor instance."""
-    global _EXECUTOR
+    """Get the global skill executor instance (thread-safe)."""
+    global _EXECUTOR, _EXECUTOR_LOCK
+    if _EXECUTOR_LOCK is None:
+        import threading
+        _EXECUTOR_LOCK = threading.Lock()
     if _EXECUTOR is None:
-        _EXECUTOR = SkillExecutor()
+        with _EXECUTOR_LOCK:
+            if _EXECUTOR is None:
+                _EXECUTOR = SkillExecutor()
     return _EXECUTOR

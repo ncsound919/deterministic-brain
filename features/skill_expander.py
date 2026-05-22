@@ -68,7 +68,6 @@ class SkillExpander:
 
     def download_skill(self, owner: str, repo: str) -> Optional[str]:
         """Download a skill pack from GitHub as a zip and extract."""
-        import tempfile
         import shutil
 
         dest = os.path.join(self.skill_dir, f"imported_{repo}")

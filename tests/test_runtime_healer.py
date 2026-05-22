@@ -1,11 +1,8 @@
 """Tests for runtime_healer.py — circuit breaker, retry, watchdog."""
-import time
 import json
-from pathlib import Path
 
-import pytest
 
-from orchestration.runtime_healer import RuntimeHealer, SkillHealth
+from orchestration.runtime_healer import RuntimeHealer
 
 
 class TestCircuitBreaker:
@@ -30,6 +27,15 @@ class TestCircuitBreaker:
         for _ in range(3):
             rh.record_failure("skill_a")
         assert rh.is_circuit_open("skill_a") is False
+
+    def test_adaptive_tightens_on_burst(self):
+        rh = RuntimeHealer()
+        rh.circuit_threshold = 10
+        for _ in range(3):
+            rh.record_failure("skill_b")
+        sk = rh._skills["skill_b"]
+        assert sk.ema_failure_rate > 0.5
+        assert rh._adaptive_threshold(sk) < 10
 
     def test_half_open_on_cooldown(self):
         rh = RuntimeHealer()
@@ -153,8 +159,8 @@ class TestHealFromCorrections:
         rh = RuntimeHealer()
         p = tmp_path / "corrections.jsonl"
         p.write_text("")
-        count = rh.heal_from_corrections(str(p))
-        assert count == 0
+        result = rh.heal_from_corrections(str(p))
+        assert result["deprecated"] == 0
 
     def test_deprecates_high_failure_skill(self, tmp_path):
         rh = RuntimeHealer()
@@ -168,8 +174,8 @@ class TestHealFromCorrections:
                 "suggested_action": "review_skill_selection",
             }))
         p.write_text("\n".join(lines))
-        count = rh.heal_from_corrections(str(p))
-        assert count == 1  # one skill deprecated
+        result = rh.heal_from_corrections(str(p))
+        assert result["deprecated"] == 1  # one skill deprecated
         # Circuit should be open now (5+ failures recorded)
         assert rh.circuit_breaker_state("broken_skill")["state"] == "open"
 
@@ -183,8 +189,8 @@ class TestHealFromCorrections:
                 "confidence": 0.1,
             }))
         p.write_text("\n".join(lines))
-        count = rh.heal_from_corrections(str(p))
-        assert count == 0
+        result = rh.heal_from_corrections(str(p))
+        assert result["deprecated"] == 0
 
 
 class TestRecentHeals:

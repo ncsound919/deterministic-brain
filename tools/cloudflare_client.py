@@ -7,8 +7,7 @@ Token savings: ~350 tokens per deploy call vs LLM-generated curl.
 """
 
 from __future__ import annotations
-import os
-from typing import Dict, List
+from typing import Dict
 
 from tools.api_client import AuthenticatedClient
 from tools.vault_aware_api import get_key
@@ -63,3 +62,12 @@ class CloudflareClient:
             f"/zones/{zone_id}/purge_cache",
             data={"purge_everything": True},
         )
+
+
+def cloudflare_deploy(project: str, repo_url: str = "") -> Dict:
+    """Convenience wrapper for the SaaS builder."""
+    client = CloudflareClient()
+    if not client.account_id:
+        return {"ok": False, "error": "Cloudflare Account ID not configured"}
+    return client.deploy_pages(project)
+

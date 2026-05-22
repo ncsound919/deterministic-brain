@@ -10,8 +10,7 @@ import json
 import urllib.request
 import urllib.error
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 
 @dataclass
 class GHRepo:
@@ -150,7 +149,7 @@ class GitHubManager:
                     self._repos[key].local_path = path
                     self._repos[key].is_cloned = True
                 return path
-        except Exception as e:
+        except Exception:
             pass
         return None
 

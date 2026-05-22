@@ -7,6 +7,10 @@ by exploring reasoning paths over retrieved contexts.  The RNG is seeded
 from a hash of (query, session_id) so the same inputs always produce the
 same ranking — full reproducibility.
 
+Parallelised across candidates using ThreadPoolExecutor for speed.
+Each candidate builds an independent tree with its own seeded Random
+so results are deterministic regardless of thread scheduling.
+
 Algorithm:
   Selection   — UCB1 with fixed C=1.41
   Expansion   — limited to BRANCH_FACTOR new context actions per node
@@ -15,17 +19,19 @@ Algorithm:
 """
 import math
 import hashlib
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from random import Random
-from typing import Any
 
 # ---------------------------------------------------------------------------
 # Hyper-parameters (all constant for determinism)
 # ---------------------------------------------------------------------------
-C_PARAM: float = 1.41        # UCB1 exploration constant
+C_PARAM: float = 1.41       # UCB1 exploration constant
 BRANCH_FACTOR: int = 3       # max children per node
 MAX_DEPTH: int = 4           # max rollout depth
 N_SIMULATIONS: int = 20      # simulations per candidate
+N_WORKERS: int = min(4, (os.cpu_count() or 2))  # parallel workers
 
 
 # ---------------------------------------------------------------------------
@@ -71,24 +77,33 @@ def _plausibility(candidate: dict, facts: list[dict], rng: Random) -> float:
 # ---------------------------------------------------------------------------
 
 class MCTSSearch:
-    """Stateless MCTS ranker — all randomness is seeded from (query, session_id)."""
+    """Stateless MCTS ranker — all randomness is seeded from (query, session_id).
+    
+    Parallelises tree construction across candidates using ThreadPoolExecutor.
+    Each candidate receives a deterministic sub-seed so results are identical
+    regardless of thread scheduling.
+    """
+
+    def __init__(self, n_workers: int = N_WORKERS):
+        self.n_workers = min(n_workers, (os.cpu_count() or 2))
 
     def _seed(self, query: str, session_id: str) -> int:
         raw = f'{query}||{session_id}'.encode()
         return int(hashlib.sha256(raw).hexdigest()[:16], 16)
 
-    def _select(self, node: MCTSNode) -> MCTSNode:
+    @staticmethod
+    def _select(node: MCTSNode) -> MCTSNode:
         """Traverse down selecting highest UCB1 child until unexpanded leaf."""
         while node.children:
             node = max(node.children, key=lambda c: c.ucb1(node.visits or 1))
         return node
 
-    def _expand(self, node: MCTSNode, extra_facts: list[dict], rng: Random) -> MCTSNode:
+    @staticmethod
+    def _expand(node: MCTSNode, extra_facts: list[dict], rng: Random) -> MCTSNode:
         """Add up to BRANCH_FACTOR children with subsets of available facts."""
         if node.depth >= MAX_DEPTH:
             return node
         available = [f for f in extra_facts if f not in node.facts]
-        # deterministic shuffle via our RNG
         shuffled = list(available)
         rng.shuffle(shuffled)
         for i in range(min(BRANCH_FACTOR, max(1, len(shuffled)))):
@@ -103,27 +118,55 @@ class MCTSSearch:
             node.children.append(child)
         return node.children[0] if node.children else node
 
-    def _simulate(self, node: MCTSNode, rng: Random) -> float:
+    @staticmethod
+    def _simulate(node: MCTSNode, rng: Random) -> float:
         """Bounded rollout: extend facts randomly, accumulate plausibility."""
-        score = _plausibility(node.candidate, node.facts, rng)
-        return score
+        return _plausibility(node.candidate, node.facts, rng)
 
-    def _backprop(self, node: MCTSNode, score: float) -> None:
+    @staticmethod
+    def _backprop(node: MCTSNode, score: float) -> None:
         cur: MCTSNode | None = node
         while cur is not None:
             cur.visits += 1
             cur.total_score += score
             cur = cur.parent
 
-    def _run_mcts(self, root: MCTSNode, extra_facts: list[dict], rng: Random) -> MCTSNode:
+    @staticmethod
+    def _run_mcts(root: MCTSNode, extra_facts: list[dict], rng: Random) -> MCTSNode:
         """Run N_SIMULATIONS iterations, return root (with populated subtree)."""
         for _ in range(N_SIMULATIONS):
-            leaf = self._select(root)
+            leaf = MCTSSearch._select(root)
             if leaf.visits > 0 and leaf.depth < MAX_DEPTH:
-                leaf = self._expand(leaf, extra_facts, rng)
-            score = self._simulate(leaf, rng)
-            self._backprop(leaf, score)
+                leaf = MCTSSearch._expand(leaf, extra_facts, rng)
+            score = MCTSSearch._simulate(leaf, rng)
+            MCTSSearch._backprop(leaf, score)
         return root
+
+    @staticmethod
+    def _evaluate_candidate(index: int, seed: int, cand: dict,
+                             contexts: list[dict]) -> tuple[int, float, dict, int]:
+        """Evaluate a single candidate (runs in a thread worker).
+        
+        Returns (index, score, candidate, node_count) for deterministic ordering.
+        """
+        sub_seed = int(hashlib.sha256(f'{seed}:{index}'.encode()).hexdigest()[:16], 16)
+        rng = Random(sub_seed)
+        initial_facts = contexts[:2]
+        root = MCTSNode(
+            node_id=f'root_{index}',
+            candidate=cand,
+            facts=initial_facts,
+        )
+        MCTSSearch._run_mcts(root, contexts, rng)
+        final_score = root.q
+        node_count = sum(1 for _ in MCTSSearch._walk(root))
+        return index, final_score, cand, node_count
+
+    @staticmethod
+    def _walk(node: MCTSNode):
+        yield node
+        for child in node.children:
+            yield from MCTSSearch._walk(child)
 
     def rank(
         self,
@@ -132,26 +175,33 @@ class MCTSSearch:
         candidates: list[dict],
         contexts: list[dict],
     ) -> tuple[list[dict], dict]:
-        """Rank candidates via MCTS.  Returns (ranked_candidates, tree_summary)."""
-        rng = Random(self._seed(query, session_id))
+        """Rank candidates via parallel MCTS.  Returns (ranked_candidates, tree_summary)."""
+        seed = self._seed(query, session_id)
+        n_candidates = len(candidates)
+        n_workers = min(self.n_workers, n_candidates) if n_candidates > 0 else 1
 
         scored: list[tuple[float, dict]] = []
         tree_nodes_total = 0
 
-        for i, cand in enumerate(candidates):
-            # Each candidate gets its own MCTS tree rooted with an initial fact subset
-            initial_facts = contexts[:2]  # start with top-2 contexts
-            root = MCTSNode(
-                node_id=f'root_{i}',
-                candidate=cand,
-                facts=initial_facts,
-            )
-            root = self._run_mcts(root, contexts, rng)
-            final_score = root.q
-            tree_nodes_total += sum(1 for _ in self._walk(root))
-            scored.append((final_score, cand))
+        if n_workers <= 1 or n_candidates <= 1:
+            for i, cand in enumerate(candidates):
+                _, score, cand_out, cnt = self._evaluate_candidate(i, seed, cand, contexts)
+                tree_nodes_total += cnt
+                scored.append((score, cand_out))
+        else:
+            with ThreadPoolExecutor(max_workers=n_workers) as executor:
+                futures = [
+                    executor.submit(self._evaluate_candidate, i, seed, cand, contexts)
+                    for i, cand in enumerate(candidates)
+                ]
+                results = []
+                for future in as_completed(futures):
+                    results.append(future.result())
+                results.sort(key=lambda r: r[0])  # deterministic: sort by index
+                for _idx, score, cand_out, cnt in results:
+                    tree_nodes_total += cnt
+                    scored.append((score, cand_out))
 
-        # Sort by MCTS q-value descending, then by id for tie-breaking
         scored.sort(key=lambda x: (-x[0], x[1].get('id', '')))
         ranked = []
         for score, cand in scored:
@@ -164,15 +214,10 @@ class MCTSSearch:
             'candidates_ranked': len(ranked),
             'simulations_per_candidate': N_SIMULATIONS,
             'total_nodes_explored': tree_nodes_total,
-            'seed': self._seed(query, session_id),
+            'seed': seed,
             'top_score': ranked[0]['score'] if ranked else None,
         }
         return ranked, tree_summary
-
-    def _walk(self, node: MCTSNode):
-        yield node
-        for child in node.children:
-            yield from self._walk(child)
 
 
 # ---------------------------------------------------------------------------

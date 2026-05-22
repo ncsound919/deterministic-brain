@@ -10,7 +10,6 @@ Sends brain output summaries to configured notification channels:
 
 Each channel is configured via environment variables.
 """
-import json
 import os
 from datetime import datetime
 from typing import Any

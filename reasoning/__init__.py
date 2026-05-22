@@ -23,6 +23,11 @@ from reasoning.policy_engine import (
     compliance_gdpr_policy,
     quiet_hours_policy,
 )
+from reasoning.context_graph import (
+    ContextGraph,
+    DecisionNode,
+    get_context_graph,
+)
 
 __all__ = [
     "ContextualBandit",
@@ -44,4 +49,7 @@ __all__ = [
     "budget_policy",
     "compliance_gdpr_policy",
     "quiet_hours_policy",
+    "ContextGraph",
+    "DecisionNode",
+    "get_context_graph",
 ]

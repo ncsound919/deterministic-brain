@@ -3,9 +3,8 @@
 Uses Levenshtein distance for typo correction and intent matching.
 """
 from __future__ import annotations
-import re
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,6 @@ class FuzzyMatcher:
     def _load_corrections(self) -> None:
         """Load common corrections from cache."""
         try:
-            import os
             from pathlib import Path
             cache = Path.home() / ".deterministic-brain" / "healer_cache" / "corrections.json"
             if cache.exists():
@@ -41,7 +39,6 @@ class FuzzyMatcher:
     def _save_corrections(self) -> None:
         """Save corrections to cache."""
         try:
-            import os
             from pathlib import Path
             cache_dir = Path.home() / ".deterministic-brain" / "healer_cache"
             cache_dir.mkdir(parents=True, exist_ok=True)

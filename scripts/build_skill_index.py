@@ -5,7 +5,7 @@ Run once after adding new skills. Generates:
   - skill_index_ids.json   (skill_id list matching row order)
 """
 
-import json, sys
+import sys
 sys.path.insert(0, ".")
 
 from brain.router import MoERouter
@@ -20,7 +20,7 @@ print("Building embedding index with MiniLM-L6 (first run downloads ~22MB model)
 index = FlatEmbeddingIndex("all-MiniLM-L6-v2")
 index.build(enriched, "skill_index.npy")
 print(f"  Index built: {index.matrix.shape}")
-print(f"  Saved: skill_index.npy + skill_index_ids.json")
+print("  Saved: skill_index.npy + skill_index_ids.json")
 
 # Quick test
 results = index.query("build a devpet battle website with canvas", top_k=3)

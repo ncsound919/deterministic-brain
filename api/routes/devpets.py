@@ -1,7 +1,6 @@
 """DevPet routes — Tamagotchi-style pet management (battling on website)."""
 from __future__ import annotations
 import json
-import os
 import glob
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel

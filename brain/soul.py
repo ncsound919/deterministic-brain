@@ -4,10 +4,13 @@ The soul is the heartbeat — it tells the brain WHO to serve and WHY.
 """
 from __future__ import annotations
 import os
+import re
 import yaml
 import time
 import logging
-from typing import Any, Dict, List, Optional
+import threading
+import tempfile
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -21,6 +24,8 @@ _SOUL_SCHEMA: Dict[str, type] = {
     "context": dict,
     "preferences": dict,
 }
+
+_soul_lock: threading.Lock = threading.Lock()
 
 
 def _validate_soul_yaml(data: Dict) -> List[str]:
@@ -37,6 +42,13 @@ def _validate_soul_yaml(data: Dict) -> List[str]:
                 f"got {type(data[key]).__name__}"
             )
     return errors
+
+
+def _sanitize_field(value: str, max_len: int = 4096) -> str:
+    """Strip null bytes, control chars, and truncate to max_len."""
+    cleaned = value.replace("\x00", "")
+    cleaned = re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f]", "", cleaned)
+    return cleaned[:max_len]
 
 
 @dataclass
@@ -194,8 +206,17 @@ class Soul:
             },
         }
         try:
-            with open(self.path, "w", encoding="utf-8") as f:
-                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(self.path) or ".", suffix=".soul.tmp")
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+                if os.path.exists(self.path):
+                    bak_path = self.path + ".bak"
+                    os.replace(self.path, bak_path)
+                os.replace(tmp_path, self.path)
+            except Exception:
+                os.unlink(tmp_path)
+                raise
             return True
         except Exception as e:
             logger.error("[soul] Soul save failed: %s", e)
@@ -203,9 +224,10 @@ class Soul:
 
     def pulse(self) -> Dict:
         """Called on every session start. Increments session counter, saves."""
-        self.meta_sessions += 1
-        self.meta_updated = time.strftime("%Y-%m-%d %H:%M")
-        self.save()
+        with _soul_lock:
+            self.meta_sessions += 1
+            self.meta_updated = time.strftime("%Y-%m-%d %H:%M")
+            self.save()
         return self.summary()
 
     def summary(self) -> Dict:
@@ -222,29 +244,28 @@ class Soul:
         }
 
     def to_context(self) -> str:
-        """Generate a context string for injection into skill exec_inputs."""
+        """Generate a sanitized context string for injection into skill exec_inputs."""
         parts = []
         if self.name:
-            parts.append(f"Building for: {self.name} ({self.role})")
+            parts.append(f"Building for: {_sanitize_field(self.name)} ({_sanitize_field(self.role)})")
         if self.mission:
-            parts.append(f"Mission: {self.mission}")
+            parts.append(f"Mission: {_sanitize_field(self.mission)}")
         if self.goals:
-            parts.append("Goals: " + "; ".join(self.goals))
+            parts.append("Goals: " + "; ".join(_sanitize_field(g) for g in self.goals))
         if self.stack_languages:
-            parts.append("Languages: " + ", ".join(self.stack_languages))
+            parts.append("Languages: " + ", ".join(_sanitize_field(l) for l in self.stack_languages))
         if self.stack_frameworks:
-            parts.append("Frameworks: " + ", ".join(self.stack_frameworks))
+            parts.append("Frameworks: " + ", ".join(_sanitize_field(f) for f in self.stack_frameworks))
         if self.code_style:
-            parts.append(f"Style: {self.code_style}")
+            parts.append(f"Style: {_sanitize_field(self.code_style)}")
         if self.testing:
-            parts.append(f"Testing: {self.testing}")
+            parts.append(f"Testing: {_sanitize_field(self.testing)}")
         if self.deploy:
-            parts.append(f"Deploy: {self.deploy}")
+            parts.append(f"Deploy: {_sanitize_field(self.deploy)}")
         if self.autonomous_directives:
-            # FIX: autonomous_directives were stored but never surfaced — expose them
-            parts.append("Directives: " + "; ".join(self.autonomous_directives))
+            parts.append("Directives: " + "; ".join(_sanitize_field(d) for d in self.autonomous_directives))
         if self.notes:
-            parts.append(f"Notes: {self.notes}")
+            parts.append(f"Notes: {_sanitize_field(self.notes)}")
         return "\n".join(parts)
 
     def merge_into_exec_inputs(self, exec_inputs: Dict) -> None:
@@ -260,8 +281,10 @@ _SOUL: Optional[Soul] = None
 def get_soul() -> Soul:
     global _SOUL
     if _SOUL is None:
-        _SOUL = Soul()
-        _SOUL.load()
+        with _soul_lock:
+            if _SOUL is None:
+                _SOUL = Soul()
+                _SOUL.load()
     return _SOUL
 
 

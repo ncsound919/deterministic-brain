@@ -78,9 +78,12 @@ class TokenLedger:
 
         # Keep last 1000 events
         if len(self._data["events"]) > 1000:
-            self._data["events"] = self._data["events"][-500:]
+            self._data["events"] = self._data["events"][-800:]
 
-        self._save()
+        # Batch save: only write to disk every 5 events or if manually triggered
+        if len(self._data["events"]) % 5 == 0:
+            self._save()
+            
         return {"tokens_saved": tokens, "dollars_saved": dollars}
 
     def summary(self) -> Dict:

@@ -7,9 +7,14 @@ Extends the base betting engine with:
 4. Custom formula upload and execution
 """
 from __future__ import annotations
-import os, json, time, math, hashlib, urllib.request, urllib.error
-from typing import Any, Dict, List, Optional, Callable
-from dataclasses import dataclass, field
+import os
+import json
+import time
+import hashlib
+import urllib.request
+import urllib.error
+from typing import Dict, List, Optional
+from dataclasses import dataclass
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -177,7 +182,7 @@ class CircadianAnalyzer:
                 peak_bonus = 0.01
             else:
                 peak_bonus = -0.02  # late night / early afternoon
-        except:
+        except (ValueError, IndexError):
             peak_bonus = 0.0
 
         # Home/away (home court advantage ~3-5% edge)
@@ -212,7 +217,8 @@ class FormulaEngine:
             try:
                 with open(self.formulas_path) as f:
                     self.formulas = json.load(f)
-            except: pass
+            except (json.JSONDecodeError, IOError):
+                pass
 
     def _save(self):
         with open(self.formulas_path, "w") as f:
@@ -237,24 +243,40 @@ class FormulaEngine:
         return False
 
     def evaluate(self, fid: str, context: Dict) -> Optional[float]:
-        """Evaluate a formula against player context. Restricted Python eval."""
+        """Evaluate a formula against player context. Hardened against escape."""
         f = self.formulas.get(fid)
         if not f:
             return None
 
+        expr = f["expression"]
+        # Security Check 1: Length limit
+        if len(expr) > 200:
+            return None
+            
+        # Security Check 2: Character whitelist (letters, numbers, basic math, spaces)
+        import re
+        if not re.match(r"^[a-zA-Z0-9\s\+\-\*\/\(\)\.\,]+$", expr):
+            return None
+            
+        # Security Check 3: Keyword blacklist (prevent reaching builtins/classes)
+        blacklist = ["__", "class", "def", "import", "exec", "eval", "lambda", "yield"]
+        if any(b in expr for b in blacklist):
+            return None
+
         # Safe variables
-        safe = {
-            "pts": context.get("pts", 0), "reb": context.get("reb", 0),
-            "ast": context.get("ast", 0), "l5_pts": context.get("l5_pts", 0),
-            "l5_reb": context.get("l5_reb", 0), "l5_ast": context.get("l5_ast", 0),
-            "line": context.get("line", 0), "trend": context.get("trend", 0),
-            "circadian": context.get("circadian", 0), "home_pts": context.get("home_pts", 0),
-            "away_pts": context.get("away_pts", 0), "streak": context.get("streak", 0),
+        safe_vars = {
+            "pts": float(context.get("pts", 0)), "reb": float(context.get("reb", 0)),
+            "ast": float(context.get("ast", 0)), "l5_pts": float(context.get("l5_pts", 0)),
+            "l5_reb": float(context.get("l5_reb", 0)), "l5_ast": float(context.get("l5_ast", 0)),
+            "line": float(context.get("line", 0)), "trend": float(context.get("trend", 0)),
+            "circadian": float(context.get("circadian", 0)), "home_pts": float(context.get("home_pts", 0)),
+            "away_pts": float(context.get("away_pts", 0)), "streak": float(context.get("streak", 0)),
             "abs": abs, "max": max, "min": min, "round": round,
-            "math": __import__("math"),
         }
+        
         try:
-            result = eval(f["expression"], {"__builtins__": {}}, safe)
+            # Use empty dict for globals and builtins to prevent escape
+            result = eval(expr, {"__builtins__": {}}, safe_vars)
             f["runs"] = f.get("runs", 0) + 1; self._save()
             return float(result)
         except Exception:
@@ -279,7 +301,8 @@ class EnhancedBetSheet:
         from features.betting_engine import get_bet_sheet
         base = get_bet_sheet()
         raw = base.fetcher.fetch(sport)
-        bets = base._parse_bets(raw)
+        games = raw.get("games", []) if isinstance(raw, dict) else raw
+        bets = base._parse_bets(games)
 
         enriched = []
         for b in bets:

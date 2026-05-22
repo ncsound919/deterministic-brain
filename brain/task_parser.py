@@ -1,77 +1,94 @@
 """Task Parser — regex + keyword matching, zero LLM."""
 from __future__ import annotations
 import re
-from typing import Dict, List
+from typing import Dict
 
 
 PATTERNS = [
     # Old explicit patterns (backward compat)
     (
-        r"create (?:a )?react component (?:named |called )?([\w]+)(?: with props ([\w ,]+))?",
+        re.compile(r"create (?:a )?react component (?:named |called )?([\w]+)(?: with props ([\w ,]+))?", re.IGNORECASE),
         {"task": "react-component",
          "group_map": {"component_name": 1, "props": 2}},
     ),
     (
-        r"scaffold (?:a )?(?:rest )?api for ([\w]+)",
+        re.compile(r"scaffold (?:a )?(?:rest )?api for ([\w]+)", re.IGNORECASE),
         {"task": "api-scaffold",
          "group_map": {"resource": 1}},
     ),
     (
-        r"add auth to ([\w]+)",
+        re.compile(r"add auth to ([\w]+)", re.IGNORECASE),
         {"task": "add-auth",
          "group_map": {"resource": 1}},
     ),
     (
-        r"generate (?:a )?dockerfile for ([\w]+)",
+        re.compile(r"generate (?:a )?dockerfile for ([\w]+)", re.IGNORECASE),
         {"task": "generate-dockerfile",
          "group_map": {"service": 1}},
     ),
     (
-        r"audit (?:repo|repository|project) ([\w./\-]+)",
+        re.compile(r"audit (?:repo|repository|project) ([\w./\-]+)", re.IGNORECASE),
         {"task": "audit-repo",
          "group_map": {"repo_path": 1}},
     ),
     (
-        r"scrape docs (?:from )?(.+)",
+        re.compile(r"scrape docs (?:from )?(.+)", re.IGNORECASE),
         {"task": "live-docs-to-skill",
          "group_map": {"url": 1}},
     ),
     # Natural language build patterns
     (
-        r"(?:build|create|make|generate|design) (?:a |an |the )?(?:landing page|homepage)",
+        re.compile(r"(?:build|create|make|generate|design) (?:a |an |the )?(?:landing page|homepage)", re.IGNORECASE),
         {"task": "landing-page"},
     ),
     (
-        r"(?:build|create|make|generate) (?:a |an )?(?:react component|component)(?: (?:named|called) ([\w]+))?",
+        re.compile(r"(?:build|create|make|generate) (?:a |an )?(?:react component|component)(?: (?:named|called) ([\w]+))?", re.IGNORECASE),
         {"task": "react-component", "group_map": {"component_name": 1}},
     ),
     (
-        r"(?:build|create|make|generate|scaffold) (?:a |an )?(?:api|backend|server|endpoint)",
+        re.compile(r"(?:build|create|make|generate|scaffold) (?:a |an )?(?:api|backend|server|endpoint)", re.IGNORECASE),
         {"task": "api-scaffold"},
     ),
     (
-        r"(?:build|create|make|generate) (?:a |an )?(?:layout|grid|flex|sidebar)",
+        re.compile(r"(?:build|create|make|generate) (?:a |an )?(?:layout|grid|flex|sidebar)", re.IGNORECASE),
         {"task": "css-layout"},
     ),
     (
-        r"(?:build|create|make|generate|design|code)\s+(?:a |an |the )?(?:responsive )?(?:web(?:site|.?page|.?app)?|page|dashboard|portfolio|blog|shop|store)",
+        re.compile(r"(?:build|create|make|generate|design|code)\s+(?:a |an |the )?(?:responsive )?(?:web(?:site|.?page|.?app)?|page|dashboard|portfolio|blog|shop|store)", re.IGNORECASE),
         {"task": "landing-page"},
     ),
     (
-        r"(?:build|create|make|generate|design|code)\s+.+",
+        re.compile(r"(?:build|create|make|generate|design|code)\s+.+", re.IGNORECASE),
         {"task": "landing-page"},
     ),
-    (r".*", {"task": "unknown"}),
+    (
+        re.compile(r"Initialize session for agent: ([\w\-]+)", re.IGNORECASE),
+        {"task": "initialize-session", "group_map": {"agent_id": 1}},
+    ),
+    (
+        re.compile(r".*", re.IGNORECASE),
+        {"task": "unknown"},
+    ),
 ]
 
 
 class TaskParser:
     def __init__(self, extra_patterns: list | None = None):
-        self.patterns = (extra_patterns or []) + PATTERNS
+        if extra_patterns:
+            compiled = []
+            for regex_str, mapping in extra_patterns:
+                if isinstance(regex_str, re.Pattern):
+                    compiled.append((regex_str, mapping))
+                else:
+                    compiled.append((re.compile(regex_str, re.IGNORECASE), mapping))
+            self.patterns = compiled + PATTERNS
+        else:
+            self.patterns = list(PATTERNS)
 
     def parse(self, user_input: str) -> Dict:
+        text = user_input.strip()
         for regex, mapping in self.patterns:
-            m = re.match(regex, user_input.strip(), re.IGNORECASE)
+            m = regex.match(text)
             if m:
                 task: Dict = {"task": mapping["task"], "raw": user_input}
                 for param, idx in mapping.get("group_map", {}).items():

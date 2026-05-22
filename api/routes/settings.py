@@ -51,12 +51,34 @@ async def update_setting(update: SettingUpdate):
 
 @router.get("/export")
 async def export_settings():
-    """Download current .env file content."""
+    """Download current settings (API keys redacted for security)."""
     import os
     env_path = os.environ.get("DOTENV_PATH", ".env")
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail="No .env file found")
-    content = open(env_path).read()
+
+    # Read and redact sensitive values
+    sensitive_keys = {
+        "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY", "QDRANT_API_KEY", "NEO4J_PASSWORD", "STRIPE_SECRET_KEY",
+        "DISCORD_BOT_TOKEN", "GITHUB_TOKEN", "REDDIT_CLIENT_SECRET", "ODDS_API_KEY",
+        "TAVILY_API_KEY", "ELEVENLABS_API_KEY", "KLING_API_KEY", "WHISPER_API_KEY",
+    }
+
+    lines = []
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                key, val = line.split("=", 1)
+                if key.upper() in sensitive_keys:
+                    lines.append(f"{key}=***REDACTED***")
+                else:
+                    lines.append(line)
+
+    content = "\n".join(lines)
     from fastapi.responses import PlainTextResponse
     return PlainTextResponse(content, media_type="text/plain",
-                             headers={"Content-Disposition": "attachment; filename=.env"})
+                             headers={"Content-Disposition": "attachment; filename=brain-settings.env"})

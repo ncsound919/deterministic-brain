@@ -7,9 +7,34 @@ import json
 import os
 import sqlite3
 import time
+from contextlib import closing
 from typing import Dict, List
 
 DB_PATH = os.environ.get("TRACE_DB", "traces.db")
+
+_DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
+
+_global_conn: sqlite3.Connection = None
+_conn_lock: object = None
+
+
+def _get_lock():
+    global _conn_lock
+    if _conn_lock is None:
+        import threading
+        _conn_lock = threading.Lock()
+    return _conn_lock
+
+
+def _get_conn():
+    global _global_conn
+    if _global_conn is None:
+        conn = sqlite3.connect(DB_PATH, timeout=5.0)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        _global_conn = conn
+    return _global_conn
 
 
 class Dashboard:
@@ -23,22 +48,46 @@ class Dashboard:
       health()            → uptime, event count, last event
     """
 
-    def _conn(self):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn
-
     def recent_events(self, n: int = 50) -> List[Dict]:
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    rows = pg.execute(
+                        "SELECT ts, event, data FROM pg_traces.events ORDER BY ts DESC LIMIT %s", (n,)
+                    )
+                    return [{"ts": r[0], "event": r[1], "data": r[2] if isinstance(r[2], dict) else (json.loads(r[2]) if r[2] else {})} for r in rows]
+            except Exception:
+                pass
         try:
-            conn = self._conn()
-            rows = conn.execute(
-                "SELECT ts, event, data FROM events ORDER BY ts DESC LIMIT ?", (n,)
-            ).fetchall()
-            conn.close()
+            conn = _get_conn()
+            with _get_lock():
+                rows = conn.execute(
+                    "SELECT ts, event, data FROM events ORDER BY ts DESC LIMIT ?", (n,)
+                ).fetchall()
             return [{"ts": r["ts"], "event": r["event"],
                      "data": json.loads(r["data"])} for r in rows]
         except Exception:
             return []
+
+    def events_count(self) -> int:
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    rows = pg.execute("SELECT COUNT(*) FROM pg_traces.events")
+                    return rows[0][0] if rows else 0
+            except Exception:
+                pass
+        try:
+            conn = _get_conn()
+            with _get_lock():
+                row = conn.execute("SELECT COUNT(*) FROM events").fetchone()
+                return row[0] if row else 0
+        except Exception:
+            return 0
 
     def bundle_stats(self) -> Dict:
         events = self.recent_events(500)
@@ -74,12 +123,30 @@ class Dashboard:
             if e["event"] in ("audit_repo", "handle", "step")
         ]
 
+    def clear_events(self) -> None:
+        """Delete all events from traces.db."""
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    pg.execute("DELETE FROM pg_traces.events")
+            except Exception:
+                pass
+        try:
+            conn = _get_conn()
+            with _get_lock():
+                conn.execute("DELETE FROM events")
+                conn.commit()
+        except Exception:
+            pass
+
     def health(self) -> Dict:
         events = self.recent_events(1)
         try:
-            conn  = self._conn()
-            count = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
-            conn.close()
+            conn = _get_conn()
+            with _get_lock():
+                count = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
         except Exception:
             count = 0
         return {

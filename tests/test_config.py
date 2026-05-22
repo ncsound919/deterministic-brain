@@ -1,10 +1,6 @@
 """Tests for config.py — reload, persist, schema generation."""
 import os
-import json
-import tempfile
-from pathlib import Path
 
-import pytest
 
 from config import BrainConfig, reload_config, get_setting_schema, persist_setting
 
@@ -55,7 +51,8 @@ class TestPersistSetting:
 
 
 class TestBrainConfig:
-    def test_defaults(self):
+    def test_defaults(self, monkeypatch):
+        monkeypatch.delenv("API_PORT", raising=False)
         cfg = BrainConfig()
         assert cfg.api_host == "0.0.0.0"
         assert cfg.api_port == 8000
@@ -76,6 +73,7 @@ class TestBrainConfig:
         assert isinstance(summary["models"], dict)
 
     def test_reload_config(self, monkeypatch):
+        monkeypatch.delenv("API_PORT", raising=False)
         monkeypatch.setenv("API_PORT", "9876")
         cfg = reload_config()
         assert cfg.api_port == 9876

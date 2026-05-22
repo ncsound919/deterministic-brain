@@ -89,3 +89,19 @@ skill_index.npy
 
 # User soul config (contains personal info)
 .soul.yaml
+
+# Runtime state
+.context_graph.jsonl
+.event_bus_log.jsonl
+.healer_constraints.json
+.swarm_repo_queue.json
+*.db-shm
+*.db-wal
+*.db.bak
+
+# Coverage
+.coverage
+htmlcov/
+
+# Node
+node_modules/

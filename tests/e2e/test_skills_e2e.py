@@ -1,9 +1,7 @@
 """E2E Tests for Skill Execution."""
 from __future__ import annotations
-import os
 import json
 import pytest
-from pathlib import Path
 
 
 class TestReactSkillExecution:
@@ -215,7 +213,6 @@ class TestSkillBackendRouting:
     def test_backend_routing_local(self, brain_app):
         """Local skills should use LocalSkillBackend."""
         from orchestration.skill_registry import SkillRegistry
-        from orchestration.backends import LocalSkillBackend
         
         registry = SkillRegistry()
         

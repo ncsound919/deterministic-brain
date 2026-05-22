@@ -5,10 +5,10 @@ Integration point for pytest to automatically heal test failures.
 from __future__ import annotations
 import logging
 import pytest
-from typing import Any, Optional
+from typing import Optional
 
 from self_healing.healer import Healer, create_healer
-from self_healing.fuzzy_matcher import create_fuzzy_matcher, create_intent_matcher
+from self_healing.fuzzy_matcher import create_fuzzy_matcher
 from self_healing.state_replayer import create_state_replayer
 from self_healing.pattern_healer import create_pattern_healer, create_comparator
 from self_healing.golden_manager import create_golden_manager, GoldenManager

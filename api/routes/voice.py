@@ -1,7 +1,6 @@
 """Voice routes — STT, TTS, and WebSocket streaming."""
 from __future__ import annotations
-import struct
-from fastapi import APIRouter, WebSocket, HTTPException
+from fastapi import APIRouter, WebSocket
 from typing import Dict
 import numpy as np
 

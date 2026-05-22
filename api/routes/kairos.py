@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from typing import Dict
 
 from orchestration.kairos_daemon import (
-    get_daemon, start_kairos, stop_kairos,
+    start_kairos, stop_kairos,
     kairos_status as _kairos_status,
 )
 

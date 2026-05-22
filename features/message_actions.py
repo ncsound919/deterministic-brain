@@ -7,7 +7,6 @@ is returned via the API, this module computes relevant follow-up actions
 the user can take (e.g. 'Run tests', 'Apply diff', 'Explain more',
 'Save to memory', 'Create GitHub issue').
 """
-from typing import Any
 
 _ACTION_TEMPLATES: dict[str, list[dict]] = {
     'code': [

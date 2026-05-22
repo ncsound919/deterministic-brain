@@ -1,6 +1,5 @@
 """Tests for tools/skill_resolver.py"""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from tools.skill_resolver import SkillResolver, get_resolver
 

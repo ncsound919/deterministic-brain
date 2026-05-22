@@ -2,9 +2,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 import sqlite3
+import logging
 import time
 import warnings
+from contextlib import closing
+
+logger = logging.getLogger(__name__)
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -14,6 +19,13 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         message=r"Api key is used with an insecure connection")
 warnings.filterwarnings("ignore", category=UserWarning,
                         message=r"Failed to obtain server version")
+
+
+def _wal_conn(db_path: str):
+    conn = sqlite3.connect(db_path, timeout=5.0)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    return conn
 
 
 def _qdrant_client():
@@ -43,7 +55,7 @@ def _neo4j_driver():
 
 
 def analyze_session_patterns(db_path: str = "traces.db") -> Dict:
-    conn = sqlite3.connect(db_path)
+    conn = _wal_conn(db_path)
     patterns = {
         "total_sessions": 0,
         "sessions_by_status": {},
@@ -54,15 +66,16 @@ def analyze_session_patterns(db_path: str = "traces.db") -> Dict:
     }
 
     try:
-        rows = conn.execute(
-            "SELECT data FROM events WHERE event = 'handle'"
-        ).fetchall()
-
-        for r in rows:
-            try:
-                data = json.loads(r[0])
-            except Exception:
-                continue
+        cursor = conn.execute("SELECT data FROM events WHERE event = 'handle'")
+        while True:
+            batch = cursor.fetchmany(500)
+            if not batch:
+                break
+            for (row,) in batch:
+                try:
+                    data = json.loads(row)
+                except Exception:
+                    continue
 
             status = data.get("status", "unknown")
             task_data = data.get("task", {})
@@ -112,25 +125,38 @@ def deduplicate_qdrant(collection_name: str, dry_run: bool = False) -> Dict:
 
     removed = 0
     seen_hashes: Dict[str, Any] = {}
+    offset = None
 
     try:
-        points_result = client.scroll(collection_name=collection_name, limit=1000)
-        points = points_result[0] if points_result else []
+        while True:
+            points_result = client.scroll(
+                collection_name=collection_name,
+                limit=200,
+                offset=offset,
+            )
+            points = points_result[0] if points_result else []
+            if not points:
+                break
+            next_offset = points_result[1] if len(points_result) > 1 else None
 
-        for p in points:
-            payload = p.payload or {}
-            text = payload.get("text", payload.get("content", ""))
-            h = hashlib.sha256(text.encode()).hexdigest()[:16]
+            for p in points:
+                payload = p.payload or {}
+                text = payload.get("text", payload.get("content", ""))
+                h = hashlib.sha256(text.encode()).hexdigest()[:16]
 
-            if h in seen_hashes:
-                if not dry_run:
-                    client.delete(
-                        collection_name=collection_name,
-                        points_selector=[p.id],
-                    )
-                removed += 1
-            else:
-                seen_hashes[h] = p.id
+                if h in seen_hashes:
+                    if not dry_run:
+                        client.delete(
+                            collection_name=collection_name,
+                            points_selector=[p.id],
+                        )
+                    removed += 1
+                else:
+                    seen_hashes[h] = p.id
+
+            if not next_offset:
+                break
+            offset = next_offset
 
     except Exception as e:
         return {"status": "error", "reason": str(e)}
@@ -156,14 +182,20 @@ def optimize_neo4j(dry_run: bool = False) -> Dict:
                 nodes = record["nodes"]
                 if len(nodes) > 1 and not dry_run:
                     keep = nodes[0]
-                    for n in nodes[1:]:
-                        session.run(
-                            "MATCH (a), (b) WHERE id(a) = $keep_id AND id(b) = $del_id "
-                            "SET a.count = coalesce(a.count, 1) + 1 "
-                            "WITH a, b MATCH (b)-[r]-() DELETE r, b",
-                            keep_id=keep.id, del_id=n.id,
-                        )
-                        merged += 1
+                    tx = session.begin_transaction()
+                    try:
+                        for n in nodes[1:]:
+                            tx.run(
+                                "MATCH (a), (b) WHERE id(a) = $keep_id AND id(b) = $del_id "
+                                "SET a.count = coalesce(a.count, 1) + 1 "
+                                "WITH a, b MATCH (b)-[r]-() DELETE r, b",
+                                keep_id=keep.id, del_id=n.id,
+                            )
+                            merged += 1
+                        tx.commit()
+                    except Exception:
+                        tx.rollback()
+                        raise
 
             result = session.run(
                 "MATCH (n) WHERE NOT (n)--() DELETE n RETURN count(n) AS cnt"
@@ -182,23 +214,25 @@ def vacuum_traces(db_path: str = "traces.db", retention_days: int = 30, dry_run:
     size_before = os.path.getsize(db_path) if os.path.exists(db_path) else 0
     cutoff = time.time() - (retention_days * 86400)
 
-    conn = sqlite3.connect(db_path)
     removed = 0
 
-    try:
-        if not dry_run:
-            cur = conn.execute("DELETE FROM events WHERE ts < ?", (cutoff,))
-            removed = cur.rowcount
-            conn.commit()
-            conn.execute("VACUUM")
-            conn.commit()
+    if not dry_run:
+        try:
+            with closing(_wal_conn(db_path)) as conn:
+                cur = conn.execute("DELETE FROM events WHERE ts < ?", (cutoff,))
+                removed = cur.rowcount
+                conn.commit()
+        except Exception as e:
+            return {"status": "error", "reason": f"delete_failed: {e}"}
 
-        size_after = os.path.getsize(db_path)
-        conn.close()
+        try:
+            with closing(_wal_conn(db_path)) as conn:
+                conn.execute("VACUUM")
+                conn.commit()
+        except Exception as e:
+            logger.warning("[autodream] VACUUM failed (non-fatal): %s", e)
 
-    except Exception as e:
-        conn.close()
-        return {"status": "error", "reason": str(e)}
+    size_after = os.path.getsize(db_path)
 
     return {
         "status": "ok",
@@ -209,7 +243,24 @@ def vacuum_traces(db_path: str = "traces.db", retention_days: int = 30, dry_run:
 
 
 def analyze_and_correct(config_file: str = ".autodream_corrections.jsonl") -> List[Dict]:
-    conn = sqlite3.connect("traces.db")
+    conn = _wal_conn("traces.db")
+
+    # Read existing corrections to avoid duplicates
+    existing_patterns = set()
+    if os.path.exists(config_file):
+        try:
+            with open(config_file) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            entry = json.loads(line)
+                            existing_patterns.add(json.dumps(entry.get("pattern_keywords", []), sort_keys=True))
+                        except json.JSONDecodeError:
+                            continue
+        except Exception:
+            pass
+
     corrections = []
 
     try:
@@ -241,17 +292,25 @@ def analyze_and_correct(config_file: str = ".autodream_corrections.jsonl") -> Li
             }
             corrections.append(correction)
 
-        if corrections:
+        # Filter out duplicates
+        new_corrections = []
+        for c in corrections:
+            pattern_key = json.dumps(c.get("pattern_keywords", []), sort_keys=True)
+            if pattern_key not in existing_patterns:
+                existing_patterns.add(pattern_key)
+                new_corrections.append(c)
+
+        if new_corrections:
             with open(config_file, "a") as f:
-                for c in corrections:
+                for c in new_corrections:
                     f.write(json.dumps(c) + "\n")
 
     except Exception as e:
-        corrections = [{"error": str(e)}]
+        new_corrections = [{"error": str(e)}]
     finally:
         conn.close()
 
-    return corrections
+    return new_corrections
 
 
 def _run_swarm_cycle(dry_run: bool = False) -> Dict:
@@ -350,8 +409,7 @@ def run_autodream(dry_run: bool = False) -> Dict:
     from brain.correction_detector import run_correction_detection
 
     session_trace = []
-    conn = sqlite3.connect("traces.db")
-    try:
+    with closing(_wal_conn("traces.db")) as conn:
         rows = conn.execute(
             "SELECT data FROM events WHERE event = 'handle'"
         ).fetchall()
@@ -366,8 +424,6 @@ def run_autodream(dry_run: bool = False) -> Dict:
                 })
             except Exception:
                 continue
-    finally:
-        conn.close()
 
     corrections_written = run_correction_detection(session_trace)
 
@@ -382,8 +438,14 @@ def run_autodream(dry_run: bool = False) -> Dict:
     results["repo_inventory"] = _run_repo_inventory_cycle(dry_run=dry_run)
 
     output_path = ".autodream_last_run.json"
-    with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
+    fd, tmp_path = tempfile.mkstemp(dir=".", suffix=".autodream.tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(results, f, indent=2)
+        os.replace(tmp_path, output_path)
+    except Exception:
+        os.unlink(tmp_path)
+        raise
 
     # Emit event for cross-system listeners (skill evolver, runtime healer)
     try:

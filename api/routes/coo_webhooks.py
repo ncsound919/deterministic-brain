@@ -1,7 +1,10 @@
 """COO Brain webhook ingestion routes — Sentry, GitHub, Stripe webhooks."""
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
+import os
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
@@ -12,6 +15,31 @@ from coo.state import DecisionCard
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/coo", tags=["coo-brain"])
+
+
+def _verify_github_signature(body: bytes, signature: str) -> bool:
+    """Verify GitHub webhook HMAC-SHA256 signature."""
+    secret = os.getenv("GITHUB_WEBHOOK_SECRET", "")
+    if not secret:
+        return True  # Skip verification if no secret configured
+    expected = f"sha256={hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()}"
+    return hmac.compare_digest(signature, expected)
+
+
+def _verify_stripe_signature(payload: bytes, sig_header: str) -> bool:
+    """Verify Stripe webhook signature (simplified — no timestamp tolerance check)."""
+    secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    if not secret:
+        return True  # Skip verification if no secret configured
+    try:
+        parts = dict(item.split("=") for item in sig_header.split(","))
+        timestamp = parts.get("t", "")
+        signature = parts.get("v1", "")
+        signed_payload = f"{timestamp}.{payload.decode('utf-8')}"
+        expected = hmac.new(secret.encode(), signed_payload.encode(), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(signature, expected)
+    except Exception:
+        return False
 
 
 class WebhookResponse(BaseModel):
@@ -36,13 +64,27 @@ class DecisionCardResponse(BaseModel):
 
 @router.post("/webhook/sentry", response_model=WebhookResponse)
 async def sentry_webhook(request: Request):
-    """Ingest Sentry exception webhooks."""
+    """Ingest Sentry exception webhooks with security check."""
+    # Basic security: Check for Sentry-specific header if configured
+    sentry_token = os.getenv("SENTRY_WEBHOOK_TOKEN", "")
+    if sentry_token:
+        provided = request.headers.get("Sentry-Hook-Signature", "")
+        if not provided:
+            logger.warning("Sentry webhook missing signature")
+            raise HTTPException(status_code=401, detail="Missing signature")
+    
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     product_id = body.get("product_id", "unknown")
+    # Validate product is in our portfolio
+    orchestrator = get_orchestrator()
+    if product_id != "unknown" and product_id not in orchestrator.portfolio.products:
+        logger.warning("Sentry event for unknown product: %s", product_id)
+        return WebhookResponse(status="skipped", message="Product not in portfolio")
+
     event_type = body.get("event_type", "exception")
     severity = float(body.get("severity", 0.0))
     error_msg = body.get("message", body.get("error_message", ""))
@@ -73,6 +115,12 @@ async def sentry_webhook(request: Request):
 @router.post("/webhook/github", response_model=WebhookResponse)
 async def github_webhook(request: Request):
     """Ingest GitHub webhooks (CI failures, PR events, issue closures)."""
+    body_bytes = await request.body()
+    sig_header = request.headers.get("X-Hub-Signature-256", "")
+    if sig_header and not _verify_github_signature(body_bytes, sig_header):
+        logger.warning("GitHub webhook signature verification failed")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
     try:
         body = await request.json()
     except Exception:
@@ -120,6 +168,12 @@ async def github_webhook(request: Request):
 @router.post("/webhook/stripe", response_model=WebhookResponse)
 async def stripe_webhook(request: Request):
     """Ingest Stripe webhooks (subscription changes, payment failures)."""
+    body_bytes = await request.body()
+    sig_header = request.headers.get("Stripe-Signature", "")
+    if sig_header and not _verify_stripe_signature(body_bytes, sig_header):
+        logger.warning("Stripe webhook signature verification failed")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
     try:
         body = await request.json()
     except Exception:
@@ -169,6 +223,18 @@ async def stripe_webhook(request: Request):
             )
 
     return WebhookResponse(status="ignored", message=f"No handler for {event_type}")
+
+
+@router.get("/status")
+async def get_status():
+    """Get COO Brain operational status."""
+    orchestrator = get_orchestrator()
+    status = orchestrator.get_status()
+    return {
+        "status": "operational",
+        "coo_brain": status,
+        "products_registered": len(status["products"]),
+    }
 
 
 @router.get("/decisions/pending", response_model=List[DecisionCardResponse])

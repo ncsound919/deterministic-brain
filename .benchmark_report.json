@@ -1,302 +1,73 @@
 {
-  "timestamp": "2026-05-07T14:40:07",
+  "timestamp": "2026-05-11T22:15:04",
   "version": "2.5.0",
-  "skills_loaded": 89,
-  "pages": {
-    "dashboard": {
-      "load_ms": 81.8,
-      "status": "ok"
-    },
-    "task": {
-      "load_ms": 8052.9,
-      "status": "failed"
-    },
-    "reason": {
-      "load_ms": 8073.2,
-      "status": "failed"
-    },
-    "bundles": {
-      "load_ms": 8065.6,
-      "status": "failed"
-    },
-    "devpets": {
-      "load_ms": 8049.7,
-      "status": "failed"
-    },
-    "battle": {
-      "load_ms": 8073.8,
-      "status": "failed"
-    },
-    "skills": {
-      "load_ms": 8048.2,
-      "status": "failed"
-    },
-    "kairos": {
-      "load_ms": 8054.0,
-      "status": "failed"
-    },
-    "autodream": {
-      "load_ms": 8047.9,
-      "status": "failed"
-    },
-    "feed": {
-      "load_ms": 8049.2,
-      "status": "failed"
-    },
-    "audit": {
-      "load_ms": 8056.8,
-      "status": "failed"
-    },
-    "settings": {
-      "load_ms": 8054.1,
-      "status": "failed"
-    },
-    "health-mon": {
-      "load_ms": 8047.5,
-      "status": "failed"
-    }
-  },
+  "skills_loaded": 0,
+  "pages": {},
   "apis": {
     "/skills": {
-      "ms": 2193.1,
-      "status": 200,
-      "size_bytes": 9922
+      "ms": 4098.6,
+      "status": 0,
+      "size_bytes": 0
     },
     "/health": {
-      "ms": 2014.2,
-      "status": 200,
-      "size_bytes": 321
+      "ms": 4071.5,
+      "status": 0,
+      "size_bytes": 0
     },
     "/bundles": {
-      "ms": 2047.1,
-      "status": 200,
-      "size_bytes": 389
+      "ms": 4059.4,
+      "status": 0,
+      "size_bytes": 0
     },
     "/settings": {
-      "ms": 2046.8,
-      "status": 200,
-      "size_bytes": 570
+      "ms": 4043.7,
+      "status": 0,
+      "size_bytes": 0
     },
     "/settings/schema": {
-      "ms": 2045.4,
-      "status": 200,
-      "size_bytes": 3625
-    },
-    "/devpets": {
-      "ms": 2041.9,
-      "status": 500,
-      "size_bytes": 21
+      "ms": 4091.7,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/feed": {
-      "ms": 2010.2,
-      "status": 200,
-      "size_bytes": 3494
+      "ms": 4083.0,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/stats": {
-      "ms": 2048.9,
-      "status": 200,
-      "size_bytes": 132
+      "ms": 4062.8,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/audit": {
-      "ms": 2029.8,
-      "status": 200,
-      "size_bytes": 13
+      "ms": 4079.0,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/middleware-stats": {
-      "ms": 2063.2,
-      "status": 200,
-      "size_bytes": 799
+      "ms": 4058.8,
+      "status": 0,
+      "size_bytes": 0
     },
     "/relay/agents": {
-      "ms": 2048.0,
-      "status": 200,
-      "size_bytes": 136
-    },
-    "/health/monitor": {
-      "ms": 2056.1,
-      "status": 200,
-      "size_bytes": 302
-    },
-    "/health/skills": {
-      "ms": 2025.7,
-      "status": 200,
-      "size_bytes": 13
-    },
-    "/health/heals": {
-      "ms": 2046.1,
-      "status": 200,
-      "size_bytes": 12
-    },
-    "/autodream/status": {
-      "ms": 2014.9,
-      "status": 200,
-      "size_bytes": 22
-    },
-    "/evolution/report": {
-      "ms": 2048.1,
-      "status": 200,
-      "size_bytes": 22
-    },
-    "/kairos/status": {
-      "ms": 2079.2,
-      "status": 200,
-      "size_bytes": 175
-    },
-    "/reason (react)": {
-      "ms": 2048.2,
-      "status": 200,
-      "size_bytes": 902
-    },
-    "/reason (rest)": {
-      "ms": 2019.9,
-      "status": 200,
-      "size_bytes": 842
-    },
-    "/reason (security)": {
-      "ms": 2016.7,
-      "status": 200,
-      "size_bytes": 828
-    },
-    "/reason (docker)": {
-      "ms": 2033.3,
-      "status": 200,
-      "size_bytes": 839
-    },
-    "/reason (auth)": {
-      "ms": 2048.4,
-      "status": 200,
-      "size_bytes": 855
-    },
-    "/reason (deploy)": {
-      "ms": 2032.7,
-      "status": 200,
-      "size_bytes": 828
-    },
-    "/reason (notebook)": {
-      "ms": 2066.4,
-      "status": 200,
-      "size_bytes": 829
-    },
-    "/reason (canvas)": {
-      "ms": 2066.1,
-      "status": 200,
-      "size_bytes": 837
-    },
-    "/reason (pdf)": {
-      "ms": 2050.3,
-      "status": 200,
-      "size_bytes": 815
-    },
-    "/reason (cli)": {
-      "ms": 2020.2,
-      "status": 200,
-      "size_bytes": 829
-    },
-    "/reason (notion)": {
-      "ms": 2044.8,
-      "status": 200,
-      "size_bytes": 831
-    },
-    "/reason (figma)": {
-      "ms": 2052.2,
-      "status": 200,
-      "size_bytes": 821
-    },
-    "POST /task": {
-      "ms": 2061.0,
-      "status": 200,
-      "size_bytes": 1804
-    },
-    "POST /bundle": {
-      "ms": 2038.1,
-      "status": 200,
-      "size_bytes": 1774
-    },
-    "POST /dialogue/process": {
-      "ms": 2071.1,
-      "status": 200,
-      "size_bytes": 162
-    },
-    "POST /devpets/generate": {
-      "ms": 2066.7,
-      "status": 200,
-      "size_bytes": 216
+      "ms": 4126.0,
+      "status": 0,
+      "size_bytes": 0
     }
   },
-  "reasoning": {
-    "create a react component for a user profile": {
-      "chosen_skill": "React Component Generator",
-      "confidence": 0.2932,
-      "ms": 2048.2
-    },
-    "build a REST API for orders": {
-      "chosen_skill": "scaffold-rest-api",
-      "confidence": 0.3321,
-      "ms": 2019.9
-    },
-    "analyze this code for security issues": {
-      "chosen_skill": "claude-code",
-      "confidence": 0.2399,
-      "ms": 2016.7
-    },
-    "generate a dockerfile": {
-      "chosen_skill": "generate-dockerfile",
-      "confidence": 0.4932,
-      "ms": 2033.3
-    },
-    "fix a bug in the authentication module": {
-      "chosen_skill": "claude_coding",
-      "confidence": 0.0,
-      "ms": 2048.4
-    },
-    "how do I deploy to vercel?": {
-      "chosen_skill": "claude_refactor",
-      "confidence": 0.2215,
-      "ms": 2032.7
-    },
-    "create a jupyter notebook": {
-      "chosen_skill": "claude_coding",
-      "confidence": 0.0,
-      "ms": 2066.4
-    },
-    "design a canvas visualization": {
-      "chosen_skill": "claude_coding",
-      "confidence": 0.0,
-      "ms": 2066.1
-    },
-    "write a pdf report": {
-      "chosen_skill": "claude_coding",
-      "confidence": 0.0,
-      "ms": 2050.3
-    },
-    "scaffold a CLI tool": {
-      "chosen_skill": "scaffold-rest-api",
-      "confidence": 0.2385,
-      "ms": 2020.2
-    },
-    "build a notion integration": {
-      "chosen_skill": "claude_coding",
-      "confidence": 0.0,
-      "ms": 2044.8
-    },
-    "create a figma design system": {
-      "chosen_skill": "algorithmic-art",
-      "confidence": 0.0,
-      "ms": 2052.2
-    }
-  },
+  "reasoning": {},
   "summary": {
-    "total_benchmark_ms": 166080.6,
-    "skills_loaded": 89,
-    "pages_tested": 13,
-    "pages_ok": 1,
-    "pages_failed": 12,
-    "apis_tested": 33,
-    "avg_page_load_ms": 7442.7,
-    "avg_api_ms": 2048.3,
-    "p50_api_ms": 2047.1,
-    "p95_api_ms": 2079.2,
-    "reasoning_queries": 12,
-    "avg_confidence": 0.1515
+    "total_benchmark_ms": 42482.7,
+    "skills_loaded": 0,
+    "pages_tested": 0,
+    "pages_ok": 0,
+    "pages_failed": 0,
+    "apis_tested": 10,
+    "avg_page_load_ms": 0,
+    "avg_api_ms": 4077.4,
+    "p50_api_ms": 4075.2,
+    "p95_api_ms": 4126.0,
+    "reasoning_queries": 0,
+    "avg_confidence": 0.0
   }
 }

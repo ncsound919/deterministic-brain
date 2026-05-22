@@ -1,9 +1,7 @@
 """E2E Tests for Determinism and Reproducibility."""
 from __future__ import annotations
 import json
-import pytest
 import random
-from pathlib import Path
 
 
 class TestRoutingDeterminism:

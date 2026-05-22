@@ -1,7 +1,4 @@
 """Tests for reasoning/auditor.py and planners/scorer.py."""
-import json
-import os
-from pathlib import Path
 
 import pytest
 

@@ -14,8 +14,13 @@ class SwarmDispatcher:
     """
 
     def __init__(self, swarm_config_path: str = "swarm.yaml"):
-        with open(swarm_config_path) as f:
-            cfg = yaml.safe_load(f)
+        try:
+            with open(swarm_config_path, encoding='utf-8') as f:
+                cfg = yaml.safe_load(f)
+        except (FileNotFoundError, yaml.YAMLError) as e:
+            import logging as _log
+            _log.getLogger(__name__).warning("swarm.yaml not found or invalid: %s", e)
+            cfg = {}
         self.bundles: Dict[str, Dict] = cfg.get("bundles", {})
 
     def dispatch(self, bundle_name: str, inputs: Dict) -> Dict:

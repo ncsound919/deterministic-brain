@@ -9,7 +9,6 @@ brain's tool_calling lane and requires explicit permission approval.
 Underlying engine: Playwright (browser) or pyautogui (desktop).
 """
 import os
-from typing import Any
 
 try:
     import pyautogui

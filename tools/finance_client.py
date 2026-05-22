@@ -4,8 +4,6 @@ Now vault-aware: checks explicit arg → env var → credential vault.
 """
 
 from __future__ import annotations
-import base64
-import os
 from typing import Dict
 
 from tools.api_client import AuthenticatedClient
@@ -57,7 +55,8 @@ class CoinbaseClient:
         )
 
     def spot_price(self, currency_pair: str = "BTC-USD") -> Dict:
-        import urllib.request, json
+        import urllib.request
+        import json
         try:
             url = f"{self.BASE_URL}/prices/{currency_pair}/spot"
             req = urllib.request.Request(url)
@@ -69,7 +68,8 @@ class CoinbaseClient:
             return {"ok": False, "error": str(e)}
 
     def exchange_rates(self, currency: str = "USD") -> Dict:
-        import urllib.request, json
+        import urllib.request
+        import json
         try:
             url = f"{self.BASE_URL}/exchange-rates?currency={currency}"
             req = urllib.request.Request(url)

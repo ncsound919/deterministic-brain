@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 from typing import Dict, Optional
 
-from config import cfg
 
 SKILLS_ROOT = Path(os.getenv('SKILLS_BASE_PATH', r'C:\Users\User\Documents\skills'))
 

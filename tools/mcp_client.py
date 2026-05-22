@@ -1,6 +1,5 @@
 """MCP Client tool — interface with MCP servers for extended capabilities."""
 from __future__ import annotations
-import os
 import json
 import logging
 from typing import Any, Dict, Optional, List
@@ -17,6 +16,40 @@ class MCPClient:
         self.server_url = server_url
         self._process = None
         self._connected = False
+        self._request_id = 1
+        self._pending_requests: Dict[int, asyncio.Future] = {}
+        self._read_task = None
+        self._stderr_task = None
+
+    async def _read_loop(self):
+        """Background loop to read from stdout and dispatch to pending requests."""
+        try:
+            while self._process and self._process.stdout:
+                line = await self._process.stdout.readline()
+                if not line:
+                    break
+                decoded = line.decode().strip()
+                if not decoded:
+                    continue
+                try:
+                    data = json.loads(decoded)
+                    if isinstance(data, dict) and "jsonrpc" in data:
+                        req_id = data.get("id")
+                        if req_id in self._pending_requests:
+                            self._pending_requests[req_id].set_result(data)
+                            del self._pending_requests[req_id]
+                        else:
+                            logger.debug(f"Received JSON-RPC message with no pending request: {data}")
+                except json.JSONDecodeError:
+                    logger.debug(f"Skipping non-JSON output: {decoded}")
+        except Exception as e:
+            logger.error(f"Read loop error: {e}")
+        finally:
+            # Wake up all pending requests with an error
+            for fut in self._pending_requests.values():
+                if not fut.done():
+                    fut.set_exception(RuntimeError("MCP server disconnected"))
+            self._pending_requests.clear()
 
     async def connect(self) -> bool:
         """Establish connection to MCP server."""
@@ -33,81 +66,170 @@ class MCPClient:
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
+                
+                # Start read loops before handshake
+                self._read_task = asyncio.create_task(self._read_loop())
+                self._stderr_task = asyncio.create_task(self._log_stderr())
+
+                # Handshake: initialize
+                init_fut = asyncio.Future()
+                self._pending_requests[0] = init_fut
+                
+                init_request = json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": 0,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {},
+                        "clientInfo": {"name": "DeterministicBrain", "version": "1.0.0"}
+                    }
+                })
+                self._process.stdin.write((init_request + "\n").encode())
+                await self._process.stdin.drain()
+                
+                # Wait for init response with timeout
+                try:
+                    await asyncio.wait_for(init_fut, timeout=10.0)
+                except asyncio.TimeoutError:
+                    logger.error("MCP initialization timed out")
+                    await self.disconnect()
+                    return False
+                
+                # Handshake: initialized notification
+                initialized_notif = json.dumps({
+                    "jsonrpc": "2.0",
+                    "method": "notifications/initialized"
+                })
+                self._process.stdin.write((initialized_notif + "\n").encode())
+                await self._process.stdin.drain()
+
                 self._connected = True
-                logger.info(f"Started MCP server process: {self.server_command}")
+                logger.info(f"Started and initialized MCP server process: {self.server_command}")
                 return True
             except Exception as e:
                 logger.error(f"Failed to start MCP server: {e}")
                 return False
         return False
 
+    async def _log_stderr(self):
+        """Read and log stderr output from the server process."""
+        try:
+            while self._process and self._process.stderr:
+                line = await self._process.stderr.readline()
+                if not line:
+                    break
+                logger.error(f"MCP Server Error: {line.decode().strip()}")
+        except Exception as e:
+            logger.debug(f"Error reading stderr: {e}")
+
     async def disconnect(self) -> None:
         """Close connection to MCP server."""
-        if self._process:
-            self._process.terminate()
-            await self._process.wait()
         self._connected = False
+        if self._read_task:
+            self._read_task.cancel()
+        if self._stderr_task:
+            self._stderr_task.cancel()
+        
+        if self._process:
+            try:
+                # Close pipes
+                if self._process.stdin:
+                    self._process.stdin.close()
+                self._process.terminate()
+                await self._process.wait()
+            except Exception as e:
+                logger.debug(f"Error during process termination: {e}")
+            finally:
+                self._process = None
+        
         logger.info("Disconnected from MCP server")
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def call_tool(self, tool_name: str, arguments: Dict[str, Any], timeout: float = 30.0) -> Dict[str, Any]:
         """Call a tool on the MCP server."""
         if not self._connected:
-            return {"error": "Not connected to MCP server"}
+            if not await self.connect():
+                return {"error": "Failed to connect to MCP server"}
         
         if self._process:
-            request = json.dumps({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "tools/call",
-                "params": {
-                    "name": tool_name,
-                    "arguments": arguments
-                }
-            })
-            self._process.stdin.write((request + "\n").encode())
-            await self._process.stdin.drain()
+            req_id = self._request_id
+            self._request_id += 1
             
-            response_line = await self._process.stdout.readline()
-            if response_line:
-                return json.loads(response_line.decode())
+            fut = asyncio.Future()
+            self._pending_requests[req_id] = fut
+            
+            try:
+                request = json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "method": "tools/call",
+                    "params": {
+                        "name": tool_name,
+                        "arguments": arguments
+                    }
+                })
+                self._process.stdin.write((request + "\n").encode())
+                await self._process.stdin.drain()
+                
+                response = await asyncio.wait_for(fut, timeout=timeout)
+                if "error" in response:
+                    return {"error": response["error"]}
+                return response.get("result", {})
+            except asyncio.TimeoutError:
+                if req_id in self._pending_requests:
+                    del self._pending_requests[req_id]
+                return {"error": f"Tool call '{tool_name}' timed out after {timeout}s"}
+            except Exception as e:
+                if req_id in self._pending_requests:
+                    del self._pending_requests[req_id]
+                logger.error(f"Tool call failed: {e}")
+                return {"error": str(e)}
         
-        return {"error": "No response from MCP server"}
+        return {"error": "Not connected"}
 
-    async def list_tools(self) -> List[Dict[str, str]]:
+    async def list_tools(self, timeout: float = 10.0) -> List[Dict[str, str]]:
         """List available tools on the MCP server."""
         if not self._connected:
-            return []
+            if not await self.connect():
+                return []
         
         if self._process:
-            request = json.dumps({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "tools/list"
-            })
-            self._process.stdin.write((request + "\n").encode())
-            await self._process.stdin.drain()
+            req_id = self._request_id
+            self._request_id += 1
             
-            response_line = await self._process.stdout.readline()
-            if response_line:
-                data = json.loads(response_line.decode())
-                return data.get("result", {}).get("tools", [])
+            fut = asyncio.Future()
+            self._pending_requests[req_id] = fut
+            
+            try:
+                request = json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "method": "tools/list"
+                })
+                self._process.stdin.write((request + "\n").encode())
+                await self._process.stdin.drain()
+                
+                response = await asyncio.wait_for(fut, timeout=timeout)
+                return response.get("result", {}).get("tools", [])
+            except Exception as e:
+                if req_id in self._pending_requests:
+                    del self._pending_requests[req_id]
+                logger.error(f"Failed to list tools: {e}")
+                return []
         
         return []
 
 
 def mcp_connect(server_command: Optional[List[str]] = None, server_url: Optional[str] = None) -> Dict[str, Any]:
-    """Connect to an MCP server.
-    
-    Args:
-        server_command: Command and args to start MCP server (e.g., ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/path"])
-        server_url: HTTP URL for MCP server (e.g., "http://localhost:8080/mcp")
-    
-    Returns:
-        Dict with connection status and client info
-    """
+    """Connect to an MCP server."""
     client = MCPClient(server_command=server_command, server_url=server_url)
-    loop = asyncio.new_event_loop()
     try:
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
         success = loop.run_until_complete(client.connect())
         return {
             "connected": success,
@@ -116,8 +238,6 @@ def mcp_connect(server_command: Optional[List[str]] = None, server_url: Optional
         }
     except Exception as e:
         return {"connected": False, "error": str(e)}
-    finally:
-        loop.close()
 
 
 def mcp_call(tool_name: str, arguments: Dict[str, Any], server_url: Optional[str] = None) -> Dict[str, Any]:

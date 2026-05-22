@@ -7,7 +7,7 @@ This module wraps it with coding-specific prompt templates and a
 self-repair loop that feeds test failures back into the model.
 """
 import os
-from tools.llm.openrouter_client import get_client, LANE_MODELS
+from tools.llm.openrouter_client import get_client
 
 _MODEL: str = os.getenv('MODEL_OPENCODE', 'openai/o3')  # override with opencode/opencode when available on OpenRouter
 _MAX_TOKENS: int = int(os.getenv('LLM_MAX_TOKENS', '2048'))

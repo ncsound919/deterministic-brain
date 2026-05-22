@@ -3,18 +3,18 @@ from __future__ import annotations
 import os
 import yaml
 import logging
+import threading
+import time
 from typing import Dict, List, Optional, Any
 
 from orchestration.backends import (
     get_backend,
     SkillBackend,
-    LocalSkillBackend,
-    ClaudeSkillBackend,
-    OpenClawSkillBackend,
-    HermesSkillBackend,
 )
 
 logger = logging.getLogger(__name__)
+
+_HOT_RELOAD_DEBOUNCE = 1.0  # seconds to debounce file change events
 
 
 class SkillMetadata:
@@ -35,6 +35,8 @@ class SkillMetadata:
         source_format: str = "native",
         requires_env: List[str] = None,
         requires_bins: List[str] = None,
+        skill_path: str = "",
+        choices: Dict[str, List[str]] = None,
     ):
         self.skill_id = skill_id
         self.skill_name = skill_name
@@ -49,6 +51,8 @@ class SkillMetadata:
         self.source_format = source_format
         self.requires_env = requires_env or []
         self.requires_bins = requires_bins or []
+        self.skill_path = skill_path
+        self.choices = choices or {}
 
     @classmethod
     def from_file(cls, skill_path: str, skill_id: str) -> Optional["SkillMetadata"]:
@@ -63,26 +67,26 @@ class SkillMetadata:
             filename = os.path.basename(skill_path)
             is_external = filename == "SKILL.md"
             if is_external:
-                return cls._parse_external(skill_id, content)
+                return cls._parse_external(skill_id, content, skill_path)
             else:
-                return cls._parse_native(skill_id, content)
+                return cls._parse_native(skill_id, content, skill_path)
         except Exception as e:
             logger.warning(f"Failed to parse {skill_path}: {e}")
             return None
 
     @classmethod
-    def _parse_native(cls, skill_id: str, content: str) -> Optional["SkillMetadata"]:
+    def _parse_native(cls, skill_id: str, content: str, skill_path: str = "") -> Optional["SkillMetadata"]:
         """Parse our native skill.md format."""
         import re
 
         fm_match = re.match(r'^---\n(.*?)\n---\n', content, re.DOTALL)
         if not fm_match:
-            return cls(skill_id=skill_id, skill_name=skill_id)
+            return None
 
         try:
             fm = yaml.safe_load(fm_match.group(1)) or {}
         except yaml.YAMLError:
-            return cls(skill_id=skill_id, skill_name=skill_id)
+            return None
 
         return cls(
             skill_id=skill_id,
@@ -96,21 +100,23 @@ class SkillMetadata:
             audit=fm.get("audit", []),
             monte_carlo=fm.get("monte_carlo", False),
             source_format="native",
+            skill_path=skill_path,
+            choices=fm.get("choices", None),
         )
 
     @classmethod
-    def _parse_external(cls, skill_id: str, content: str) -> Optional["SkillMetadata"]:
+    def _parse_external(cls, skill_id: str, content: str, skill_path: str = "") -> Optional["SkillMetadata"]:
         """Parse Hermes/OpenClaw SKILL.md format."""
         import re
 
         fm_match = re.match(r'^---\n(.*?)\n---\n', content, re.DOTALL)
         if not fm_match:
-            return cls(skill_id=skill_id, skill_name=skill_id)
+            return None
 
         try:
             fm = yaml.safe_load(fm_match.group(1)) or {}
         except yaml.YAMLError:
-            return cls(skill_id=skill_id, skill_name=skill_id)
+            return None
 
         name = fm.get("name", skill_id)
         description = fm.get("description", "")
@@ -134,6 +140,7 @@ class SkillMetadata:
             source_format="external",
             requires_env=env_requires,
             requires_bins=bins_requires,
+            skill_path=skill_path,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -151,7 +158,105 @@ class SkillMetadata:
             "source_format": self.source_format,
             "requires_env": self.requires_env,
             "requires_bins": self.requires_bins,
+            "skill_path": self.skill_path,
+            "choices": self.choices,
         }
+
+
+class SkillDirWatcher:
+    """Watch skill directories for changes and trigger hot-reload.
+
+    Uses watchdog if available, otherwise falls back to polling.
+    """
+
+    def __init__(self, registry: 'SkillRegistry', directories: list[str]):
+        self.registry = registry
+        self.directories = [d for d in directories if os.path.isdir(d)]
+        self._lock = threading.Lock()
+        self._last_event = 0.0
+        self._running = False
+        self._thread: Optional[threading.Thread] = None
+
+    def start(self) -> None:
+        if self._running:
+            return
+        self._running = True
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+        logger.info("SkillDirWatcher started on %s", self.directories)
+
+    def stop(self) -> None:
+        self._running = False
+
+    def _run(self) -> None:
+        try:
+            self._watch_watchdog()
+        except ImportError:
+            logger.info("watchdog not installed — falling back to polling SkillDirWatcher")
+            self._watch_poll()
+        except Exception as exc:
+            logger.warning("watchdog error (%s) — falling back to polling", exc)
+            self._watch_poll()
+
+    def _watch_watchdog(self) -> None:
+        from watchdog.observers import Observer
+        from watchdog.events import FileSystemEventHandler
+
+        class _Handler(FileSystemEventHandler):
+            def __init__(self, watcher: SkillDirWatcher):
+                self.watcher = watcher
+
+            def on_any_event(self, event):
+                if not event.is_directory:
+                    self.watcher._notify()
+
+        handler = _Handler(self)
+        observer = Observer()
+        for d in self.directories:
+            observer.schedule(handler, d, recursive=True)
+        observer.start()
+        try:
+            while self._running:
+                time.sleep(0.5)
+        finally:
+            observer.stop()
+            observer.join()
+
+    def _watch_poll(self) -> None:
+        mtimes: dict[str, float] = {}
+        for d in self.directories:
+            for root, _dirs, files in os.walk(d):
+                for f in files:
+                    fpath = os.path.join(root, f)
+                    try:
+                        mtimes[fpath] = os.path.getmtime(fpath)
+                    except OSError:
+                        pass
+        while self._running:
+            time.sleep(_HOT_RELOAD_DEBOUNCE)
+            changed = False
+            for d in self.directories:
+                for root, _dirs, files in os.walk(d):
+                    for f in files:
+                        fpath = os.path.join(root, f)
+                        try:
+                            new_mtime = os.path.getmtime(fpath)
+                            if mtimes.get(fpath, 0) != new_mtime:
+                                mtimes[fpath] = new_mtime
+                                changed = True
+                        except OSError:
+                            pass
+            if changed:
+                self._notify()
+
+    def _notify(self) -> None:
+        now = time.time()
+        if now - self._last_event < _HOT_RELOAD_DEBOUNCE:
+            return
+        self._last_event = now
+        with self._lock:
+            logger.info("Skill change detected — refreshing registry")
+            self.registry._refresh_registry()
 
 
 class SkillRegistry:
@@ -164,6 +269,32 @@ class SkillRegistry:
         self._skills: Dict[str, SkillMetadata] = {}
         self._backends: Dict[str, SkillBackend] = {}
         self._discovered = False
+        self._enable_watch = False
+        self._watcher: Optional[SkillDirWatcher] = None
+        self._refresh_lock = threading.Lock()
+
+    def enable_watch(self) -> None:
+        """Start watching skill directories for changes (hot-reload)."""
+        if self._enable_watch:
+            return
+        self._enable_watch = True
+        self._watcher = SkillDirWatcher(self, [self.local_skills_root, self.lanes_root])
+        self._watcher.start()
+
+    def disable_watch(self) -> None:
+        """Stop watching skill directories."""
+        self._enable_watch = False
+        if self._watcher:
+            self._watcher.stop()
+            self._watcher = None
+
+    def _refresh_registry(self) -> None:
+        """Re-discover all skills from disk (thread-safe)."""
+        with self._refresh_lock:
+            self._skills.clear()
+            self._backends.clear()
+            self._discovered = False
+            self.discover()
 
     def discover(self) -> None:
         """Discover all local skills from skill_packs and lanes."""
@@ -233,7 +364,10 @@ class SkillRegistry:
             return None
 
         if metadata.backend not in self._backends:
-            self._backends[metadata.backend] = get_backend(metadata.backend)
+            try:
+                self._backends[metadata.backend] = get_backend(metadata.backend)
+            except ValueError:
+                return None
 
         return self._backends[metadata.backend]
 
@@ -283,6 +417,8 @@ class SkillRegistry:
                 "logs": [f"ERROR: Could not create backend '{metadata.backend}'"],
             }
 
+        if metadata.skill_path:
+            task["_skill_path"] = metadata.skill_path
         return backend.run(metadata.backend_skill_id, task, context)
 
     def translate_external_skill(
@@ -314,17 +450,33 @@ class SkillRegistry:
 
 
 _REGISTRY: Optional[SkillRegistry] = None
+_REGISTRY_LOCK = None
 
 
-def get_skill_registry(local_root: Optional[str] = None) -> SkillRegistry:
-    """Get the global skill registry instance."""
-    global _REGISTRY
+def get_skill_registry(local_root: Optional[str] = None,
+                        enable_watch: bool = False) -> SkillRegistry:
+    """Get the global skill registry instance (thread-safe).
+
+    Args:
+        local_root: Optional override for skills root directory.
+        enable_watch: If True, start hot-reload file watcher on first init.
+    """
+    global _REGISTRY, _REGISTRY_LOCK
+    if _REGISTRY_LOCK is None:
+        _REGISTRY_LOCK = threading.Lock()
     if _REGISTRY is None:
-        _REGISTRY = SkillRegistry(local_root)
+        with _REGISTRY_LOCK:
+            if _REGISTRY is None:
+                _REGISTRY = SkillRegistry(local_root)
+                if enable_watch:
+                    _REGISTRY.enable_watch()
     return _REGISTRY
 
 
 def reset_skill_registry() -> None:
     """Reset the global registry (useful for testing)."""
     global _REGISTRY
-    _REGISTRY = None
+    with _REGISTRY_LOCK:
+        if _REGISTRY is not None:
+            _REGISTRY.disable_watch()
+        _REGISTRY = None

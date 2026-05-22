@@ -23,8 +23,6 @@ import signal
 import sys
 import time
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -47,6 +45,14 @@ def load_soul() -> dict:
     print("\n" + "=" * 60)
     print("  DETERMINISTIC BRAIN — BOOT SEQUENCE")
     print("=" * 60)
+
+    # Health check
+    try:
+        from brain.health_check import run_health_check, print_health_report
+        result = run_health_check()
+        print_health_report(result)
+    except ImportError:
+        pass
 
     try:
         from brain.soul import get_soul, reset_soul
@@ -72,7 +78,7 @@ def connect_learning_loop() -> dict:
     status = {}
 
     try:
-        from orchestration.event_bus import connect_all_learning, event_bus
+        from orchestration.event_bus import connect_all_learning
         connect_all_learning()
         print("  [OK] Full learning loop wired (bandit ↔ tracker ↔ evolver ↔ healer)")
         status["learning_loop"] = "connected"
@@ -216,12 +222,14 @@ def load_credentials() -> dict:
     return status
 
 
+_daemons: list = []
+
+
 def start_daemons() -> dict:
-    print("\n  --- Daemons ---")
     status = {}
 
     try:
-        from orchestration.kairos_daemon import start_kairos, kairos_status
+        from orchestration.kairos_daemon import start_kairos
         result = start_kairos()
         print(f"  [OK] KAIROS daemon started (idle threshold: {result.get('idle_threshold_seconds', 0)}s)")
         status["kairos"] = "running"
@@ -249,6 +257,20 @@ def start_daemons() -> dict:
         print(f"  [WARN] Swarm worker: {e}")
         status["swarm_worker"] = f"error: {e}"
 
+    # Satellite Servers (Skilltech)
+    try:
+        import subprocess
+        import os
+        script_path = os.path.join(os.getcwd(), "scripts", "start_satellite_servers.py")
+        if os.path.exists(script_path):
+            p = subprocess.Popen([sys.executable, script_path])
+            _daemons.append(p)
+            print(f"  [OK] Satellite servers initiated (BookBridge, VibeServe) - PID {p.pid}")
+            status["satellite_servers"] = "running"
+    except Exception as e:
+        print(f"  [WARN] Satellite servers: {e}")
+        status["satellite_servers"] = f"error: {e}"
+
     return status
 
 
@@ -256,14 +278,15 @@ def start_daemons() -> dict:
 # Step 6: FastAPI server (optional)
 # ═══════════════════════════════════════════════════════════════════════
 
-def start_server(host: str = "0.0.0.0", port: int = 8000) -> None:
-    print(f"\n  --- API Server ---")
+def start_server(host: str = "0.0.0.0", port: int = int(os.environ.get("API_PORT", 8000))) -> None:
+    print("\n  --- API Server ---")
     try:
         import uvicorn
-        print(f"  [OK] Starting FastAPI on http://{host}:{port}")
-        print(f"  [OK] Dashboard: http://localhost:{port}")
-        print(f"  [OK] API Docs:  http://localhost:{port}/docs")
-        uvicorn.run("api.server:app", host=host, port=port, reload=False, log_level="warning")
+        api_port = int(os.environ.get("API_PORT", 8000))
+        print(f"  [OK] Starting FastAPI on http://{host}:{api_port}")
+        print(f"  [OK] Dashboard: http://localhost:{api_port}")
+        print(f"  [OK] API Docs:  http://localhost:{api_port}/docs")
+        uvicorn.run("api.server:app", host=host, port=api_port, reload=False, log_level="warning")
     except Exception as e:
         print(f"  [ERROR] Server failed: {e}")
 
@@ -428,6 +451,14 @@ def main() -> None:
                 get_scheduler().stop()
             except Exception:
                 pass
+            
+            # Kill satellite servers
+            for p in _daemons:
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+            
             sys.exit(0)
 
         signal.signal(signal.SIGINT, _shutdown)

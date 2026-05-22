@@ -12,7 +12,6 @@ This is distinct from the agent_brain lane's full browser automation;
 this is a lightweight read-only tool available to all lanes.
 """
 import os
-from typing import Any
 
 try:
     import httpx

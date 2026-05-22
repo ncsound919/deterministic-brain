@@ -14,7 +14,6 @@ or directly:
 import json
 import os
 from pathlib import Path
-from typing import Any
 
 _SKILLS_DIR = Path(os.getenv('SKILLS_DIR', '.skills'))
 _SKILLS_DIR.mkdir(exist_ok=True)

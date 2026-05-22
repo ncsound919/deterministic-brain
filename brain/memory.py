@@ -1,6 +1,5 @@
 """Session memory — plain dict, no vector store, no LLM."""
 from __future__ import annotations
-import uuid
 import time
 from typing import Dict
 

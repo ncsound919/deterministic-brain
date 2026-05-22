@@ -12,7 +12,6 @@ class ToolRegistry:
         self._register_defaults()
 
     def _register_defaults(self):
-        import shlex
         import subprocess
 
         try:
@@ -28,9 +27,17 @@ class ToolRegistry:
         except ImportError:
             pass
 
-        self.register("run_command", lambda cmd: subprocess.run(
-            cmd, capture_output=True, text=True,
-            check=True, timeout=60, shell=True))
+        def _safe_run(cmd: str | list[str]):
+            import shlex
+            if isinstance(cmd, str):
+                cmd_list = shlex.split(cmd)
+            else:
+                cmd_list = cmd
+            return subprocess.run(
+                cmd_list, capture_output=True, text=True,
+                check=True, timeout=60, shell=False)
+
+        self.register("run_command", _safe_run)
         
         self._register_optional_tools()
 
@@ -298,6 +305,35 @@ class ToolRegistry:
             logger.info("Registered tool: web_fetch")
         except ImportError as e:
             logger.debug(f"web_fetch not available: {e}")
+
+        # --- SATELLITE MCP SERVERS (Skilltech) ---
+        try:
+            from tools.bookbridge_bridge import bookbridge_search, bookbridge_retrieve, bookbridge_reading_plan, bookbridge_status
+            self.register("bookbridge_search", bookbridge_search)
+            self.register("bookbridge_retrieve", bookbridge_retrieve)
+            self.register("bookbridge_reading_plan", bookbridge_reading_plan)
+            self.register("bookbridge_status", bookbridge_status)
+            logger.info("Registered tools: bookbridge_*")
+        except ImportError as e:
+            logger.debug(f"bookbridge_bridge not available: {e}")
+
+        try:
+            from tools.business_logic_bridge import biz_get_rules, biz_get_footguns, biz_get_effects
+            self.register("biz_get_rules", biz_get_rules)
+            self.register("biz_get_footguns", biz_get_footguns)
+            self.register("biz_get_effects", biz_get_effects)
+            logger.info("Registered tools: biz_*")
+        except ImportError as e:
+            logger.debug(f"business_logic_bridge not available: {e}")
+
+        try:
+            from tools.vibeserve_bridge import vibe_generate, vibe_validate, vibe_list_systems
+            self.register("vibe_generate", vibe_generate)
+            self.register("vibe_validate", vibe_validate)
+            self.register("vibe_list_systems", vibe_list_systems)
+            logger.info("Registered tools: vibe_*")
+        except ImportError as e:
+            logger.debug(f"vibeserve_bridge not available: {e}")
         
         try:
             from tools.browser.controller import BrowserController

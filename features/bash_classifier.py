@@ -66,7 +66,7 @@ def classify(command: str) -> Classification:
             return Classification('DANGER', False, f'Dangerous operation detected: {pat}')
     for pat in _CAUTION_PATTERNS:
         if re.search(pat, cmd, re.IGNORECASE):
-            return Classification('CAUTION', False, f'Elevated privilege or write operation')
+            return Classification('CAUTION', False, 'Elevated privilege or write operation')
     return Classification('SAFE', False, 'No dangerous patterns detected')
 
 

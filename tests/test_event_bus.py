@@ -1,8 +1,7 @@
 """Tests for event_bus.py — pub/sub determinism."""
 import threading
-import time
 
-from orchestration.event_bus import EventBus, event_bus
+from orchestration.event_bus import EventBus
 
 
 class TestEventBus:

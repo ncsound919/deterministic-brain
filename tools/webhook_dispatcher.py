@@ -7,9 +7,11 @@ Token savings: ~300 tokens per notification vs LLM formatting.
 from __future__ import annotations
 import json
 import os
-from typing import Dict, Optional
+from typing import Dict
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+
+from tools.circuit_breaker import circuit_breaker
 
 
 class WebhookDispatcher:
@@ -60,6 +62,7 @@ class WebhookDispatcher:
     def custom(self, url: str, payload: dict) -> Dict:
         return self._send(url, payload)
 
+    @circuit_breaker(name="webhook", threshold=3, cooldown_s=60, retries=1)
     def _send(self, url: str, payload: dict) -> Dict:
         data = json.dumps(payload).encode()
         req = Request(url, data=data, headers={"Content-Type": "application/json"})
@@ -75,12 +78,14 @@ class WebhookDispatcher:
                             channel: str = "slack") -> Dict:
         """Post skill execution result to configured channels."""
         msg = f"*[{status.upper()}]* `{skill}`\n{details}" if details else f"*[{status.upper()}]* `{skill}`"
+        results = {}
 
         if channel in ("slack", "all"):
-            r = self.slack(msg)
+            results["slack"] = self.slack(msg)
         if channel in ("discord", "all"):
-            r = self.discord(msg)
+            results["discord"] = self.discord(msg)
         if channel in ("teams", "all"):
-            r = self.teams(f"Skill: {skill} [{status}]", details or "No details")
+            results["teams"] = self.teams(f"Skill: {skill} [{status}]", details or "No details")
 
-        return {"ok": True, "message": msg}
+        success = all(r.get("ok", False) for r in results.values()) if results else True
+        return {"ok": success, "message": msg, "dispatch_results": results}

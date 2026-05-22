@@ -19,10 +19,10 @@ _DEFAULT_ROUTES: Dict[str, str] = {
 }
 
 LANE_PATTERNS = [
-    (r'\b(code|program|function|class|implement|refactor|write|build)\b', 'coding'),
-    (r'\b(policy|rule|approval|compliance|budget|business|logic)\b', 'business_logic'),
-    (r'\b(agent|browser|click|navigate|autonom)\b', 'agent_brain'),
-    (r'\b(tool|call|invoke|api|validate|execute)\b', 'tool_calling'),
+    (re.compile(r'\b(code|program|function|class|implement|refactor|write|build)\b', re.IGNORECASE), 'coding'),
+    (re.compile(r'\b(policy|rule|approval|compliance|budget|business|logic)\b', re.IGNORECASE), 'business_logic'),
+    (re.compile(r'\b(agent|browser|click|navigate|autonom)\b', re.IGNORECASE), 'agent_brain'),
+    (re.compile(r'\b(tool|call|invoke|api|validate|execute)\b', re.IGNORECASE), 'tool_calling'),
 ]
 
 def route_lane(query: str) -> str:
@@ -33,7 +33,7 @@ def route_lane(query: str) -> str:
     """
     q_lower = query.lower()
     for pattern, lane in LANE_PATTERNS:
-        if re.search(pattern, q_lower, re.IGNORECASE):
+        if pattern.search(q_lower):
             return lane
     return 'cross_domain'
 
@@ -43,10 +43,14 @@ class MoERouter:
         self.routes = dict(_DEFAULT_ROUTES)
         self.aliases: Dict[str, list] = {}
         if routes_path and os.path.exists(routes_path):
-            with open(routes_path) as f:
-                config = yaml.safe_load(f) or {}
-            self.routes.update(config.get("routes", {}))
-            self.aliases = config.get("aliases", {})
+            try:
+                with open(routes_path, encoding='utf-8') as f:
+                    config = yaml.safe_load(f) or {}
+                self.routes.update(config.get("routes", {}))
+                self.aliases = config.get("aliases", {})
+            except (yaml.YAMLError, Exception) as e:
+                import logging as _log
+                _log.getLogger(__name__).warning("MoERouter: failed to load %s: %s", routes_path, e)
         if warn_on_missing:
             issues = self.validate_routes()
             if issues:

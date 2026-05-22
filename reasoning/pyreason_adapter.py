@@ -10,7 +10,6 @@ pure-Python rule engine that produces the same interface contract:
     (derived_facts: list[dict], trace: list[str])
 """
 import re
-from typing import Any
 
 try:
     import pyreason as pr
@@ -74,7 +73,9 @@ _LANE_RULES: dict[str, list[_Rule]] = {
 
 def _pyreason_reason(lane: str, contexts: list[dict], query: str) -> tuple[list[dict], list[str]]:
     """Run pyreason on a small graph built from contexts."""
-    import tempfile, os, yaml
+    import tempfile
+    import os
+    import yaml
 
     # Build a minimal YAML graph file
     nodes = [{'name': c['id'], 'facts': [f'text_{re.sub(chr(32), "_", c["text"][:30])}']} for c in contexts]

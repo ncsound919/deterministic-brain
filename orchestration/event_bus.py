@@ -4,22 +4,72 @@ Thread-safe pub/sub so each subsystem can emit and subscribe independently.
 """
 
 from __future__ import annotations
+import logging
+import os
 import threading
 import time
 from typing import Any, Callable, Dict, List
+
+logger = logging.getLogger(__name__)
+
+_DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
 
 
 class EventBus:
     """In-memory pub/sub event bus with optional persistent logging."""
 
-    def __init__(self):
+    def __init__(self, log_path: str = ".event_bus_log.jsonl"):
         self._subscribers: Dict[str, List[Callable]] = {}
         self._lock = threading.Lock()
+        self._log_lock = threading.Lock()
         self._event_log: List[Dict[str, Any]] = []
+        self._log_path = log_path
+        self._load_log()
+
+    def _load_log(self) -> None:
+        import os
+        if not os.path.exists(self._log_path):
+            return
+        try:
+            with open(self._log_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            for line in lines[-5000:]:
+                line = line.strip()
+                if line:
+                    import json
+                    self._event_log.append(json.loads(line))
+        except Exception as e:
+            logger.warning("EventBus: failed to load event log: %s", e)
+
+    def _append_log(self, event: Dict[str, Any]) -> None:
+        if not self._log_path:
+            return
+        try:
+            import json
+            with self._log_lock:
+                with open(self._log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(event, default=str) + "\n")
+        except Exception as e:
+            logger.warning("EventBus: failed to append event log: %s", e)
 
     def subscribe(self, event_type: str, callback: Callable) -> None:
         with self._lock:
             self._subscribers.setdefault(event_type, []).append(callback)
+        if _DISTRIBUTED:
+            try:
+                from tools.redis_client import get_redis
+                r = get_redis()
+                if r.available:
+                    import json
+                    def redis_callback(message: str) -> None:
+                        try:
+                            data = json.loads(message)
+                            callback(**data)
+                        except Exception:
+                            pass
+                    r.subscribe(f"event:{event_type}", redis_callback)
+            except Exception:
+                pass
 
     def unsubscribe(self, event_type: str, callback: Callable) -> None:
         with self._lock:
@@ -35,19 +85,37 @@ class EventBus:
             if len(self._event_log) > 5000:
                 self._event_log = self._event_log[-2500:]
             callbacks = list(self._subscribers.get(event_type, []))
+        self._append_log(event)
 
         for cb in callbacks:
             try:
                 cb(**data)
+            except Exception as exc:
+                logger.warning("EventBus subscriber %s failed: %s", cb, exc)
+
+        if _DISTRIBUTED:
+            try:
+                from tools.redis_client import get_redis
+                r = get_redis()
+                if r.available:
+                    import json
+                    r.publish(f"event:{event_type}", json.dumps({"ts": time.time(), **data}, default=str))
             except Exception:
-                pass  # never let one subscriber break others
+                pass
 
     def recent_events(self, limit: int = 100) -> List[Dict]:
         with self._lock:
             return list(self._event_log[-limit:])
 
     def clear(self) -> None:
-        self._event_log.clear()
+        with self._lock:
+            self._event_log.clear()
+        try:
+            import os
+            if os.path.exists(self._log_path):
+                os.remove(self._log_path)
+        except Exception as e:
+            logger.warning("EventBus: failed to clear event log: %s", e)
 
 
 # Singleton
@@ -82,8 +150,8 @@ def connect_devpet_listeners(tracker=None):
         if tracker:
             try:
                 tracker.process_events()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("DevPet process_events failed: %s", e)
     event_bus.subscribe("autodream_run", _on_maintenance)
 
 

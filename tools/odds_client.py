@@ -9,9 +9,10 @@ Token savings: ~500 tokens per odds query vs LLM scraping approach.
 from __future__ import annotations
 import json
 import os
-import time
-from typing import Dict, List
+from typing import Dict
 from urllib.request import urlopen
+
+from tools.circuit_breaker import circuit_breaker
 
 
 class OddsClient:
@@ -55,6 +56,7 @@ class OddsClient:
                 "note": "Set ODDS_API_KEY for live odds from the-odds-api.com"}
 
 
+@circuit_breaker(name="odds_api", threshold=3, cooldown_s=60, retries=1)
 def fetch_odds(sport: str = "basketball_nba") -> Dict:
     """Convenience function for tool registry."""
     return OddsClient().fetch_odds(sport)

@@ -6,11 +6,10 @@ from __future__ import annotations
 import json
 import logging
 import re
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ class Healer:
 
     def __init__(self, test_id: str = None):
         self.test_id = test_id or f"heal_{id(self)}"
-        self.artifacts: Optional[HealArtifacts] = None
+        self.artifacts: Optional[TestArtifacts] = None
         self._heal_count = 0
         self._intents_patterns = self._load_intent_patterns()
         self._response_patterns: Dict[str, List[Any]] = {}
@@ -256,10 +255,12 @@ class Healer:
     def _text_to_pattern(self, text: str) -> str:
         """Convert text to regex pattern."""
         words = re.findall(r'\w+', text.lower())
-        if len(words) <= 2:
-            return r'\b(' + '|'.join(words) + r')\b'
+        import re as _re
+        escaped_words = [_re.escape(w) for w in words]
+        if len(escaped_words) <= 2:
+            return r'\b(' + '|'.join(escaped_words) + r')\b'
         
-        return r'\b' + words[0] + r'.*' + words[-1] + r'\b'
+        return r'\b' + escaped_words[0] + r'.*' + escaped_words[-1] + r'\b'
 
     def heal_slot_extraction(self) -> Optional[str]:
         """Heal slot extraction failures — expand acceptable slot patterns."""
@@ -270,7 +271,7 @@ class Healer:
             from self_healing.fuzzy_matcher import FuzzyMatcher
             matcher = FuzzyMatcher()
         except ImportError:
-            return f"Fuzzy matcher unavailable — raw input saved as pattern"
+            return "Fuzzy matcher unavailable — raw input saved as pattern"
         self._slot_patterns.setdefault(self.test_id, []).append(raw)
         self._persist_slot_patterns()
         return f"Slot pattern expanded: accepting '{raw[:40]}...' as valid input"
@@ -369,6 +370,16 @@ class Healer:
         
         with open(heals_file, "w") as f:
             json.dump(history, f, indent=2)
+
+    def attempt_auto_repair(self, skill_name: str) -> Dict[str, Any]:
+        """Attempt to auto-repair a skill by name. Runtime healing compatibility."""
+        try:
+            diag = self.diagnose({"type": "skill_failure", "skill": skill_name}, {})
+            result = self.repair(diag, {})
+            success = result.get("success", False)
+            return {"status": "repaired" if success else "failed", "skill": skill_name}
+        except Exception as e:
+            return {"status": "failed", "skill": skill_name, "error": str(e)}
 
     @classmethod
     def get_heal_summary(cls) -> Dict[str, Any]:

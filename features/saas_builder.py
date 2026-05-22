@@ -10,9 +10,7 @@ from __future__ import annotations
 import os
 import json
 import time
-import urllib.request
-import urllib.error
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 
@@ -71,7 +69,7 @@ class SaaSBuilder:
             from tools.web_fetcher import WebFetcher
             fetcher = WebFetcher()
             sources = [
-                f"https://news.ycombinator.com/item?id=startup",
+                "https://news.ycombinator.com/item?id=startup",
                 f"https://www.indiehackers.com/products?keyword={topic.replace(' ', '+')}",
             ]
             for url in sources[:1]:

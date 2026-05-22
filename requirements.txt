@@ -1,10 +1,97 @@
-# Deterministic Brain — runtime dependencies (no LLMs)
+# =============================================================================
+# Deterministic Brain — Core Runtime Dependencies
+# Install: pip install -r requirements.txt
+# Optional groups: pip install -r requirements.txt --extra-index-url ...
+# =============================================================================
+
+# --- Core servers ---
 fastapi>=0.110.0
 uvicorn[standard]>=0.29.0
-pyyaml>=6.0
-Jinja2>=3.1.0
 pydantic>=2.0.0
-numpy>=1.26.0
-websockets>=12.0
-aiofiles>=23.0
+httpx>=0.27.0
+requests>=2.31.0
+
+# --- Config & parsing ---
+pyyaml>=6.0
+python-dotenv>=1.0.0
+Jinja2>=3.1.0
+
+# --- Storage & crypto ---
 cryptography>=41.0
+
+# --- Observability ---
+loguru>=0.7.0
+psutil>=5.9.0
+
+# --- Core ML/data ---
+numpy>=1.26.0
+
+# =============================================================================
+# Optional Feature Groups (pip install individually as needed)
+# =============================================================================
+
+# --- LLM backends ---
+# anthropic>=0.30.0              # Claude API fallback
+# openai>=1.0.0                  # OpenRouter / OpenAI client
+# ollama>=0.1.0                  # Local Ollama inference
+# llama-cpp-python>=0.2.0        # Local GGUF inference via llama.cpp
+# litellm>=1.0.0                 # Universal LLM proxy
+
+# --- Vector search & knowledge ---
+# qdrant-client>=1.9.0           # Vector database
+# sentence-transformers>=2.2.0   # Embedding models
+# scikit-learn>=1.4.0            # TF-IDF / classical ML
+# neo4j>=5.20.0                  # Knowledge graph
+# tavily-python>=0.3.0           # Web search API
+
+# --- Browser automation ---
+# playwright>=1.40.0             # E2E tests, scraping
+#   (post-install: playwright install chromium)
+
+# --- Voice ---
+# faster-whisper>=1.0.0          # STT (requires ~2GB model download)
+# sounddevice>=0.4.0             # Audio input
+# soundfile>=0.12.0              # Audio file I/O
+# piper-tts>=1.0.0               # TTS (varies by platform — see docs/voice-setup.md)
+
+# --- Data science ---
+# pandas>=2.0.0                  # Data analysis
+# scipy>=1.11.0                  # Scientific computing
+# yfinance>=0.2.0                # Market data
+
+# --- Document processing ---
+# pymupdf>=1.23.0                # PDF read/extract
+# pdfplumber>=0.10.0             # PDF table extraction
+# pikepdf>=8.0.0                 # PDF manipulation
+# reportlab>=4.0.0               # PDF generation
+# openpyxl>=3.1.0                # Excel read/write
+# Pillow>=10.0.0                 # Image processing
+# pytesseract>=0.3.0             # OCR (requires Tesseract installed)
+# lxml>=5.0.0                    # XML/HTML parsing
+# python-docx>=1.0.0             # DOCX read/write
+# python-pptx>=0.6.0             # PPTX read/write
+
+# --- External integrations ---
+langgraph>=0.1.0                 # Agent orchestration
+# discord.py>=2.3.0              # Discord bot
+# praw>=7.7.0                    # Reddit API
+# apscheduler>=3.10.0            # Cron scheduling
+# rich>=13.0.0                   # CLI formatting
+
+# --- Reasoning ---
+z3-solver>=4.12.0                # Constraint solving
+pyreason>=0.1.0                  # Knowledge reasoning
+# rapidfuzz>=3.0.0               # Fuzzy string matching
+
+# --- NLU ---
+# spacy>=3.7.0                   # NLP pipeline
+#   (post-install: python -m spacy download en_core_web_sm)
+
+# --- File watching ---
+watchdog>=4.0.0                  # Hot-reload skill watching
+
+# --- Other ---
+# pyautogui>=0.9.0               # Desktop automation
+# scrapling>=0.1.0               # Web scraping
+# librosa>=0.10.0                # Audio analysis
+# defusedxml>=0.7.0              # Secure XML parsing

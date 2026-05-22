@@ -129,7 +129,7 @@ class PrizePicksScraper:
             game_id = rel.get("game", {}).get("data", {}).get("id", "")
             event_type = attrs.get("event_type", "")
 
-            if event_type != "team":
+            if event_type not in ("team", "player"):
                 continue
 
             stat_name = STAT_TYPE_MAP.get(stat_id, stat_map.get(stat_id, ""))

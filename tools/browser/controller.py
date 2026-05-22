@@ -1,6 +1,5 @@
 from __future__ import annotations
 from tools.browser.dom_snapshot import get_dom_snapshot
-from tools.browser.policies import allow_browser_action
 
 def observe_browser_state(goal: str) -> dict:
     snapshot = get_dom_snapshot()

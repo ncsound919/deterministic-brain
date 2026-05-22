@@ -9,7 +9,7 @@ import os
 import time
 import hashlib
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 

@@ -14,7 +14,6 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-import sys
 import argparse
 import logging
 
@@ -88,7 +87,7 @@ def clone_or_pull(repo_url: str, branch: str, dest: str) -> bool:
     
     code, stdout, stderr = run_cmd(["git", "clone", "--depth", "1", "--branch", branch, repo_url, dest])
     if code == 0:
-        log.info(f"  Clone successful")
+        log.info("  Clone successful")
         return True
     else:
         log.warning(f"  Clone failed: {stderr[:200] if stderr else 'unknown error'}")
@@ -169,9 +168,9 @@ def main():
             count = import_skills(source, REPO_CONFIG[source])
             total += count
     
-    log.info(f"\n=== Summary ===")
+    log.info("\n=== Summary ===")
     log.info(f"Total skills imported: {total}")
-    log.info(f"Run: python -c \"from orchestration import get_skill_registry; r = get_skill_registry(); r.discover(); print(r.list_by_backend())\"")
+    log.info("Run: python -c \"from orchestration import get_skill_registry; r = get_skill_registry(); r.discover(); print(r.list_by_backend())\"")
 
 
 if __name__ == "__main__":

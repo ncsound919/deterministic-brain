@@ -27,10 +27,13 @@ Optional: numpy (faster linear ops). Falls back to pure Python if absent.
 from __future__ import annotations
 import hashlib
 import itertools
+import logging
 import math
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -490,7 +493,9 @@ def _check_injection(text: str) -> bool:
 
     patterns = [
         # Shell metacharacters and command injection
-        r'[;|&`$]',            # any of ; | & ` $
+        # NOTE: $ omitted to avoid false-positives on Python f-strings and bash variables;
+        # $(command) is caught by the \$\( pattern below.
+        r'[;|&`]',             # any of ; | & `
         r'&&',                 # command chaining
         r'\|\|',               # logical OR (escaped pipe)
         r'\$\(',              # $(command) — escaped $ for literal match
@@ -548,7 +553,7 @@ class PreAudit:
                 passed = False
             if not passed:
                 issues.append(f"[{name}] {msg}")
-                if name in ("no_injection", "no_task"):
+                if name in ("no_injection", "has_task"):
                     ok = False  # blocking
         return ok, issues
 
@@ -690,9 +695,10 @@ class ReasoningEngine:
                 final_score = scorer_fn({**best_config, "skill": chosen_skill})
                 breakdown.append({"step": "config_select", "final_config": best_config,
                                   "score": round(final_score, 4), "method": "scored_max"})
-            except Exception:
+            except Exception as _e:
+                logger.warning("scorer_fn raised: %s", _e)
                 breakdown.append({"step": "config_select", "skipped": True,
-                                  "reason": "scorer_fn error"})
+                                  "reason": f"scorer_fn error: {_e}"})
         else:
             breakdown.append({"step": "config_select", "skipped": True})
 

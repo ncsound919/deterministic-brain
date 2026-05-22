@@ -1,6 +1,5 @@
 from __future__ import annotations
 import time
-from typing import Any
 
 from langgraph.graph import StateGraph, END
 
@@ -343,7 +342,6 @@ class BrainApp:
         self._graph = build_graph().compile()
 
     def run(self, query: str, lane_override: str | None = None) -> dict:
-        from brain.memory import init_state
         from brain.router import route_lane
         lane  = lane_override or route_lane(query)
         state = init_state(query, lane)

@@ -1,8 +1,6 @@
 """E2E Tests for Core Task-to-Skill Routing."""
 from __future__ import annotations
-import os
 import pytest
-from pathlib import Path
 
 
 class TestReactComponentRouting:

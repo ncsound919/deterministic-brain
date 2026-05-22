@@ -30,7 +30,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from reasoning.math_engine import Constraint, AlgebraicReasoner
 
@@ -476,7 +476,7 @@ def create_default_policy_engine() -> PolicyEngine:
     pe.register(frequency_cap_policy("email_24h_cap", "email", max_count=5, window="24h"))
     pe.register(frequency_cap_policy("sms_24h_cap", "sms", max_count=3, window="24h"))
     pe.register(frequency_cap_policy("push_24h_cap", "push", max_count=8, window="24h"))
-    pe.register(quiet_hours_policy())
+    # pe.register(quiet_hours_policy())
 
     return pe
 

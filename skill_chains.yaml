@@ -786,6 +786,40 @@ chains:
     notify:
       summary: "System intelligence report ready"
 
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: AUTONOMOUS BUSINESS (NEW -- the CEO layer)
+  # ═══════════════════════════════════════════════════════════════════
+
+  autonomous-business-cycle:
+    description: "CEO Level strategy loop: evaluate portfolio -> sync marketing -> decide next moves"
+    trigger: "cron"
+    cron: "0 9 * * *"
+    steps:
+      - skill: "news-fetch"
+        inputs: { "providers": ["newsapi", "rss"], "limit": 10 }
+        parallel: true
+      - skill: "market-data"
+        inputs: { "format": "summary" }
+        parallel: true
+    post:
+      - call: "scripts.ceo_tick.main"
+    notify:
+      summary: "Autonomous CEO cycle complete"
+
+  disruption-manifesto-cycle:
+    description: "Phase 1 Roadmap: Ingest Disruption data -> Cross-Audit Ecosystem -> Generate 919 Manifesto"
+    trigger: "manual"
+    steps:
+      - skill: "knowledge-ingest"
+        inputs: { "files": ["AI Disruption and Customer Concentration.md", "The 120-Day AI Disruption Roadmap.md"] }
+      - skill: "draymond-ecosystem-audit"
+        inputs: { "registry_path": "Draymond-Orchestrator-main/src/lib/draymond/seed.ts" }
+      - skill: "generate-manifesto"
+        inputs: { "engine": "CCE", "topic": "919 AI SaaS-pocalypse Manifesto" }
+    notify:
+      summary: "Phase 1: Weaponize Brand — Manifesto Generated"
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # CRON MASTER SCHEDULE (EST timezone -- all times in America/New_York)
 # ═══════════════════════════════════════════════════════════════════════

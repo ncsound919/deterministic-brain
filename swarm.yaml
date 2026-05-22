@@ -1,9 +1,9 @@
-# swarm.yaml — DCA Swarm Bundle Config
+﻿# swarm.yaml â€” DCA Swarm Bundle Config
 # Each bundle maps to a set of parallel lanes.
 # Agents listed under `agents` are external repos that participate
 # via the tap919-middleman REST bridge.
 #
-# Routes map task-name → skill_pack path for the MoE Router.
+# Routes map task-name â†’ skill_pack path for the MoE Router.
 # Aliases improve NLU cosine matching when user phrasing doesn't
 # match the skill directory name exactly.
 
@@ -33,7 +33,7 @@ bundles:
       - lanes.audit_repo
 
 routes:
-  # ── Existing skills ──────────────────────────────────────────────────
+  # â”€â”€ Existing skills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   create-react-component:   skill_packs/react
   landing-page:             skill_packs/landing-page
   react-component:          skill_packs/react-component
@@ -44,8 +44,9 @@ routes:
   generate-dockerfile:      skill_packs/docker
   audit-repo:               lanes/audit_repo
   live-docs-to-skill:       lanes/live_docs_to_skill
+  initialize-session:       skills/initialize-session
 
-  # ── Anthropic skills (17) ────────────────────────────────────────────
+  # â”€â”€ Anthropic skills (17) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   algorithmic-art:              skill_packs/anthropic/algorithmic-art
   brand-guidelines:             skill_packs/anthropic/brand-guidelines
   canvas-design:                skill_packs/anthropic/canvas-design
@@ -64,7 +65,7 @@ routes:
   webapp-testing:               skill_packs/anthropic/webapp-testing
   xlsx:                         skill_packs/anthropic/xlsx
 
-  # ── OpenAI / Codex skills (43) ───────────────────────────────────────
+  # â”€â”€ OpenAI / Codex skills (43) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   figma:                              skill_packs/openai/figma
   figma-generate-design:              skill_packs/openai/figma-generate-design
   figma-implement-design:             skill_packs/openai/figma-implement-design
@@ -109,7 +110,7 @@ routes:
   yeet:                               skill_packs/openai/yeet
   aspnet-core-app:                    skill_packs/openai/aspnet-core
 
-  # ── Superpowers / obra skills (14) ───────────────────────────────────
+  # â”€â”€ Superpowers / obra skills (14) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   brainstorming:                      skill_packs/superpowers/brainstorming
   dispatching-parallel-agents:        skill_packs/superpowers/dispatching-parallel-agents
   executing-plans:                    skill_packs/superpowers/executing-plans
@@ -125,7 +126,7 @@ routes:
   writing-plans:                      skill_packs/superpowers/writing-plans
   writing-skills:                     skill_packs/superpowers/writing-skills
 
-  # ── OpenClaw skills (7) ──────────────────────────────────────────────
+  # â”€â”€ OpenClaw skills (7) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   intent-router:                      skill_packs/openclaw/intent-router
   memory-engine:                      skill_packs/openclaw/memory-engine
   meta-social:                        skill_packs/openclaw/meta-social
@@ -134,7 +135,7 @@ routes:
   thought-leadership-video:           skill_packs/openclaw/thought-leadership-video
   wordpress:                          skill_packs/openclaw/wordpress
 
-  # ── Business skills ─────────────────────────────────────
+  # â”€â”€ Business skills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   email-send:                         skill_packs/business/email-send
   email-notify:                       skill_packs/business/email-notify
   crm-contact:                        skill_packs/business/crm-contact
@@ -150,7 +151,7 @@ routes:
   gitlab-manage:                      skill_packs/business/gitlab-manage
   linear-sync:                        skill_packs/business/linear-sync
 
-# ── Skill aliases ─────────────────────────────────────────────────────
+# â”€â”€ Skill aliases â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Used by the NLU route loader to expand cosine candidate text so that
 # natural-language user queries match skill names they don't literally contain.
 aliases:
@@ -189,6 +190,7 @@ aliases:
   webhook-notify:         ["slack alert", "discord message", "team notification", "post to channel"]
   gitlab-manage:          ["gitlab issue", "gitlab MR", "gitlab pipeline", "merge request"]
   linear-sync:            ["linear task", "jira ticket", "sync issue", "track task"]
+  initialize-session:     ["initialize session", "wake up agent", "start session", "connect system"]
   screenshot:                   ["take screenshot", "capture page", "page screenshot"]
   systematic-debugging:         ["debug", "fix bug", "root cause", "traceback"]
   create-react-component:       ["react component", "create component", "react hook", "JSX"]

@@ -4,8 +4,11 @@ KAIROS cron tasks + AutoDream consolidation + skill expansion.
 Wire this into the daemon for continuous autonomous operation.
 """
 from __future__ import annotations
-import os, json, time, logging, hashlib
-from typing import Any, Dict, List, Optional
+import os
+import json
+import time
+import logging
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -41,9 +44,11 @@ class DreamCycle:
     def _load(self):
         if os.path.exists(self.log_path):
             try:
-                data = json.loads(open(self.log_path).read())
+                with open(self.log_path) as f:
+                    data = json.loads(f.read())
                 self.cycles = [DreamResult(**d) for d in data]
-            except: pass
+            except Exception:
+                pass
 
     def _save(self):
         with open(self.log_path, "w") as f:
@@ -93,7 +98,27 @@ class DreamCycle:
         except Exception as e:
             errors.append(f"Soul goals: {e}")
 
-        # 4. Execute due tasks
+        # 4. Self-Healing Benchmarker
+        try:
+            from self_healing import create_healer as create_self_healer
+            from evolution.skill_evolver import SkillEvolver
+            evolver = SkillEvolver()
+            healer = create_self_healer("dream_cycle")
+            
+            # Check for skills with poor performance
+            poor_skills = [s for s in evolver.all_stats() if s.get("score", 1.0) < 0.4]
+            for s in poor_skills[:2]: # Only heal 2 at a time to save compute
+                name = s.get("name")
+                logger.info(f"Dream Cycle: Attempting self-healing for {name}...")
+                heal_res = healer.attempt_auto_repair(name)
+                if heal_res.get("status") == "repaired":
+                    suggestions.append(f"Successfully self-healed broken skill: {name}")
+                else:
+                    suggestions.append(f"Skill {name} is degrading. Consider manual audit.")
+        except Exception as e:
+            errors.append(f"Self-healing: {e}")
+
+        # 5. Execute due tasks
         try:
             from features.planner import get_planner
             planner = get_planner()
@@ -141,7 +166,7 @@ class DreamCycle:
                 suggestions.append("Knowledge bank is sparse — add URLs or docs via Settings")
             if stats.get("snippets", 0) < 3:
                 suggestions.append("Save useful code snippets in the Knowledge tab")
-        except: pass
+        except Exception: pass
 
         try:
             from orchestration.skill_registry import get_skill_registry
@@ -150,7 +175,7 @@ class DreamCycle:
             total = len(sr.list_all())
             if total < 120:
                 suggestions.append(f"Only {total} skills loaded — run Skill Expansion")
-        except: pass
+        except Exception: pass
 
         try:
             from brain.soul import get_soul
@@ -159,18 +184,19 @@ class DreamCycle:
                 suggestions.append("Set up your identity in Settings to personalize the brain")
             if not soul.goals:
                 suggestions.append("Add goals to your soul file so the brain can work toward them")
-        except: pass
+        except Exception: pass
 
         try:
             plan_path = "planner_tasks.json"
             if os.path.exists(plan_path):
-                tasks = json.loads(open(plan_path).read())
+                with open(plan_path) as f:
+                    tasks = json.loads(f.read())
                 pending = len([t for t in tasks if t.get("status") == "pending"])
                 if pending < 2:
                     suggestions.append(f"Only {pending} pending tasks — add more scheduled builds")
             else:
                 suggestions.append("No tasks scheduled — add recurring tasks in the Planner")
-        except: pass
+        except Exception: pass
 
         return suggestions
 
@@ -196,16 +222,42 @@ class AutonomyScheduler:
 
     def __init__(self):
         self.dream_cycle = DreamCycle()
-        self.last_dream = 0
-        self.last_expand = 0
-        self.last_news = 0
+        # Initialize last-run times to NOW to prevent immediate execution storm on restart
+        now = time.time()
+        self.last_dream = now
+        self.last_expand = now
+        self.last_news = now
+        self.last_social = now
 
     def tick(self) -> Dict:
         """Called every ~minute by KAIROS. Runs operations that are due."""
         now = time.time()
         actions = []
 
-        # Dream cycle every 6 hours
+        # 1. Social Post execution (every minute)
+        if now - self.last_social > 60:
+            try:
+                from features.social_scheduler import get_social
+                from features.social_posting import SocialPoster
+                ss = get_social()
+                due = ss.get_due()
+                if due:
+                    sp = SocialPoster(headless=True)
+                    try:
+                        for post in due:
+                            res = sp.post(post.platform, post.content, tags=post.tags)
+                            if res.get("ok"):
+                                ss.mark_posted(post.id, res)
+                            else:
+                                ss.mark_failed(post.id, res.get("error", "Unknown error"))
+                        actions.append({"action": "social_posting", "count": len(due)})
+                    finally:
+                        sp.close()
+                self.last_social = now
+            except Exception as e:
+                actions.append({"action": "social_posting", "error": str(e)})
+
+        # 2. Dream cycle every 6 hours
         if now - self.last_dream > 21600:
             try:
                 result = self.dream_cycle.run(dry_run=False)
@@ -231,15 +283,16 @@ class AutonomyScheduler:
             except Exception as e:
                 actions.append({"action": "skill_expand", "error": str(e)})
 
-        # News fetch every 30 minutes
-        if now - self.last_news > 1800:
+        # News fetch & Opportunity Scout every 15 minutes (WEAPONIZED)
+        if now - self.last_news > 900:
             try:
-                from features.finance_modules import get_news
-                items = get_news().fetch_all()
+                from features.opportunity_scout import trigger_autonomous_scout
+                opp_count = trigger_autonomous_scout()
                 self.last_news = now
-                if items:
-                    actions.append({"action": "news_fetch", "items": len(items)})
-            except: pass
+                if opp_count > 0:
+                    actions.append({"action": "opportunity_scout", "found": opp_count, "triggered_actuators": True})
+            except Exception as e:
+                actions.append({"action": "opportunity_scout", "error": str(e)})
 
         return {"tick": time.strftime("%H:%M:%S"), "actions": actions}
 

@@ -2,8 +2,7 @@
 from __future__ import annotations
 import re
 import os
-import json
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 def run(state: dict) -> dict:
     """Convert live documentation to skill format.
@@ -106,7 +105,7 @@ def _fetch_doc_content(url: str) -> Optional[str]:
         })
         if response.status_code == 200:
             return response.text
-    except Exception as e:
+    except Exception:
         return None
     return None
 

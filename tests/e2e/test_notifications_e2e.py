@@ -1,8 +1,6 @@
 """E2E Tests for Notifications (Email + Webhook)."""
 from __future__ import annotations
 import json
-import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestEmailNotifications:
@@ -216,8 +214,6 @@ class TestNotificationIntegration:
 
     def test_scheduler_sends_notification_on_complete(self, brain_app, mock_email_server, mock_webhook_server):
         """Scheduler should trigger notification on task completion."""
-        from features.scheduler import Scheduler
-        from features.notification import NotificationService
         
         scheduler = brain_app["scheduler"]
         

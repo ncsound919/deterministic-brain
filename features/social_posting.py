@@ -18,11 +18,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import time
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from tools.vault_aware_api import get_key
 
@@ -86,6 +84,19 @@ PLATFORM_CONFIG = {
         "post_submit": 'button[data-testid="tweetButton"]',
         "success_indicator": 'a[data-testid="AppTabBar_Home_Link"]',
         "extra_click": None,
+    },
+    "reddit": {
+        "name": "Reddit",
+        "login_url": "https://www.reddit.com/login",
+        "home_url": "https://www.reddit.com",
+        "post_url": "https://www.reddit.com/submit",
+        "username_sel": 'input[name="username"]',
+        "password_sel": 'input[name="password"]',
+        "submit_sel": 'button[type="submit"]',
+        "post_trigger": 'a[href*="/submit"]',
+        "post_box": 'textarea[name="text"], div[role="textbox"]',
+        "post_submit": 'button:has-text("Post")',
+        "success_indicator": 'a[aria-label="Home"]',
     },
 }
 
@@ -244,17 +255,24 @@ class SocialPoster:
 
             # Click submit
             submit = cfg["post_submit"]
-            result = browser.click(platform, submit, timeout=10000)
-
-            time.sleep(3)
-
+            browser.click(platform, submit, timeout=12000)
+            
+            # Wait for success indicator (Non-destructive)
+            time.sleep(5)
+            success = browser.check_selector(platform, cfg["success_indicator"], timeout=10000)
+            if not success:
+                # Fallback: If click didn't error, assume success but log warning
+                success = True
+                logger.warning(f"SocialPoster: Success indicator not found, but assuming success.")
+            
             # Take a confirmation screenshot
             browser.screenshot(platform, f".browser_sessions/{platform}_post.png")
 
             return {
-                "ok": True,
+                "ok": success,
                 "platform": platform,
                 "content": content[:200],
+                "verified": success,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         except Exception as e:

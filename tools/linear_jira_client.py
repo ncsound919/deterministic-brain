@@ -8,7 +8,7 @@ Token savings: ~350 tokens per Linear API call vs LLM wrapper.
 
 from __future__ import annotations
 import os
-from typing import Dict, List, Optional
+from typing import Dict
 
 from tools.api_client import AuthenticatedClient
 

@@ -148,10 +148,15 @@ class GitHubQueue:
             logger.error("GitHubQueue GET failed: %s", e)
             return None
 
-    def open_issue(self, card: DecisionCard) -> Optional[DecisionCard]:
+    def _get_base_url(self, owner: str = "", repo: str = "") -> str:
+        owner = owner or self._owner
+        repo = repo or self._repo
+        return f"https://api.github.com/repos/{owner}/{repo}"
+
+    def open_issue(self, card: DecisionCard, owner: str = "", repo: str = "") -> Optional[DecisionCard]:
         """Create a GitHub Issue for a DecisionCard. Returns updated card with issue number."""
         payload = build_issue_payload(card)
-        url = f"{self._base_url}/issues"
+        url = f"{self._get_base_url(owner, repo)}/issues"
         data = {
             "title": payload.title,
             "body": payload.body,
@@ -164,10 +169,11 @@ class GitHubQueue:
 
         card.github_issue_number = result.get("number")
         logger.info(
-            "GitHubQueue: opened issue #%d for event %s (%s)",
+            "GitHubQueue: opened issue #%d for event %s in %s/%s",
             card.github_issue_number,
             card.event_id,
-            card.zone.value,
+            owner or self._owner,
+            repo or self._repo,
         )
         return card
 
@@ -236,10 +242,13 @@ _queue_instance: Optional[GitHubQueue] = None
 def get_queue(
     token: str = "",
     owner: str = "ncsound919",
-    repo: str = "claw-protect",
+    repo: str = "deterministic-brain",
 ) -> GitHubQueue:
-    """Get or create the singleton GitHubQueue."""
+    """Get or create the singleton GitHubQueue. Reads GITHUB_TOKEN from environment if not provided."""
     global _queue_instance
     if _queue_instance is None:
+        import os
+        if not token:
+            token = os.environ.get("GITHUB_TOKEN", "")
         _queue_instance = GitHubQueue(token=token, owner=owner, repo=repo)
     return _queue_instance

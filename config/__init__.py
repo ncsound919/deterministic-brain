@@ -6,7 +6,7 @@ Import `cfg` anywhere to access configuration.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, MISSING
 from pathlib import Path
 
 try:
@@ -24,6 +24,7 @@ except ImportError:
 __all__ = [
     "BrainConfig",
     "cfg",
+    "settings",
     "reload_config",
     "get_setting_schema",
     "persist_setting",
@@ -32,7 +33,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True)
+@dataclass
 class BrainConfig:
     # --- Qdrant ---
     qdrant_url:       str  = field(default_factory=lambda: os.getenv('QDRANT_URL', ''))
@@ -41,7 +42,7 @@ class BrainConfig:
     retrieval_top_k:  int  = field(default_factory=lambda: int(os.getenv('RETRIEVAL_TOP_K', '5')))
 
     # --- Gemma (local GGUF) ---
-    gemma_base_url:   str  = field(default_factory=lambda: os.getenv('GEMMA_BASE_URL', 'http://localhost:8080'))
+    gemma_base_url:   str  = field(default_factory=lambda: os.getenv('GEMMA_BASE_URL', 'http://localhost:11434'))
 
     # --- Neo4j ---
     neo4j_uri:        str  = field(default_factory=lambda: os.getenv('NEO4J_URI', ''))
@@ -57,6 +58,22 @@ class BrainConfig:
     openrouter_api_key:  str = field(default_factory=lambda: os.getenv('OPENROUTER_API_KEY', ''))
     openrouter_site_url: str = field(default_factory=lambda: os.getenv('OPENROUTER_SITE_URL', 'https://github.com/ncsound919/deterministic-brain'))
     openrouter_site_name:str = field(default_factory=lambda: os.getenv('OPENROUTER_SITE_NAME', 'deterministic-brain'))
+
+    # --- Research & Scientific ---
+    alpha_genome_api_key: str = field(default_factory=lambda: os.getenv('ALPHA_GENOME_API_KEY', ''))
+    ncbi_api_key:         str = field(default_factory=lambda: os.getenv('NCBI_API_KEY', ''))
+    xai_api_key:          str = field(default_factory=lambda: os.getenv('XAI_API_KEY', ''))
+    perplexity_api_key:   str = field(default_factory=lambda: os.getenv('PERPLEXITY_API_KEY', ''))
+
+    # --- News ---
+    newsapi_key:          str = field(default_factory=lambda: os.getenv('NEWSAPI_KEY', ''))
+    gnews_api_key:        str = field(default_factory=lambda: os.getenv('GNEWS_API_KEY', ''))
+    worldnews_api_key:    str = field(default_factory=lambda: os.getenv('WORLDNEWS_API_KEY', ''))
+
+    # --- Content Creation ---
+    elevenlabs_api_key:   str = field(default_factory=lambda: os.getenv('ELEVENLABS_API_KEY', ''))
+    kling_api_key:        str = field(default_factory=lambda: os.getenv('KLING_API_KEY', ''))
+    whisper_api_key:      str = field(default_factory=lambda: os.getenv('WHISPER_API_KEY', ''))
 
     # --- Per-lane model selection (all via OpenRouter) ---
     model_coding:         str = field(default_factory=lambda: os.getenv('MODEL_CODING',         'openai/o3'))
@@ -120,13 +137,43 @@ class BrainConfig:
             'checkpoint_dir':      str(self.checkpoint_dir),
             'api':                 f'{self.api_host}:{self.api_port}',
             'mcts_simulations':    self.mcts_simulations,
+            'research': {
+                'alpha_genome': bool(self.alpha_genome_api_key),
+                'ncbi':         bool(self.ncbi_api_key),
+                'xai':          bool(self.xai_api_key),
+                'perplexity':   bool(self.perplexity_api_key),
+            },
+            'news_extensions': {
+                'gnews':        bool(self.gnews_api_key),
+                'worldnews':    bool(self.worldnews_api_key),
+            }
         }
+
+    def reload(self) -> None:
+        """Re-read all fields from environment variables."""
+        try:
+            from dotenv import load_dotenv as _reload
+            _reload(override=True)
+        except ImportError:
+            pass
+        for field_name in self.__dataclass_fields__:
+            f = self.__dataclass_fields__[field_name]
+            if f.default_factory is not MISSING:
+                try:
+                    setattr(self, field_name, f.default_factory())
+                except Exception:
+                    pass
 
 
 def reload_config() -> BrainConfig:
+    """Re-read environment variables and return a fresh BrainConfig.
+
+    NOTE: Does not override env vars already set in the process environment.
+    Restart the process to pick up new .env file values.
+    """
     try:
-        from dotenv import load_dotenv as _reload
-        _reload(override=True)
+        from dotenv import load_dotenv
+        load_dotenv()
     except ImportError:
         pass
     return BrainConfig()
@@ -144,13 +191,20 @@ def get_setting_schema() -> dict:
             {"key": "NEO4J_DEPTH", "type": "int", "default": "1", "label": "Neo4j Depth", "min": 1, "max": 5},
         ],
         "Models": [
-            {"key": "MODEL_CODING", "type": "string", "default": "openai/o3", "label": "Coding Model"},
-            {"key": "MODEL_BUSINESS_LOGIC", "type": "string", "default": "anthropic/claude-opus-4", "label": "Business Logic Model"},
-            {"key": "MODEL_AGENT_BRAIN", "type": "string", "default": "anthropic/claude-sonnet-4-5", "label": "Agent Brain Model"},
-            {"key": "MODEL_TOOL_CALLING", "type": "string", "default": "meta-llama/llama-3.3-70b-instruct", "label": "Tool Calling Model"},
-            {"key": "MODEL_CROSS_DOMAIN", "type": "string", "default": "google/gemini-2.5-pro", "label": "Cross-Domain Model"},
-            {"key": "MODEL_DEFAULT", "type": "string", "default": "openai/gpt-4o", "label": "Default Model"},
-            {"key": "MODEL_OPENCODE", "type": "string", "default": "openai/o3", "label": "OpenCode Model"},
+            {"key": "MODEL_CODING", "type": "select", "default": "openai/o3", "label": "Coding Model",
+             "options": ["openai/o3", "openai/gpt-4o", "anthropic/claude-opus-4", "meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_BUSINESS_LOGIC", "type": "select", "default": "anthropic/claude-opus-4", "label": "Business Logic Model",
+             "options": ["anthropic/claude-opus-4", "openai/o3", "openai/gpt-4o", "google/gemini-2.5-pro"]},
+            {"key": "MODEL_AGENT_BRAIN", "type": "select", "default": "anthropic/claude-sonnet-4-5", "label": "Agent Brain Model",
+             "options": ["anthropic/claude-sonnet-4-5", "openai/o3", "openai/gpt-4o", "meta-llama/llama-3.3-70b-instruct"]},
+        {"key": "MODEL_TOOL_CALLING", "type": "select", "default": "meta-llama/llama-3.3-70b-instruct", "label": "Tool Calling Model",
+         "options": ["meta-llama/llama-3.3-70b-instruct", "openai/gpt-4o", "anthropic/claude-sonnet-4-5", "openai/o3"]},
+        {"key": "MODEL_CROSS_DOMAIN", "type": "select", "default": "google/gemini-2.5-pro", "label": "Cross-Domain Model",
+         "options": ["google/gemini-2.5-pro", "anthropic/claude-opus-4", "openai/o3", "openai/gpt-4o"]},
+        {"key": "MODEL_DEFAULT", "type": "select", "default": "openai/gpt-4o", "label": "Default Model",
+         "options": ["openai/gpt-4o", "openai/o3", "anthropic/claude-sonnet-4-5", "google/gemini-2.5-pro"]},
+        {"key": "MODEL_OPENCODE", "type": "select", "default": "openai/o3", "label": "OpenCode Model",
+         "options": ["openai/o3", "openai/gpt-4o", "anthropic/claude-opus-4", "anthropic/claude-sonnet-4-5"]},
             {"key": "LLM_CTX_SIZE", "type": "int", "default": "4096", "label": "LLM Context Size", "min": 1024, "max": 32768},
             {"key": "LLM_MAX_TOKENS", "type": "int", "default": "2048", "label": "LLM Max Tokens", "min": 256, "max": 16384},
             {"key": "LLM_SEED", "type": "int", "default": "42", "label": "LLM Seed", "min": 0, "max": 9999},
@@ -193,7 +247,7 @@ def persist_setting(key: str, value: str) -> bool:
             lines = f.readlines()
     key_upper = key.upper()
     for i, line in enumerate(lines):
-        if line.strip().startswith(f"{key_upper}=") or line.strip().startswith(f"{key_upper}_"):
+        if line.strip().startswith(f"{key_upper}="):
             lines[i] = f"{key_upper}={value}\n"
             found = True
             break
@@ -205,3 +259,6 @@ def persist_setting(key: str, value: str) -> bool:
 
 
 cfg = BrainConfig()
+
+# Alias for modules that import `settings`
+settings = cfg

@@ -24,7 +24,10 @@ from typing import Dict, Optional
 from tools.tracing import log_event
 
 # ── Config ───────────────────────────────────────────────────────────
-SECRET_KEY = os.environ.get("RELAY_SECRET", "dca-relay-secret-change-me")
+SECRET_KEY = os.environ.get("RELAY_SECRET", "")
+if not SECRET_KEY and os.environ.get("DEBUG") != "true":
+    # In production, we should probably fail or use a random one
+    SECRET_KEY = "dca-fallback-key-please-set-relay-secret"
 
 # Agent registry: name → base URL
 # Override via RELAY_AGENTS env var as JSON string:
@@ -169,7 +172,8 @@ relay = AgentRelay()
 
 # ── Standalone CLI ──────────────────────────────────────────────────────
 if __name__ == "__main__":
-    import argparse, sys
+    import argparse
+    import sys
     parser = argparse.ArgumentParser(description="DCA Agent Relay")
     parser.add_argument("--agent",  required=True, help="Agent name")
     parser.add_argument("--path",   default="/task")

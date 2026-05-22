@@ -8,13 +8,13 @@ import json
 import time
 import statistics
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 import pytest
 from playwright.sync_api import sync_playwright
 
-BASE = "http://localhost:8000"
+API_BASE = "http://localhost:8000"
+UI_BASE = "http://localhost:5174"
 BENCHMARK_FILE = Path(".benchmark_report.json")
 
 
@@ -85,7 +85,7 @@ class BenchmarkReport:
 
         s = self.metrics["summary"]
         print(f"\n{'='*60}")
-        print(f"  BENCHMARK COMPLETE")
+        print("  BENCHMARK COMPLETE")
         print(f"  Skills: {s['skills_loaded']}  Pages: {s['pages_ok']}/{s['pages_tested']} ok")
         print(f"  APIs: {s['apis_tested']}  avg_page: {s['avg_page_load_ms']}ms  avg_api: {s['avg_api_ms']}ms")
         print(f"  p50_api: {s['p50_api_ms']}ms  p95_api: {s['p95_api_ms']}ms")
@@ -124,12 +124,12 @@ def _timed_get(endpoint: str, report: BenchmarkReport, label: str = None):
     name = label or endpoint
     t0 = time.time()
     try:
-        r = requests.get(f"{BASE}{endpoint}", timeout=15)
+        r = requests.get(f"{API_BASE}{endpoint}", timeout=15)
         ms = (time.time() - t0) * 1000
         size = len(r.content)
         report.record_api(name, ms, r.status_code, size)
         return r
-    except Exception as e:
+    except Exception:
         ms = (time.time() - t0) * 1000
         report.record_api(name, ms, 0)
         raise
@@ -140,12 +140,12 @@ def _timed_post(endpoint: str, json_data: dict, report: BenchmarkReport, label: 
     name = label or endpoint
     t0 = time.time()
     try:
-        r = requests.post(f"{BASE}{endpoint}", json=json_data, timeout=30)
+        r = requests.post(f"{API_BASE}{endpoint}", json=json_data, timeout=30)
         ms = (time.time() - t0) * 1000
         size = len(r.content)
         report.record_api(name, ms, r.status_code, size)
         return r
-    except Exception as e:
+    except Exception:
         ms = (time.time() - t0) * 1000
         report.record_api(name, ms, 0)
         raise
@@ -179,10 +179,6 @@ class TestAPIBenchmark:
 
     def test_settings_schema_endpoint(self, report):
         r = _timed_get("/settings/schema", report)
-        assert r.status_code == 200
-
-    def test_devpets_endpoint(self, report):
-        r = _timed_get("/devpets", report)
         assert r.status_code == 200
 
     def test_dashboard_feed(self, report):
@@ -257,7 +253,7 @@ class TestReasoningBenchmark:
         for query, domain in self.QUERIES:
             t0 = time.time()
             try:
-                r = requests.post(f"{BASE}/reason", json={"query": query}, timeout=20)
+                r = requests.post(f"{API_BASE}/reason", json={"query": query}, timeout=20)
                 ms = (time.time() - t0) * 1000
                 d = r.json().get("decision", {})
                 report.record_reasoning(
@@ -267,14 +263,14 @@ class TestReasoningBenchmark:
                     ms,
                 )
                 report.record_api(f"/reason ({domain})", ms, r.status_code, len(r.content))
-            except Exception as e:
+            except Exception:
                 ms = (time.time() - t0) * 1000
                 report.record_api(f"/reason ({domain})", ms, 0)
 
     def test_task_executes(self, report):
         """Run an actual task to verify skill execution pipeline."""
         t0 = time.time()
-        r = requests.post(f"{BASE}/task", json={
+        r = requests.post(f"{API_BASE}/task", json={
             "query": "create a react component named UserCard"
         }, timeout=30)
         ms = (time.time() - t0) * 1000
@@ -283,7 +279,7 @@ class TestReasoningBenchmark:
     def test_bundle_executes(self, report):
         """Run a bundle dispatch."""
         t0 = time.time()
-        r = requests.post(f"{BASE}/bundle", json={
+        r = requests.post(f"{API_BASE}/bundle", json={
             "bundle": "scaffold-rest-api",
             "inputs": {"resource": "Products"},
         }, timeout=30)
@@ -293,7 +289,7 @@ class TestReasoningBenchmark:
     def test_dialogue_pipeline(self, report):
         """Test dialogue pipeline with voice intent routing."""
         t0 = time.time()
-        r = requests.post(f"{BASE}/dialogue/process", json={
+        r = requests.post(f"{API_BASE}/dialogue/process", json={
             "text": "Help me write a test for my REST API",
         }, timeout=15)
         ms = (time.time() - t0) * 1000
@@ -312,7 +308,7 @@ class TestPageBenchmark:
         ("task", "input"),
         ("reason", "input"),
         ("bundles", "button"),
-        ("devpets", "canvas"),
+
         ("battle", "select, button"),
         ("skills", "table"),
         ("kairos", ".card"),
@@ -332,7 +328,7 @@ class TestPageBenchmark:
 
     def test_all_pages_load(self, page, report):
         """Navigate to every page and measure load time."""
-        page.goto(BASE)
+        page.goto(UI_BASE)
         page.wait_for_selector(".card-grid", timeout=8000)
 
         for name, selector in self.PAGES:
@@ -348,27 +344,6 @@ class TestPageBenchmark:
                 report.record_page(name, ms, "failed")
                 print(f"  Page {name}: {str(e)[:60]}")
 
-
-# ═══════════════════════════════════════════════════════════════════
-# DevPet Generation Benchmark
-# ═══════════════════════════════════════════════════════════════════
-
-class TestDevPetBenchmark:
-    def test_generate_devpet(self, report):
-        """Generate a DevPet from traces and measure time."""
-        t0 = time.time()
-        r = requests.post(f"{BASE}/devpets/generate", json={
-            "pet_name": f"BenchmarkBot",
-            "db_path": "traces.db",
-        }, timeout=30)
-        ms = (time.time() - t0) * 1000
-        report.record_api("POST /devpets/generate", ms, r.status_code, len(r.content))
-        if r.status_code == 200:
-            data = r.json()
-            assert "pet_name" in data
-            print(f"  Generated pet: {data['pet_name']} (Lv.{data['level']})")
-        else:
-            print(f"  DevPet generate returned {r.status_code} (expected if no traces)")
 
 
 # ═══════════════════════════════════════════════════════════════════

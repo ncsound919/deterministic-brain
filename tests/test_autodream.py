@@ -138,10 +138,6 @@ def test_analyze_and_correct(autodream_module, temp_db):
 
 from brain.correction_detector import (
     detect_corrections,
-    write_corrections,
-    run_correction_detection,
-    get_recent_corrections,
-    clear_corrections,
 )
 
 
@@ -181,7 +177,6 @@ def test_detect_corrections_no_issues():
 def test_write_corrections(tmp_path):
     import sys
     sys.path.insert(0, str(tmp_path.parent))
-    from pathlib import Path
 
     class FakeCORRECTIONS_FILE:
         pass

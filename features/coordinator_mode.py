@@ -7,7 +7,6 @@ to a separate brain instance in a thread pool, collects results, and
 merges them into a final synthesis using the cross_domain lane.
 """
 import concurrent.futures
-import threading
 from datetime import datetime
 from tools.llm.router import chat
 from tools.tracing import log_event

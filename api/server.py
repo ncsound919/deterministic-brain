@@ -8,28 +8,36 @@ from datetime import datetime
 import traceback
 import asyncio
 from functools import wraps
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
+import httpx
 
 from orchestration.dca_engine import DeterministicCodingAgent
 from orchestration.swarm_dispatcher import SwarmDispatcher
 from orchestration.event_bus import event_bus
+from orchestration.skill_registry import get_skill_registry as _get_skill_registry
 from brain.autodream import run_autodream, consolidate_knowledge_bank
 from tools.forge import Forge, forge_diff
 from tools.dashboard import Dashboard
 from tools.web_fetcher import web_fetch
 from tools.relay import relay
 from api.middleware import RequestLoggingMiddleware, get_route_stats
+from tools.metrics import get_metrics
 import logging as _api_log
 _api_logger = _api_log.getLogger(__name__)
 
+_DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
+
 # ── Hermes Integration ─────────────────────────────────────────
 HERMES_URL = os.getenv("HERMES_URL", "http://127.0.0.1:9119")
-LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8080")
+LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8082")
+LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "gemma-4-e2b.gguf")
+_API_PORT = int(os.environ.get("API_PORT", 8000))
 
 # Bundle config cache (avoid YAML parse on every /bundles request)
 _BUNDLES_CACHE = {"mtime": 0, "bundles": []}
@@ -107,8 +115,71 @@ from api.routes.kairos import router as kairos_router
 from api.routes.evolution import router as evolution_router
 from api.routes.social import router as social_router
 from api.routes.media import router as media_router
+from api.routes.knowledge import router as knowledge_router
 
-app   = FastAPI(title="Deterministic Brain", version="2.5.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize SQLite databases on startup — WAL mode and schema."""
+    _init_sqlite_wal()
+    # Check distributed backends on startup
+    if os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes"):
+        try:
+            from tools.postgres import get_pg_pool
+            if get_pg_pool().available:
+                _api_logger.info("PostgreSQL backend: available")
+            else:
+                _api_logger.warning("PostgreSQL backend: unavailable — using SQLite fallback")
+        except Exception as e:
+            _api_logger.warning("PostgreSQL backend: error — %s", e)
+        try:
+            from tools.redis_client import get_redis
+            if get_redis().available:
+                _api_logger.info("Redis backend: available")
+            else:
+                _api_logger.warning("Redis backend: unavailable — using in-memory fallback")
+        except Exception as e:
+            _api_logger.warning("Redis backend: error — %s", e)
+    yield
+    _close_sqlite_connections()
+
+
+def _init_sqlite_wal():
+    """Set WAL mode on all known SQLite databases at startup."""
+    dbs = [
+        os.environ.get("TRACE_DB", "traces.db"),
+        "sovereign.db",
+        "knowledge_bank/fragments.db",
+    ]
+    from pathlib import Path
+    coo_db = Path(os.environ.get("COO_DATA_DIR", "data")) / "coo_state.db"
+    dbs.append(str(coo_db))
+    for db_path in dbs:
+        try:
+            import sqlite3
+            conn = sqlite3.connect(db_path, timeout=5.0)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.close()
+        except Exception:
+            pass
+
+
+def _close_sqlite_connections():
+    """Clean up persistent connections on shutdown."""
+    try:
+        from tools.dashboard import _global_conn
+        if _global_conn is not None:
+            _global_conn.close()
+    except Exception:
+        pass
+    try:
+        from devpet.tracker import DevPetTracker
+    except Exception:
+        pass
+
+
+app = FastAPI(title="Deterministic Brain", version="2.5.0", lifespan=lifespan)
+scheduler = get_scheduler()
 agent = DeterministicCodingAgent()
 swarm = SwarmDispatcher()
 forge = Forge()
@@ -150,12 +221,15 @@ def _seed_knowledge():
         for title, content, tags_str in seeds:
             fragments = ingester.ingest_text(content, title, tags_str.split())
             bank.add_fragments(fragments)
-        bank.rebuild_index()
     except Exception as _e:
         import logging as _log
         _log.getLogger(__name__).warning("Knowledge seeding failed: %s", _e)
 
-_seed_knowledge()
+    # _seed_knowledge()
+
+# Enable hot-reload skill watcher if env var is set
+if os.environ.get("API_SKILL_WATCH", "").lower() in ("1", "true", "yes"):
+    _get_skill_registry(enable_watch=True)
 
 # Middleware
 import re
@@ -173,13 +247,14 @@ app.include_router(kairos_router)
 app.include_router(evolution_router)
 app.include_router(social_router)
 app.include_router(media_router)
+app.include_router(knowledge_router)
 
 # Notifications
 try:
     from api.notifications import router as notifications_router
     app.include_router(notifications_router)
-except:
-    pass
+except Exception:
+    _api_logger.exception("Failed to load notifications router")
 
 # COO Brain webhooks
 try:
@@ -236,28 +311,6 @@ class DialogueRequest(BaseModel):
     seed: Optional[int] = None
 
 
-class KnowledgeIngestRequest(BaseModel):
-    url: str
-    tags: List[str] = []
-
-
-class KnowledgeTextIngestRequest(BaseModel):
-    text: str
-    title: str
-    tags: List[str] = []
-
-
-class KnowledgeSearchRequest(BaseModel):
-    query: str
-    top_k: int = 5
-
-
-class SnippetSaveRequest(BaseModel):
-    title: str
-    content: str
-    tags: List[str] = []
-
-
 class SoulUpdateRequest(BaseModel):
     identity: Optional[Dict] = None
     agenda: Optional[Dict] = None
@@ -290,6 +343,133 @@ class TemplateBoilRequest(BaseModel):
 class BundleDefinition(BaseModel):
     description: str = ""
     lanes: List[str] = []
+
+
+# ── Caching Layer (in-memory by design — cold restart is acceptable for TTL cache) ──
+class CacheManager:
+    """Intelligent TTL-based caching for expensive API responses.
+    Evicts oldest entries when max_size is reached.
+    When DISTRIBUTED_MODE=1, delegates to Redis for cross-worker sharing.
+    """
+    def __init__(self, max_size: int = 500):
+        self._store: Dict[str, Dict] = {}
+        self._max_size = max_size
+        self._lock = None
+
+    def _get_lock(self):
+        if self._lock is None:
+            import threading
+            self._lock = threading.Lock()
+        return self._lock
+
+    def get(self, key: str) -> Optional[Any]:
+        if _DISTRIBUTED:
+            try:
+                from tools.redis_client import get_redis
+                r = get_redis()
+                if r.available:
+                    val = r.cache_get(key)
+                    return json.loads(val) if val else None
+            except Exception:
+                pass
+        with self._get_lock():
+            if key in self._store:
+                entry = self._store[key]
+                if time.time() < entry["expiry"]:
+                    entry["last_access"] = time.time()
+                    return entry["data"]
+                del self._store[key]
+        return None
+
+    def set(self, key: str, data: Any, ttl: int = 60):
+        if _DISTRIBUTED:
+            try:
+                from tools.redis_client import get_redis
+                r = get_redis()
+                if r.available:
+                    r.cache_set(key, json.dumps(data, default=str), ttl)
+                    return
+            except Exception:
+                pass
+        with self._get_lock():
+            if len(self._store) >= self._max_size and key not in self._store:
+                oldest = min(self._store.items(), key=lambda kv: kv[1].get("last_access", kv[1]["expiry"]))
+                del self._store[oldest[0]]
+            self._store[key] = {
+                "data": data,
+                "expiry": time.time() + ttl,
+                "last_access": time.time(),
+            }
+
+    def invalidate(self, key: str):
+        if _DISTRIBUTED:
+            try:
+                from tools.redis_client import get_redis
+                r = get_redis()
+                if r.available:
+                    r.cache_delete(key)
+                    return
+            except Exception:
+                pass
+        with self._get_lock():
+            self._store.pop(key, None)
+
+    def invalidate_prefix(self, prefix: str):
+        if _DISTRIBUTED:
+            try:
+                from tools.redis_client import get_redis
+                r = get_redis()
+                if r.available:
+                    r.cache_scan_delete(prefix)
+                    return
+            except Exception:
+                pass
+        with self._get_lock():
+            for k in list(self._store.keys()):
+                if k.startswith(prefix):
+                    del self._store[k]
+
+    def size(self) -> int:
+        if _DISTRIBUTED:
+            return 0  # Redis-backed, in-memory size not meaningful
+        with self._get_lock():
+            return len(self._store)
+
+_CACHE = CacheManager()
+
+def cached_endpoint(ttl: int = 60):
+    """Decorator to cache FastAPI endpoint responses."""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                k_str = json.dumps(kwargs, sort_keys=True, default=str)
+            except Exception:
+                k_str = str(sorted(kwargs.items()))
+            key = f"{func.__name__}:{k_str}"
+            cached = _CACHE.get(key)
+            if cached is not None:
+                get_metrics().record_cache_hit()
+                return cached
+
+            get_metrics().record_cache_miss()
+
+            if asyncio.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
+            else:
+                loop = asyncio.get_running_loop()
+                result = await loop.run_in_executor(None, func, *args, **kwargs)
+
+            _CACHE.set(key, result, ttl)
+            return result
+        return wrapper
+    return decorator
+
+
+def invalidate_caches(*prefixes: str):
+    """Invalidate all cache entries matching given prefixes."""
+    for p in prefixes:
+        _CACHE.invalidate_prefix(p)
 
 
 # ── Core ───────────────────────────────────────────────────────────
@@ -355,6 +535,7 @@ def run_bundle(req: BundleRequest) -> Dict:
 
 @app.get("/skills")
 @app.get("/skills/list")
+@cached_endpoint(ttl=30)
 def list_skills() -> Dict:
     from orchestration.skill_registry import get_skill_registry
     sr = get_skill_registry()
@@ -370,6 +551,7 @@ def list_bundles() -> Dict[str, List[Dict]]:
 
 # ── Skill Chains (Gap fix: chains were never wired) ─────────────────
 @app.get("/chains")
+@cached_endpoint(ttl=30)
 def list_chains() -> Dict:
     try:
         from features.skill_chains_loader import get_chain_status
@@ -379,6 +561,7 @@ def list_chains() -> Dict:
 
 
 @app.get("/chains/{chain_name}")
+@cached_endpoint(ttl=30)
 def get_chain(chain_name: str) -> Dict:
     try:
         from features.skill_chains_loader import get_chain_status
@@ -447,6 +630,7 @@ def fetch_url(req: FetchRequest) -> Dict:
 
 # ── Dashboard ──────────────────────────────────────────────────────
 @app.get("/dashboard/feed")
+@cached_endpoint(ttl=5)
 def feed() -> Dict:
     return {"events": dash.recent_events(50)}
 
@@ -458,11 +642,13 @@ def feed_clear() -> Dict:
 
 
 @app.get("/dashboard/audit")
+@cached_endpoint(ttl=5)
 def audit() -> Dict:
     return {"events": dash.audit_feed()}
 
 
 @app.get("/dashboard/stats")
+@cached_endpoint(ttl=10)
 def stats() -> Dict:
     return {"bundles": dash.bundle_stats(), "skills": dash.skill_stats()}
 
@@ -484,6 +670,7 @@ def autodream_run() -> Dict:
 
 
 @app.get("/autodream/status")
+@cached_endpoint(ttl=30)
 def autodream_status() -> Dict:
     path = os.environ.get("AUTODREAM_STATUS_PATH", os.path.join(os.path.dirname(os.path.dirname(__file__)), ".autodream_last_run.json"))
     if os.path.exists(path):
@@ -492,149 +679,9 @@ def autodream_status() -> Dict:
     return {"status": "never_run"}
 
 
-# ── Knowledge Bank ─────────────────────────────────────────────────
-@app.get("/knowledge/stats")
-def knowledge_stats() -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        stats = bank.stats()
-        # Find unique tags for synthesis
-        try:
-            tags = list(bank.cluster_by_tags(min_size=1).keys())
-        except Exception:
-            tags = []
-        return {**stats, "tags": tags}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/knowledge/ingest")
-def knowledge_ingest(req: KnowledgeIngestRequest) -> Dict:
-    try:
-        from knowledge.ingester import get_ingester
-        from knowledge.bank import get_knowledge_bank
-        ingester = get_ingester()
-        bank = get_knowledge_bank()
-        fragments = ingester.ingest_url(req.url, req.tags)
-        count = bank.add_fragments(fragments)
-        return {"status": "ok", "ingested": count, "url": req.url, "tags": req.tags}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/knowledge/ingest-text")
-def knowledge_ingest_text(req: KnowledgeTextIngestRequest) -> Dict:
-    try:
-        from knowledge.ingester import get_ingester
-        from knowledge.bank import get_knowledge_bank
-        ingester = get_ingester()
-        bank = get_knowledge_bank()
-        fragments = ingester.ingest_text(req.text, req.title, req.tags)
-        count = bank.add_fragments(fragments)
-        return {"status": "ok", "ingested": count, "title": req.title, "tags": req.tags}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/knowledge/search")
-def knowledge_search(req: KnowledgeSearchRequest) -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        results = bank.query(req.query, top_k=req.top_k)
-        return {
-            "query": req.query,
-            "results": [
-                {
-                    "id": f.id,
-                    "source_type": f.source_type,
-                    "source_url": f.source_url,
-                    "source_title": f.source_title,
-                    "chunk_text": f.chunk_text[:500],
-                    "tags": f.tags,
-                    "confidence": f.confidence,
-                    "access_count": f.access_count,
-                    "score": round(score, 4),
-                }
-                for f, score in results
-            ],
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/knowledge/fragments")
-def knowledge_fragments(source_type: str = "") -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        if source_type:
-            frags = bank.fragments_by_source(source_type)
-        else:
-            frags = bank.all_fragments()
-        return {
-            "fragments": [f.to_dict() for f in frags],
-            "count": len(frags),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/knowledge/snippets")
-def knowledge_snippets() -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        return {"snippets": bank.list_snippets()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/knowledge/snippets")
-def knowledge_save_snippet(req: SnippetSaveRequest) -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        snippet = bank.save_snippet(req.title, req.content, req.tags)
-        return {"status": "ok", "snippet": snippet}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.delete("/knowledge/snippets/{snippet_id}")
-def knowledge_delete_snippet(snippet_id: str) -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        bank.delete_snippet(snippet_id)
-        return {"status": "ok", "deleted": snippet_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/knowledge/generate-refs")
-def knowledge_generate_refs() -> Dict:
-    try:
-        from knowledge.bank import get_knowledge_bank
-        bank = get_knowledge_bank()
-        clusters = bank.cluster_by_tags(min_size=5)
-        generated = []
-        for tag, frags in clusters.items():
-            path = bank.generate_ref_doc(tag, frags)
-            generated.append({"tag": tag, "fragments": len(frags), "path": path})
-        return {"status": "ok", "generated": len(generated), "refs": generated}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/knowledge/consolidate")
-def knowledge_consolidate(dry_run: bool = True) -> Dict:
-    return consolidate_knowledge_bank(dry_run=dry_run)
-
-
 # ── Soul ───────────────────────────────────────────────────────────
 @app.get("/soul")
+@cached_endpoint(ttl=30)
 def soul_get() -> Dict:
     from brain.soul import get_soul
     s = get_soul()
@@ -653,6 +700,7 @@ def soul_get() -> Dict:
 
 @app.post("/soul")
 def soul_update(req: SoulUpdateRequest) -> Dict:
+    invalidate_caches("soul_get:")
     from brain.soul import get_soul
     s = get_soul()
     if req.identity:
@@ -827,6 +875,7 @@ def serve_build_index(build_id: str) -> FileResponse:
 
 
 @app.get("/llm-status")
+@cached_endpoint(ttl=30)
 def llm_status() -> Dict:
     has_openrouter = bool(os.getenv("OPENROUTER_API_KEY"))
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
@@ -928,6 +977,7 @@ def betting_prizepicks(market: str = "all", min_line: float = 0) -> Dict:
 
 # ── Integrations status ────────────────────────────────────────────
 @app.get("/integrations")
+@cached_endpoint(ttl=60)
 def integrations_status() -> Dict:
     return {
         "apis": {
@@ -1125,7 +1175,7 @@ def local_model_chat(req: ChatRequest) -> Dict:
         import httpx
         with httpx.Client(timeout=120) as client:
             resp = client.post(f"{LOCAL_MODEL_URL}/v1/chat/completions", json={
-                "model": "gemma-4",
+                "model": LOCAL_MODEL_NAME,
                 "messages": [{"role": "user", "content": req.text}],
                 "stream": False,
             })
@@ -1134,6 +1184,28 @@ def local_model_chat(req: ChatRequest) -> Dict:
             return resp.json()
     except Exception as e:
         return {"_error": f"Model unavailable: {str(e)}"}
+
+
+@app.post("/models/local/proxy")
+async def local_model_proxy(request: Request) -> Dict:
+    """Proxy endpoint for local model - used by LLM router for deterministic tasks."""
+    try:
+        # Forward the request to the local model server
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            # Get the raw body and forward it
+            body = await request.body()
+            resp = await client.post(
+                f"{LOCAL_MODEL_URL}/v1/chat/completions",
+                content=body,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if resp.status_code >= 400:
+                return {"_error": f"Local model returned {resp.status_code}", "details": resp.text}
+            
+            return resp.json()
+    except Exception as e:
+        return {"_error": f"Local model proxy failed: {str(e)}"}
 
 
 # ── Tool Registration (command-code, opencode) ─────────────────
@@ -1273,6 +1345,7 @@ def github_expand_skills(max_downloads: int = 5) -> Dict:
 
 # ── Planner ────────────────────────────────────────────────────────
 @app.get("/planner/tasks")
+@cached_endpoint(ttl=10)
 def planner_tasks() -> Dict:
     from features.planner import get_planner
     p = get_planner()
@@ -1297,6 +1370,7 @@ def planner_delete(task_id: str) -> Dict:
 
 
 @app.get("/planner/timeline")
+@cached_endpoint(ttl=10)
 def planner_timeline(hours: int = 24) -> Dict:
     from features.planner import get_planner
     return {"timeline": get_planner().get_timeline(hours)}
@@ -1330,6 +1404,7 @@ def planner_run_due() -> Dict:
 
 # ── News / Finance ─────────────────────────────────────────────────
 @app.get("/news")
+@cached_endpoint(ttl=120)
 def news_feed() -> Dict:
     from features.finance_modules import get_news
     items = get_news().fetch_all()
@@ -1337,6 +1412,7 @@ def news_feed() -> Dict:
 
 
 @app.get("/odds")
+@cached_endpoint(ttl=60)
 def odds_feed(sport: str = "basketball_nba") -> Dict:
     from features.finance_modules import get_odds
     lines = get_odds().fetch_odds(sport)
@@ -1521,71 +1597,9 @@ def autonomy_tick() -> Dict:
     return get_autonomy().tick()
 
 
-# ── Caching Layer (in-memory by design — cold restart is acceptable for TTL cache) ──
-class CacheManager:
-    """Intelligent TTL-based caching for expensive API responses."""
-    def __init__(self):
-        self._store: Dict[str, Dict] = {}
-        self._lock = None
-
-    def _get_lock(self):
-        if self._lock is None:
-            import threading
-            self._lock = threading.Lock()
-        return self._lock
-
-    def get(self, key: str) -> Optional[Any]:
-        with self._get_lock():
-            if key in self._store:
-                entry = self._store[key]
-                if time.time() < entry["expiry"]:
-                    return entry["data"]
-                del self._store[key]
-        return None
-
-    def set(self, key: str, data: Any, ttl: int = 60):
-        with self._get_lock():
-            self._store[key] = {
-                "data": data,
-                "expiry": time.time() + ttl
-            }
-
-    def invalidate(self, key: str):
-        with self._get_lock():
-            if key in self._store:
-                del self._store[key]
-
-_CACHE = CacheManager()
-
-def cached_endpoint(ttl: int = 60):
-    """Decorator to cache FastAPI endpoint responses."""
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Generate stable cache key (JSON-sorted kwargs)
-            try:
-                k_str = json.dumps(kwargs, sort_keys=True, default=str)
-            except Exception:
-                k_str = str(sorted(kwargs.items()))
-            key = f"{func.__name__}:{k_str}"
-            cached = _CACHE.get(key)
-            if cached is not None:
-                return cached
-            
-            # Execute function (handle both sync and async)
-            if asyncio.iscoroutinefunction(func):
-                result = await func(*args, **kwargs)
-            else:
-                result = func(*args, **kwargs)
-                
-            _CACHE.set(key, result, ttl)
-            return result
-        return wrapper
-    return decorator
-
-
 # ── Scheduler ──────────────────────────────────────────────────────
 @app.get("/scheduler/tasks")
+@cached_endpoint(ttl=10)
 def scheduler_tasks() -> Dict:
     try:
         from features.scheduler import get_scheduler
@@ -1627,8 +1641,8 @@ def scheduler_run_due() -> Dict:
         s = get_scheduler()
         if s._executor_callback is None:
             from orchestration.dca_engine import DeterministicCodingAgent as _DCA
-            agent = _DCA()
-            s.set_executor(lambda skill, inputs: agent.handle(f"run {skill} with {inputs}"))
+            _dca_agent = _DCA()
+            s._executor_callback = lambda skill, inputs: _dca_agent.handle(f"run {skill} with {inputs}")
         # Trigger APScheduler to check for due jobs
         jobs = s._aps_scheduler.get_jobs() if s._aps_scheduler else []
         ran = 0
@@ -1648,8 +1662,8 @@ def scheduler_run_due() -> Dict:
                 category="job",
                 details={"jobs_triggered": ran, "total_jobs": len(jobs)}
             )
-        except:
-            pass
+        except Exception:
+            _api_logger.warning("Failed to add notification for scheduled jobs")
         
         return {"ran": ran, "total_jobs": len(jobs)}
     except Exception as e:
@@ -1708,11 +1722,12 @@ def scheduler_delete_task(name: str) -> Dict:
 # ── Health ──────────────────────────────────────────────────────────
 @app.get("/health")
 def health_check() -> Dict:
-    return {"status": "ok", "ts": time.time(), "version": "2.5.0", "cache_size": len(_CACHE._store)}
+    return {"status": "ok", "ts": time.time(), "version": "2.5.0", "cache_size": _CACHE.size()}
 
 
 # ── System Status (Comprehensive 24/7 Monitoring) ───────────────────
 @app.get("/system/status")
+@cached_endpoint(ttl=10)
 def system_status() -> Dict:
     """Comprehensive system status for 24/7 monitoring"""
     import requests
@@ -1747,7 +1762,7 @@ def system_status() -> Dict:
     
     # Check knowledge bank
     try:
-        from features.knowledge_bank import get_knowledge_bank
+        from knowledge.bank import get_knowledge_bank
         kb = get_knowledge_bank()
         stats = kb.get_stats()
         status["components"]["knowledge"] = {
@@ -1762,7 +1777,7 @@ def system_status() -> Dict:
     
     # Check betting engine
     try:
-        r = requests.get(f"http://localhost:{PORT}/betting/odds", timeout=5)
+        r = requests.get(f"http://localhost:{_API_PORT}/betting/odds", timeout=5)
         if r.status_code == 200:
             data = r.json()
             status["components"]["betting"] = {"status": "online", "odds_count": data.get("count", 0)}
@@ -1772,7 +1787,7 @@ def system_status() -> Dict:
     
     # Check news
     try:
-        r = requests.get(f"http://localhost:{PORT}/news", timeout=10)
+        r = requests.get(f"http://localhost:{_API_PORT}/news", timeout=10)
         if r.status_code == 200:
             data = r.json()
             status["components"]["news"] = {"status": "online", "items": len(data.get("items", []))}
@@ -1782,7 +1797,7 @@ def system_status() -> Dict:
     
     # Check social
     try:
-        r = requests.get(f"http://localhost:{PORT}/social/posts", timeout=5)
+        r = requests.get(f"http://localhost:{_API_PORT}/social/posts", timeout=5)
         if r.status_code == 200:
             status["components"]["social"] = {"status": "online"}
     except:
@@ -1822,6 +1837,168 @@ def system_status() -> Dict:
         pass
     
     return status
+
+
+@app.get("/system/backends")
+def system_backends() -> Dict:
+    """Show which backends are currently active."""
+    backends = {
+        "distributed_mode": os.environ.get("DISTRIBUTED_MODE", "0"),
+        "postgresql": {"available": False},
+        "redis": {"available": False},
+        "sqlite": {"available": True},
+        "state_manager": {"backend": "file"},
+    }
+    try:
+        from tools.postgres import get_pg_pool
+        pg = get_pg_pool()
+        backends["postgresql"] = {"available": pg.available}
+        if pg.available:
+            backends["state_manager"]["backend"] = "postgresql"
+    except Exception:
+        pass
+    try:
+        from tools.redis_client import get_redis
+        r = get_redis()
+        backends["redis"] = {"available": r.available}
+    except Exception:
+        pass
+    return backends
+
+
+# ── Metrics (Phase 2 — Speed Engine) ─────────────────────────────
+@app.get("/metrics")
+def metrics_dump() -> Dict:
+    """Full runtime metrics snapshot — latency, error rates, cache, SQLite."""
+    return get_metrics().snapshot()
+
+
+@app.get("/dashboard/performance")
+@cached_endpoint(ttl=10)
+def dashboard_performance() -> Dict:
+    """Performance summary for dashboard UI — top slow endpoints, error rates."""
+    metrics = get_metrics().snapshot()
+    routes = metrics.get("routes", {})
+    sorted_by_latency = sorted(
+        routes.items(),
+        key=lambda kv: kv[1].get("latency_ms", {}).get("p95", 0),
+        reverse=True,
+    )
+    return {
+        "uptime": metrics.get("uptime_str", ""),
+        "total_requests": metrics.get("total_requests", 0),
+        "total_errors": metrics.get("total_errors", 0),
+        "cache": metrics.get("cache", {}),
+        "sqlite": metrics.get("sqlite", {}),
+        "slowest_endpoints": [
+            {"route": r, **s}
+            for r, s in sorted_by_latency[:10]
+        ],
+        "error_prone_endpoints": [
+            {"route": r, "error_rate": s.get("error_rate_5m", 0)}
+            for r, s in sorted(routes.items(), key=lambda kv: -kv[1].get("error_rate_5m", 0))
+            if s.get("error_rate_5m", 0) > 0
+        ],
+    }
+
+
+# ── Runtime Healer Status (Phase 3 — Production Ready) ─────────────
+@app.get("/healer/status")
+def healer_status() -> Dict:
+    """Runtime Healer v2 status — circuits, daemons, learned constraints."""
+    try:
+        from orchestration.runtime_healer import runtime_healer
+        snapshot = runtime_healer.health_snapshot()
+        return {
+            "status": snapshot,
+            "learned_constraints": runtime_healer.get_learned_constraints()[-50:],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ── Confidence Router Status (Phase 3 — Production Ready) ─────────
+@app.get("/confidence/status")
+def confidence_status() -> Dict:
+    """Hybrid confidence stacking status — routes, weights, fallback rates."""
+    try:
+        if hasattr(agent, "confidence_router") and agent.confidence_router:
+            return agent.confidence_router.status_summary()
+        return {"error": "confidence_router not initialized"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ── Session Replay (Phase 4 — Intelligence Upgrade) ─────────────────
+@app.get("/replay/list")
+def replay_list(limit: int = 20) -> Dict:
+    """List sessions with replay data available."""
+    try:
+        from orchestration.session_replay import get_replay_engine
+        sessions = get_replay_engine().list_sessions(limit)
+        return {"sessions": sessions, "count": len(sessions)}
+    except Exception as e:
+        return {"error": str(e), "sessions": []}
+
+
+@app.get("/replay/{session_id}")
+def replay_session(session_id: str) -> Dict:
+    """Full replay data for a session — capture + describe."""
+    try:
+        from orchestration.session_replay import get_replay_engine
+        engine = get_replay_engine()
+        session = engine.capture_session(session_id)
+        if not session:
+            return {"error": f"Session not found: {session_id}"}
+        description = engine.describe(session)
+        node_data = list(engine.replay(session_id, step=False))
+        return {"session_id": session_id, "description": description, "nodes": node_data}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/replay/{session_id}/nodes")
+def replay_nodes(session_id: str) -> Dict:
+    """Node list for a session."""
+    try:
+        from orchestration.session_replay import get_replay_engine
+        engine = get_replay_engine()
+        session = engine.capture_session(session_id)
+        if not session:
+            return {"error": f"Session not found: {session_id}"}
+        return {
+            "session_id": session_id,
+            "nodes": [
+                {
+                    "node_name": n.node_name,
+                    "timestamp": n.timestamp,
+                    "state": n.state_snapshot,
+                }
+                for n in session.nodes
+            ],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/replay/{session_id}/deltas")
+def replay_deltas(session_id: str) -> Dict:
+    """Node-to-node deltas for a session."""
+    try:
+        from orchestration.session_replay import get_replay_engine
+        engine = get_replay_engine()
+        session = engine.capture_session(session_id)
+        if not session:
+            return {"error": f"Session not found: {session_id}"}
+        return {
+            "session_id": session_id,
+            "deltas": [
+                {"node": n.node_name, "timestamp": n.timestamp, "delta": n.delta_from_previous}
+                for n in session.nodes
+            ],
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # ── Settings Keys (persist from UI to .env) ────────────────────────
@@ -2157,6 +2334,8 @@ def governor_approve(req: GovernorActionRequest) -> Dict:
         raise HTTPException(status_code=404, detail="Escalation not found")
     item = _governor_state["queue"].pop(idx)
     _governor_state["history"].append({**item, "status": "approved", "resolved_at": datetime.now().isoformat()})
+    if len(_governor_state["history"]) > 1000:
+        _governor_state["history"] = _governor_state["history"][-1000:]
     return {"status": "approved", "decision": item["decision"]}
 
 @app.post("/governor/reject")
@@ -2166,6 +2345,8 @@ def governor_reject(req: GovernorActionRequest) -> Dict:
         raise HTTPException(status_code=404, detail="Escalation not found")
     item = _governor_state["queue"].pop(idx)
     _governor_state["history"].append({**item, "status": "rejected", "reason": req.reason, "resolved_at": datetime.now().isoformat()})
+    if len(_governor_state["history"]) > 1000:
+        _governor_state["history"] = _governor_state["history"][-1000:]
     return {"status": "rejected"}
 
 @app.get("/governor/status")
@@ -2217,7 +2398,10 @@ async def catch_all(full_path: str):
         raise HTTPException(status_code=404, detail="Not Found")
     # If the path looks like a file (has an extension), try to serve it from dist
     # Otherwise, return index.html for SPA routing
-    dist_path = os.path.join("aether-dashboard/dist", full_path)
+    base = os.path.abspath("aether-dashboard/dist")
+    dist_path = os.path.abspath(os.path.join(base, full_path))
+    if not dist_path.startswith(base):
+        raise HTTPException(status_code=403, detail="path traversal blocked")
     if os.path.isfile(dist_path):
         return FileResponse(dist_path)
     

@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 import asyncio
-import os
 import sys
 from pathlib import Path
 
@@ -26,20 +25,41 @@ async def setup_qdrant():
 
         try:
             print("\n[1] Navigating to cloud.qdrant.io...")
-            await page.goto("https://cloud.qdrant.io", wait_until="networkidle", timeout=30000)
+            await page.goto("https://cloud.qdrant.io", wait_until="networkidle", timeout=60000)
 
-            if await page.is_visible("text=Sign in"):
-                print("\n[2] Clicking 'Sign up'...")
-                await page.click("text=Sign up")
-                await page.wait_for_load_state("networkidle", timeout=10000)
+            # Check for "Sign up" or "Start for free" buttons on landing page
+            signup_selectors = [
+                "text=Sign up", 
+                "text=Start for free", 
+                "text=Try for free",
+                "a[href*='signup']",
+                "button:has-text('Sign up')"
+            ]
+            
+            for selector in signup_selectors:
+                if await page.is_visible(selector):
+                    print(f"\n[2] Clicking '{selector}'...")
+                    await page.click(selector)
+                    await page.wait_for_load_state("networkidle", timeout=20000)
+                    break
 
-            print("[3] Filling email: tap4500@gmail.com")
-            await page.wait_for_selector("input[type='email'], input[name='email']", timeout=10000)
-            await page.fill("input[type='email'], input[name='email']", email)
+            print("[3] Waiting for email input...")
+            try:
+                email_field = page.locator("input[type='email'], input[name='email'], input[placeholder*='email' i]")
+                await email_field.first.wait_for(state="visible", timeout=30000)
+                print(f"[3] Filling email: {email}")
+                await email_field.first.fill(email)
+            except Exception as e:
+                print(f"  Warning: Could not find email field automatically: {e}")
+                print("  Please enter your email manually in the browser window.")
 
-            continue_btn = page.locator("button:has-text('Continue'), button:has-text('Sign up'), button[type='submit']")
-            await continue_btn.first.click()
-            await page.wait_for_load_state("networkidle", timeout=10000)
+            try:
+                continue_btn = page.locator("button:has-text('Continue'), button:has-text('Sign up'), button[type='submit']")
+                if await continue_btn.first.is_visible():
+                    await continue_btn.first.click()
+                    await page.wait_for_load_state("networkidle", timeout=10000)
+            except Exception:
+                pass
 
             print("\n" + "=" * 60)
             print(">>> EMAIL VERIFICATION REQUIRED <<<")

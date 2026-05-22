@@ -8,10 +8,9 @@ Zero LLM — pure math. Deterministic to 4 decimal places.
 """
 
 from __future__ import annotations
-import math
 import random
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 
 @dataclass

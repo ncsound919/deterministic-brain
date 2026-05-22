@@ -12,6 +12,8 @@ import time
 from typing import Dict, List
 from urllib.request import urlopen
 
+from tools.circuit_breaker import circuit_breaker
+
 
 class MarketDataClient:
     """Free, no-auth market data for crypto and stocks."""
@@ -19,6 +21,7 @@ class MarketDataClient:
     # Coinbase public API — no key needed for spot prices
     COINBASE_BASE = "https://api.coinbase.com/v2"
 
+    @circuit_breaker(name="crypto_price", threshold=3, cooldown_s=60, retries=1)
     def crypto_price(self, pair: str = "BTC-USD") -> Dict:
         try:
             url = f"{self.COINBASE_BASE}/prices/{pair}/spot"

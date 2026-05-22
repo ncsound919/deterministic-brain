@@ -9,7 +9,7 @@ Replaces the naive `/chat` that just hits `/task`. Now:
 """
 from __future__ import annotations
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 class ChatIntent:
@@ -213,6 +213,18 @@ def _answer_question(text: str) -> Dict:
             ],
         }
 
+    tavily_results = _tavily_search(text)
+    if tavily_results:
+        return {
+            "intent": "question", "type": "web_search",
+            "text": f"Found {len(tavily_results)} web results. Top: **{tavily_results[0]['title']}** — {tavily_results[0]['text'][:200]}",
+            "web_results": tavily_results,
+            "actions": [
+                {"label": "Build something", "query": "build a landing page"},
+                {"label": "Search more", "query": "help"},
+            ],
+        }
+
     return {
         "intent": "question", "type": "text",
         "text": "I don't have that in my knowledge bank yet. Try adding relevant docs via the Knowledge tab, or ask me to build something.",
@@ -221,6 +233,26 @@ def _answer_question(text: str) -> Dict:
             {"label": "Build a website", "query": "build a landing page"},
         ],
     }
+
+
+def _tavily_search(query: str) -> List[Dict]:
+    import os
+    try:
+        key = os.getenv("TAVILY_API_KEY", "")
+    except Exception:
+        key = os.getenv("TAVILY_API_KEY", "")
+    if not key:
+        return []
+    try:
+        from tavily import TavilyClient
+        client = TavilyClient(api_key=key)
+        results = client.search(query=query, max_results=3)
+        return [
+            {"title": r.get("title", ""), "text": r.get("content", ""), "url": r.get("url", "")}
+            for r in results.get("results", [])
+        ]
+    except Exception:
+        return []
 
 
 def _route_to_build(text: str) -> Dict:
@@ -246,12 +278,4 @@ def _route_to_build(text: str) -> Dict:
 
 
 def _fallback(text: str) -> Dict:
-    return {
-        "intent": "unknown", "type": "text",
-        "text": "Not sure what you mean. Try: 'build a landing page', 'how to use React hooks', or 'help'.",
-        "actions": [
-            {"label": "Build something", "query": "build a landing page"},
-            {"label": "Help", "query": "help"},
-            {"label": "Status", "query": "status"},
-        ],
-    }
+    return _route_to_build(text)

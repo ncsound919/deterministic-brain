@@ -2,20 +2,14 @@ from __future__ import annotations
 """
 Z3-backed constraint verification for each lane.
 
-When z3-solver is installed this module encodes lane-specific constraints
-as SMT formulas and checks satisfiability.  When z3 is absent it falls
-back to pure-Python heuristic checks that mirror the same logic.
+This module encodes lane-specific constraints as SMT formulas
+and checks satisfiability.
 
 Public interface:
     verify_candidate(lane: str, candidate: dict) -> Verdict
 """
 from typing import Any, Dict
-
-try:
-    import z3
-    _Z3_OK = True
-except ImportError:
-    _Z3_OK = False
+import z3
 
 
 # ---------------------------------------------------------------------------
@@ -79,24 +73,6 @@ def _verify_coding_z3(candidate: dict) -> Verdict:
     )
 
 
-def _verify_coding_py(candidate: dict) -> Verdict:
-    content = candidate.get('content', '')
-    tests = candidate.get('tests', [])
-    has_def = 'def ' in content
-    has_tests = bool(tests)
-    no_eval = 'eval(' not in content
-    no_shell = 'shell=True' not in content
-    passed = has_def and has_tests and no_eval and no_shell
-    return _verdict(
-        stage='z3_contract',
-        passed=passed,
-        reason='function_and_tests_required',
-        details={'tests': len(tests), 'has_def': has_def, 'no_eval': no_eval},
-        soft_score=0.9 if passed else 0.3,
-        hard_ok=passed,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Business logic lane — Z3: at least one rule fired, no conflicts
 # ---------------------------------------------------------------------------
@@ -126,21 +102,6 @@ def _verify_business_logic_z3(candidate: dict) -> Verdict:
     )
 
 
-def _verify_business_logic_py(candidate: dict) -> Verdict:
-    rule_results = candidate.get('rule_results', [])
-    fired = [r for r in rule_results if r.get('fired')]
-    conflicts = candidate.get('conflicts', [])
-    ok = len(fired) >= 1 and len(conflicts) == 0
-    return _verdict(
-        stage='z3_logic',
-        passed=ok,
-        reason='at_least_one_rule_fired_no_conflicts',
-        details={'fired': len(fired), 'conflicts': conflicts},
-        soft_score=0.9 if ok else 0.35,
-        hard_ok=ok,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Tool calling lane — Z3: tool_calls list non-empty or content prepared
 # ---------------------------------------------------------------------------
@@ -166,16 +127,6 @@ def _verify_tool_calling_z3(candidate: dict) -> Verdict:
     )
 
 
-def _verify_tool_calling_py(candidate: dict) -> Verdict:
-    calls = candidate.get('tool_calls', [])
-    content_ok = 'tool_call_prepared' in candidate.get('content', '')
-    ok = bool(calls) or content_ok
-    return _verdict(
-        stage='z3_tools', passed=ok, reason='tool_call_required',
-        details={'calls': len(calls)}, soft_score=0.9 if ok else 0.4, hard_ok=ok,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Agent brain lane — Z3: action was approved
 # ---------------------------------------------------------------------------
@@ -192,14 +143,6 @@ def _verify_agent_brain_z3(candidate: dict) -> Verdict:
         stage='z3_agent', passed=passed, reason='approved_action_required',
         details={'approved': approved, 'z3_result': str(result)},
         soft_score=0.95 if passed else 0.2, hard_ok=passed,
-    )
-
-
-def _verify_agent_brain_py(candidate: dict) -> Verdict:
-    ok = candidate.get('approved', False)
-    return _verdict(
-        stage='z3_agent', passed=bool(ok), reason='approved_action_required',
-        details={'approved': ok}, soft_score=0.95 if ok else 0.2, hard_ok=bool(ok),
     )
 
 
@@ -224,25 +167,16 @@ def _verify_cross_domain_z3(candidate: dict) -> Verdict:
     )
 
 
-def _verify_cross_domain_py(candidate: dict) -> Verdict:
-    ok = bool(candidate.get('signals')) or bool(candidate.get('content'))
-    return _verdict(
-        stage='z3_cross_domain', passed=ok, reason='signals_or_content_required',
-        details={'signals': bool(candidate.get('signals')), 'content': bool(candidate.get('content'))},
-        soft_score=0.85 if ok else 0.4, hard_ok=ok,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Dispatch table
 # ---------------------------------------------------------------------------
 
-_Z3_VERIFIERS = {
-    'coding':        (_verify_coding_z3,         _verify_coding_py),
-    'business_logic':(_verify_business_logic_z3,  _verify_business_logic_py),
-    'tool_calling':  (_verify_tool_calling_z3,    _verify_tool_calling_py),
-    'agent_brain':   (_verify_agent_brain_z3,     _verify_agent_brain_py),
-    'cross_domain':  (_verify_cross_domain_z3,    _verify_cross_domain_py),
+_VERIFIERS = {
+    'coding':        _verify_coding_z3,
+    'business_logic':_verify_business_logic_z3,
+    'tool_calling':  _verify_tool_calling_z3,
+    'agent_brain':   _verify_agent_brain_z3,
+    'cross_domain':  _verify_cross_domain_z3,
 }
 
 
@@ -251,18 +185,10 @@ _Z3_VERIFIERS = {
 # ---------------------------------------------------------------------------
 
 def verify_candidate(lane: str, candidate: Dict[str, Any]) -> Verdict:
-    """Verify a candidate artifact against lane-specific Z3 or Python constraints.
+    """Verify a candidate artifact against lane-specific Z3 constraints.
 
     Returns a Verdict dict with keys:
         stage, passed, reason, details, soft_score, hard_constraints_ok
     """
-    z3_fn, py_fn = _Z3_VERIFIERS.get(
-        lane,
-        (_verify_cross_domain_z3, _verify_cross_domain_py),
-    )
-    if _Z3_OK:
-        try:
-            return z3_fn(candidate)
-        except Exception:  # noqa: BLE001
-            pass
-    return py_fn(candidate)
+    fn = _VERIFIERS.get(lane, _verify_cross_domain_z3)
+    return fn(candidate)

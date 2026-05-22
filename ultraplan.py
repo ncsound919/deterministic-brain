@@ -312,14 +312,8 @@ class UltraPlanEngine:
         logger.info(f"Resuming plan: {plan.title}")
         plan.status = PlanStatus.PLANNING
 
-        # Continue from checkpoint
-        # ... implementation continues from checkpoint_data
-
-        return plan
-
-            # FIX: Implementation stub - reconstruct session state from checkpoint
+        # Reconstruct session state from checkpoint
         if plan.checkpoint_data:
-            # Restore session state
             session_id = plan.checkpoint_data.get("plan_state", str(uuid.uuid4()))
             session = PlanningSession(
                 session_id=session_id,
@@ -332,6 +326,8 @@ class UltraPlanEngine:
             logger.info(f"Session resumed from checkpoint at phase {session.current_phase}")
         else:
             logger.warning("No checkpoint data found - restarting from beginning")
+
+        return plan
 
     async def pause_plan(self, session_id: str) -> bool:
         """Pause an active planning session"""

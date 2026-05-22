@@ -25,25 +25,52 @@ class Forge:
     def list_skills(self) -> List[Dict]:
         skills = []
         seen = set()
-        # Discover both *.skill.md (original) and SKILL.md (imported)
-        for pattern in ["**/*.skill.md", "**/SKILL.md"]:
-            for path in glob.glob(os.path.join(self.SKILLS_ROOT, pattern), recursive=True):
-                if path in seen:
-                    continue
-                seen.add(path)
-                try:
-                    with open(path, encoding="utf-8") as f:
-                        content = f.read()
-                    fm = content.split("---")[1] if content.startswith("---") else ""
-                    meta = yaml.safe_load(fm) or {}
-                    skills.append({
-                        "skill":   meta.get("skill", path),
-                        "version": meta.get("version", "?"),
-                        "path":    path,
-                        "mc":      meta.get("monte_carlo", False),
-                    })
-                except Exception:
-                    pass
+        # Search both skill_packs/ and skills/ directories
+        for root in [self.SKILLS_ROOT, "skills"]:
+            if not os.path.isdir(root):
+                continue
+            for pattern in ["**/*.skill.md", "**/SKILL.md", "**/skill.md"]:
+                for path in glob.glob(os.path.join(root, pattern), recursive=True):
+                    if path in seen:
+                        continue
+                    seen.add(path)
+                    try:
+                        with open(path, encoding="utf-8") as f:
+                            content = f.read()
+                        fm = content.split("---")[1] if content.startswith("---") else ""
+                        meta = yaml.safe_load(fm) or {}
+
+                        # Extract skill ID from directory name
+                        skill_id = os.path.basename(os.path.dirname(path))
+
+                        # Determine category from parent directory structure
+                        parts = path.replace("\\", "/").split("/")
+                        category = parts[-3] if len(parts) >= 3 else ""
+
+                        description = meta.get("description", meta.get("help", ""))
+                        inputs = meta.get("inputs", {})
+                        tools = meta.get("tools", [])
+                        requires = meta.get("requires", {})
+
+                        skills.append({
+                            "skill_id":   skill_id,
+                            "skill":      meta.get("skill", meta.get("name", skill_id)),
+                            "description": description,
+                            "version":    meta.get("version", "1.0"),
+                            "category":   category if category != root.replace("/", "").replace("\\", "") else "",
+                            "backend":    meta.get("backend", "local"),
+                            "path":       path,
+                            "inputs":     inputs if isinstance(inputs, dict) else {},
+                            "tools":      tools if isinstance(tools, list) else [],
+                            "requires":   {
+                                "env": requires.get("env", []) if isinstance(requires, dict) else [],
+                                "bins": requires.get("bins", []) if isinstance(requires, dict) else [],
+                            },
+                            "source_format": "external" if path.endswith("SKILL.md") else "native",
+                            "monte_carlo": meta.get("monte_carlo", False),
+                        })
+                    except Exception:
+                        pass
         return skills
 
     def diff(self, old_content: str, new_content: str, filename: str = "file") -> str:

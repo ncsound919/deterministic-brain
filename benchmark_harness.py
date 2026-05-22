@@ -17,10 +17,9 @@ import os
 import sys
 import time
 import threading
-import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -321,7 +320,7 @@ class BenchmarkActions:
 
     def test_cron_scheduler(self, cycle: int) -> Dict:
         try:
-            from features.scheduler import get_scheduler, Scheduler
+            from features.scheduler import get_scheduler
             s = get_scheduler()
             if not s.is_running():
                 s.start()
@@ -483,10 +482,10 @@ def print_report(report: Dict):
     print_metric("Memory %", f"{p['memory_percent']}%", p["memory_percent"] < 85)
     print_metric("Avg Cycle Duration", f"{p['avg_cycle_duration_s']}s")
 
-    print(f"\n  Full report: .benchmarks/report.json")
-    print(f"  Snapshots:   .benchmarks/snapshots.json")
-    print(f"  Cycles:      .benchmarks/cycles.json")
-    print(f"  Errors:      .benchmarks/errors.json\n")
+    print("\n  Full report: .benchmarks/report.json")
+    print("  Snapshots:   .benchmarks/snapshots.json")
+    print("  Cycles:      .benchmarks/cycles.json")
+    print("  Errors:      .benchmarks/errors.json\n")
 
 
 def run_benchmark(cycles: int = 5, interval_s: float = 30.0):
@@ -508,7 +507,7 @@ def run_benchmark(cycles: int = 5, interval_s: float = 30.0):
         print_metric("Soul", f"WARN: {e}", False)
 
     try:
-        from orchestration.event_bus import connect_all_learning, event_bus
+        from orchestration.event_bus import connect_all_learning
         connect_all_learning()
         print_metric("Learning Loop", "Wired (bandit <-> tracker <-> evolver <-> healer)", True)
         boot_actions.append({"learning_loop": "connected"})
@@ -568,7 +567,7 @@ def run_benchmark(cycles: int = 5, interval_s: float = 30.0):
             # Every 2nd cycle, allow a quiet period for KAIROS idle detection
             # Skip updating activity this cycle so KAIROS can detect idle
             if cycle % 2 == 0:
-                print(f"  [KAIROS-IDLE] Quiet period (85s) for KAIROS idle detection...")
+                print("  [KAIROS-IDLE] Quiet period (85s) for KAIROS idle detection...")
                 time.sleep(85)
                 # Check KAIROS status after idle period
                 try:
@@ -576,7 +575,7 @@ def run_benchmark(cycles: int = 5, interval_s: float = 30.0):
                     ks = kairos_status()
                     print(f"  [KAIROS-RESULT] total_runs={ks['total_runs']} | idle_triggers={ks['idle_triggers']} | seconds_since_activity={ks['seconds_since_activity']}")
                     if ks['total_runs'] > 0:
-                        print(f"  [KAIROS] Maintenance successfully triggered after idle period!")
+                        print("  [KAIROS] Maintenance successfully triggered after idle period!")
                 except Exception as e:
                     print(f"  [KAIROS] Status check failed: {e}")
             else:
@@ -642,7 +641,7 @@ def main():
         print("\n\n  Benchmark interrupted by user.")
         # Try to generate partial report
         try:
-            from benchmark_harness import BenchmarkMetrics
+            pass
             # Can't recover easily from interrupt, just exit
         except Exception:
             pass

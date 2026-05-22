@@ -1,29 +1,50 @@
+version: "3.8"
+
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: brain
+      POSTGRES_PASSWORD: brain
+      POSTGRES_DB: braindb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brain"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   brain:
     build: .
+    environment:
+      DISTRIBUTED_MODE: "1"
+      PG_DSN: "postgresql://brain:brain@postgres:5432/braindb"
+      REDIS_URL: "redis://redis:6379/0"
+      UVICORN_WORKERS: "4"
+      API_PORT: "8000"
     ports:
       - "8000:8000"
-    env_file:
-      - .env
-    volumes:
-      - checkpoints:/app/.checkpoints
     depends_on:
-      qdrant:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 volumes:
-  qdrant_data:
-  checkpoints:
+  pgdata:

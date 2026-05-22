@@ -246,6 +246,16 @@ class LiveBrowser:
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
+    def check_selector(self, platform: str, selector: str, timeout: int = 5000) -> bool:
+        """Check if a selector is present on the current page without navigating."""
+        self._ensure()
+        try:
+            page = self._get_page(platform)
+            page.wait_for_selector(selector, timeout=timeout)
+            return True
+        except Exception:
+            return False
+
     def is_logged_in(self, platform: str,
                      success_indicator: str) -> bool:
         """Quick check if cookies provide a valid session."""

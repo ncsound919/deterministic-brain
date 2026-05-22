@@ -11,8 +11,19 @@ import json
 import time
 import urllib.request
 import urllib.error
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
+from features.fallback_handler import deterministic_fallback, FallbackRegistry
+import unicodedata
+
+
+def _clean(text: str) -> str:
+    """Strip unicode characters that break in CLI/browser output."""
+    if not text:
+        return ""
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    return text.strip()
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -69,7 +80,7 @@ class NewsFeed:
                     data = json.loads(r.read().decode())
                 if data and data.get("title"):
                     items.append(NewsItem(
-                        title=data["title"], source="HackerNews",
+                        title=_clean(data["title"]), source="HackerNews",
                         url=data.get("url", f"https://news.ycombinator.com/item?id={sid}"),
                         category="tech", tags=["hn"],
                     ))
@@ -92,16 +103,61 @@ class NewsFeed:
         items = []
         for a in data[:10]:
             items.append(NewsItem(
-                title=a.get("title", ""), source="Dev.to",
-                url=a.get("url", ""), summary=(a.get("description", "") or "")[:200],
+                title=_clean(a.get("title", "")), source="Dev.to",
+                url=a.get("url", ""), summary=_clean(a.get("description", "") or "")[:200],
                 tags=a.get("tag_list", []), category="dev",
             ))
         return items
+
+    @deterministic_fallback([])
+    def fetch_gnews(self) -> List[NewsItem]:
+        """Fetch news from GNews API."""
+        from config import reload_config
+        _cfg = reload_config()
+        if not _cfg.gnews_api_key: return []
+        try:
+            url = f"https://gnews.io/api/v4/top-headlines?category=business&lang=en&country=us&max=10&apikey={_cfg.gnews_api_key}"
+            req = urllib.request.Request(url, headers={"User-Agent": "DeterministicBrain/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read().decode())
+            items = []
+            for a in data.get("articles", []):
+                items.append(NewsItem(
+                    title=_clean(a.get("title", "")), source="GNews",
+                    url=a.get("url", ""), summary=_clean(a.get("description", "")),
+                    published=a.get("publishedAt", ""), category="business"
+                ))
+            return items
+        except Exception: return []
+
+    @deterministic_fallback([])
+    def fetch_worldnews(self) -> List[NewsItem]:
+        """Fetch news from World News API."""
+        from config import reload_config
+        _cfg = reload_config()
+        if not _cfg.worldnews_api_key: return []
+        try:
+            url = f"https://api.worldnewsapi.com/top-news?source-country=us&language=en&api-key={_cfg.worldnews_api_key}"
+            req = urllib.request.Request(url, headers={"User-Agent": "DeterministicBrain/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read().decode())
+            items = []
+            for a in data.get("top_news", []):
+                for n in a.get("news", []):
+                    items.append(NewsItem(
+                        title=_clean(n.get("title", "")), source="WorldNews",
+                        url=n.get("url", ""), summary=_clean(n.get("text", "")[:300]),
+                        published=n.get("publish_date", ""), category="general"
+                    ))
+            return items
+        except Exception: return []
 
     def fetch_all(self) -> List[NewsItem]:
         all_items = []
         all_items.extend(self.fetch_hackernews())
         all_items.extend(self.fetch_devto())
+        all_items.extend(self.fetch_gnews())
+        all_items.extend(self.fetch_worldnews())
         return sorted(all_items, key=lambda x: x.published or "", reverse=True)
 
 
@@ -146,34 +202,41 @@ class OddsLine:
 
 class OddsEngine:
     def __init__(self, api_key: str = ""):
-        self.api_key = api_key or os.getenv("ODDS_API_KEY", "")
+        if not api_key:
+            try:
+                api_key = os.getenv("ODDS_API_KEY", "")
+            except Exception:
+                api_key = os.getenv("ODDS_API_KEY", "")
+        self.api_key = api_key
 
     def fetch_odds(self, sport: str = "basketball_nba") -> List[OddsLine]:
-        """Fetch live odds from The Odds API."""
         if not self.api_key:
             return self._sample_odds(sport)
         try:
-            url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={self.api_key}&regions=us&markets=h2h"
-            req = urllib.request.Request(url, headers={"User-Agent": "DeterministicBrain/1.0"})
-            with urllib.request.urlopen(req, timeout=10) as r:
-                data = json.loads(r.read().decode())
+            for markets in ["h2h", "totals"]:
+                url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={self.api_key}&regions=us&markets={markets}&oddsFormat=american"
+                req = urllib.request.Request(url, headers={"User-Agent": "DeterministicBrain/1.0"})
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    data = json.loads(r.read().decode())
+                lines = []
+                for game in data[:5]:
+                    for book in game.get("bookmakers", [])[:3]:
+                        for market in book.get("markets", []):
+                            for outcome in market.get("outcomes", []):
+                                lines.append(OddsLine(
+                                    event=f"{game.get('home_team','')} vs {game.get('away_team','')}",
+                                    market=market.get("key", "h2h"),
+                                    selection=outcome.get("name", ""),
+                                    odds=outcome.get("price", 1.0),
+                                    bookmaker=book.get("title", ""),
+                                    sport=sport,
+                                ))
+                return lines
+        except urllib.error.HTTPError:
+            pass
         except Exception:
-            return self._sample_odds(sport)
-
-        lines = []
-        for game in data[:5]:
-            for book in game.get("bookmakers", [])[:3]:
-                for market in book.get("markets", []):
-                    for outcome in market.get("outcomes", []):
-                        lines.append(OddsLine(
-                            event=f"{game.get('home_team','')} vs {game.get('away_team','')}",
-                            market=market.get("key", "h2h"),
-                            selection=outcome.get("name", ""),
-                            odds=outcome.get("price", 1.0),
-                            bookmaker=book.get("title", ""),
-                            sport=sport,
-                        ))
-        return lines
+            pass
+        return self._sample_odds(sport)
 
     def _sample_odds(self, sport: str) -> List[OddsLine]:
         """Sample odds for testing without API key."""
@@ -246,22 +309,54 @@ class TradingEngine:
         """Add a trading strategy (executed deterministically)."""
         return {"name": name, "code": code, "status": "registered"}
 
+    def calculate_volatility(self, price_data: List[float]) -> float:
+        """Calculate standard deviation of recent price data."""
+        if len(price_data) < 2: return 0.0
+        import math
+        mean = sum(price_data) / len(price_data)
+        variance = sum((x - mean) ** 2 for x in price_data) / len(price_data)
+        return math.sqrt(variance)
+
     def evaluate(self, symbol: str, price_data: List[float]) -> Optional[TradeSignal]:
-        """Simple moving average crossover strategy."""
+        """Enhanced strategy with Volatility Guard."""
         if len(price_data) < 20:
             return None
+        
         short_ma = sum(price_data[-5:]) / 5
         long_ma = sum(price_data[-20:]) / 20
         current = price_data[-1]
+        volatility = self.calculate_volatility(price_data[-20:])
+        
+        # Volatility Guard: If volatility > 2% of price, reduce confidence
+        vol_factor = 1.0
+        if volatility > current * 0.02:
+            vol_factor = 0.5
+            logger.warning(f"Trading: High volatility detected for {symbol} ({volatility:.2f}). Reducing signal confidence.")
 
         if short_ma > long_ma and current > short_ma:
             return TradeSignal(symbol=symbol, action="BUY", price=current,
-                              confidence=0.6, strategy="ma_crossover")
+                               confidence=0.8 * vol_factor, strategy="ma_crossover_v2")
         elif short_ma < long_ma and current < short_ma:
             return TradeSignal(symbol=symbol, action="SELL", price=current,
-                              confidence=0.6, strategy="ma_crossover")
+                               confidence=0.8 * vol_factor, strategy="ma_crossover_v2")
+        
         return TradeSignal(symbol=symbol, action="HOLD", price=current,
-                          confidence=0.3, strategy="ma_crossover")
+                           confidence=0.3, strategy="ma_crossover_v2")
+
+    def apply_risk_guards(self, symbol: str, current_price: float, positions: Dict):
+        """Advanced Optimization: Auto-liquidate positions on stop-loss/take-profit triggers."""
+        if symbol not in positions: return None
+        pos = positions[symbol]
+        entry = pos.get("entry_price", 0)
+        qty = pos.get("quantity", 0)
+        
+        # 3% Stop-Loss | 7% Take-Profit
+        change = (current_price - entry) / entry
+        if change <= -0.03:
+            return TradeSignal(symbol=symbol, action="SELL", price=current_price, confidence=1.0, strategy="stop_loss")
+        if change >= 0.07:
+            return TradeSignal(symbol=symbol, action="SELL", price=current_price, confidence=1.0, strategy="take_profit")
+        return None
 
     def fetch_price(self, symbol: str) -> Optional[float]:
         """Fetch current price from Yahoo Finance."""
@@ -303,3 +398,32 @@ def get_trading() -> TradingEngine:
     if _TRADE is None:
         _TRADE = TradingEngine()
     return _TRADE
+
+
+# ═══════════════════════════════════════════════════════════════
+# STRIPE ENGINE
+# ═══════════════════════════════════════════════════════════════
+
+class StripeEngine:
+    def __init__(self):
+        self.api_key = os.getenv("STRIPE_API_KEY", "")
+
+    def create_checkout_session(self, amount: float, currency: str = "usd") -> Dict:
+        """Mock/Skeletal Stripe Checkout."""
+        if not self.api_key:
+            return {"status": "error", "message": "STRIPE_API_KEY not set"}
+        
+        # In a real app, you'd use the stripe library here
+        return {
+            "status": "success",
+            "url": f"https://checkout.stripe.com/pay/mock_{int(time.time())}",
+            "amount": amount,
+            "currency": currency
+        }
+
+_STRIPE: Optional[StripeEngine] = None
+
+def get_stripe() -> StripeEngine:
+    global _STRIPE
+    if _STRIPE is None: _STRIPE = StripeEngine()
+    return _STRIPE

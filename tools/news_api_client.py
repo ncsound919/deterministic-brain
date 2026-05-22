@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Dict, List
 
 from tools.vault_aware_api import get_key
+from tools.circuit_breaker import circuit_breaker
 
 
 class NewsAPIClient:
@@ -28,6 +29,7 @@ class NewsAPIClient:
             env_var="NEWSAPI_KEY", explicit=api_key,
         )
 
+    @circuit_breaker(name="newsapi", threshold=3, cooldown_s=60, retries=1)
     def _get(self, endpoint: str, params: Dict = None) -> Dict:
         params = params or {}
         params["apiKey"] = self.key
@@ -86,6 +88,7 @@ class GNewsClient:
             env_var="GNEWS_API_KEY", explicit=api_key,
         )
 
+    @circuit_breaker(name="gnews", threshold=3, cooldown_s=60, retries=1)
     def _get(self, endpoint: str, params: Dict = None) -> Dict:
         params = params or {}
         params["apikey"] = self.key
@@ -132,6 +135,7 @@ class WorldNewsClient:
             env_var="WORLDNEWS_API_KEY", explicit=api_key,
         )
 
+    @circuit_breaker(name="worldnews", threshold=3, cooldown_s=60, retries=1)
     def _get(self, path: str, params: Dict = None) -> Dict:
         url = f"{self.BASE}{path}"
         if params:

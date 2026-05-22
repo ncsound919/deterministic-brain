@@ -1,11 +1,7 @@
 """E2E Tests for Scheduler Integration."""
 from __future__ import annotations
-import os
-import json
-import pytest
-from pathlib import Path
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from datetime import datetime
+from unittest.mock import patch
 
 
 class TestSchedulerBasicOperations:
@@ -70,7 +66,6 @@ class TestSchedulerTaskExecution:
             task_input={"component_name": "TestComponent"}
         )
         
-        from features.scheduler import TaskResult
         
         with patch("features.scheduler.get_scheduler") as mock_get:
             mock_get.return_value = scheduler
@@ -160,7 +155,6 @@ class TestSchedulerResultsPersistence:
         """Task results should be stored and retrievable."""
         scheduler = brain_app["scheduler"]
         
-        from features.scheduler import TaskResult
         
         scheduler.schedule_task(
             name="test-result",
@@ -180,7 +174,6 @@ class TestSchedulerResultsPersistence:
         """Task results should have required fields."""
         scheduler = brain_app["scheduler"]
         
-        from features.scheduler import TaskResult
         
         scheduler.schedule_task(
             name="test-fields",
@@ -234,7 +227,6 @@ class TestSchedulerNotification:
 
     def test_task_with_email_notification(self, brain_app, mock_notification_config):
         """Task with email notification should trigger notification."""
-        from features.notification import NotificationService
         
         scheduler = brain_app["scheduler"]
         
@@ -251,7 +243,6 @@ class TestSchedulerNotification:
         
     def test_task_with_webhook_notification(self, brain_app, mock_notification_config):
         """Task with webhook should trigger notification."""
-        from features.notification import NotificationService
         
         scheduler = brain_app["scheduler"]
         

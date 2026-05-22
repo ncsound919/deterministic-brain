@@ -1,16 +1,21 @@
 """
-Vector Memory System using ChromaDB
+Vector Memory System using Qdrant
 Enables semantic search and retrieval of past conversations, skills, and knowledge
 """
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from loguru import logger
-from config import settings
+import uuid
+import atexit
+import sys
+
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
+from sentence_transformers import SentenceTransformer
+
+from config import cfg
 
 @dataclass
 class MemoryEntry:
@@ -24,58 +29,63 @@ class MemoryEntry:
 class VectorMemory:
     """
     Vector-based semantic memory system
-
+    
     Features:
     - Semantic search across all past interactions
     - Automatic embedding generation
-    - Thread isolation (separate collections per context)
+    - Thread isolation (using metadata filtering)
     - Efficient similarity retrieval
     """
 
     def __init__(self, persist_directory: Optional[Path] = None):
-        """Initialize vector memory with ChromaDB"""
-
-        self.persist_dir = persist_directory or settings._normalize_path(settings.vector_db_dir)
+        """Initialize vector memory with Qdrant"""
+        self.persist_dir = persist_directory or Path(".qdrant_data")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-
-        # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(
-            path=str(self.persist_dir),
-            settings=ChromaSettings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
-        )
+        
+        self.url = cfg.qdrant_url
+        self.api_key = cfg.qdrant_api_key
+        
+        # Initialize Qdrant client
+        try:
+            if self.url and self.url != "http://localhost:6333":
+                logger.info(f"Connecting to remote Qdrant at {self.url}")
+                self.client = QdrantClient(url=self.url, api_key=self.api_key)
+            else:
+                logger.info(f"Using local Qdrant at {self.persist_dir}")
+                self.client = QdrantClient(path=str(self.persist_dir))
+            
+            # Register explicit close on exit to avoid meta_path None errors
+            atexit.register(self.close)
+        except Exception as e:
+            if "already accessed by another instance" in str(e):
+                logger.warning("Qdrant storage locked. Using in-memory fallback for this session.")
+                self.client = QdrantClient(location=":memory:")
+            else:
+                raise e
 
         # Initialize embedding model (384-dimensional, fast)
         logger.info("Loading sentence transformer model...")
         self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        self.vector_size = 384
         logger.info("Embedding model loaded")
 
         # Collections for different memory types
-        self.conversations = self._get_or_create_collection("conversations")
-        self.skills = self._get_or_create_collection("skills")
-        self.knowledge = self._get_or_create_collection("knowledge")
+        self._ensure_collection("conversations")
+        self._ensure_collection("skills")
+        self._ensure_collection("knowledge")
+        self._ensure_collection("threads")
 
-        # Thread-specific collections (created on demand)
-        self.threads: Dict[str, Any] = {}
-
-    def _get_or_create_collection(self, name: str):
-        """Get or create a ChromaDB collection"""
+    def _ensure_collection(self, name: str):
+        """Get or create a Qdrant collection"""
         try:
-            return self.client.get_collection(name=name)
-        except Exception:
-            return self.client.create_collection(
-                name=name,
-                metadata={"hnsw:space": "cosine"}  # Use cosine similarity
-            )
-
-    def get_thread_collection(self, thread_name: str):
-        """Get or create a thread-specific collection"""
-        if thread_name not in self.threads:
-            collection_name = f"thread_{thread_name}"
-            self.threads[thread_name] = self._get_or_create_collection(collection_name)
-        return self.threads[thread_name]
+            collections = [c.name for c in self.client.get_collections().collections]
+            if name not in collections:
+                self.client.create_collection(
+                    collection_name=name,
+                    vectors_config=VectorParams(size=self.vector_size, distance=Distance.COSINE)
+                )
+        except Exception as e:
+            logger.error(f"Failed to ensure collection {name}: {e}")
 
     def add_conversation(
         self,
@@ -83,36 +93,27 @@ class VectorMemory:
         role: str,
         metadata: Optional[Dict] = None
     ) -> str:
-        """
-        Add a conversation turn to memory
-
-        Args:
-            content: The message content
-            role: user, assistant, or system
-            metadata: Additional metadata (task_type, cost, etc.)
-
-        Returns:
-            Memory entry ID
-        """
-        entry_id = f"conv_{datetime.now().timestamp()}"
-
-        # Generate embedding
+        """Add a conversation turn to memory"""
+        entry_id = str(uuid.uuid4())
         embedding = self.embedder.encode(content).tolist()
 
-        # Prepare metadata
         meta = metadata or {}
         meta.update({
             "role": role,
             "timestamp": datetime.now().isoformat(),
-            "type": "conversation"
+            "type": "conversation",
+            "content": content
         })
 
-        # Store in ChromaDB
-        self.conversations.add(
-            ids=[entry_id],
-            embeddings=[embedding],
-            documents=[content],
-            metadatas=[meta]
+        self.client.upsert(
+            collection_name="conversations",
+            points=[
+                PointStruct(
+                    id=entry_id,
+                    vector=embedding,
+                    payload=meta
+                )
+            ]
         )
 
         logger.debug(f"Added conversation memory: {entry_id}")
@@ -125,40 +126,34 @@ class VectorMemory:
         workflow: List[Dict],
         success_rate: float = 0.0
     ) -> str:
-        """
-        Add a learned skill to memory
+        """Add a learned skill to memory"""
+        # Create a deterministic UUID for the skill based on its name
+        import hashlib
+        m = hashlib.md5()
+        m.update(name.encode('utf-8'))
+        entry_id = str(uuid.UUID(m.hexdigest()))
 
-        Args:
-            name: Skill name
-            description: What the skill does
-            workflow: Sequence of steps
-            success_rate: Historical success rate
-
-        Returns:
-            Memory entry ID
-        """
-        entry_id = f"skill_{name}"
-
-        # Create searchable content
         content = f"{name}: {description}\nWorkflow: {workflow}"
-
-        # Generate embedding
         embedding = self.embedder.encode(content).tolist()
 
-        # Store metadata
         meta = {
             "name": name,
             "description": description,
             "success_rate": success_rate,
             "timestamp": datetime.now().isoformat(),
-            "type": "skill"
+            "type": "skill",
+            "content": content
         }
 
-        self.skills.upsert(  # Upsert to update existing skills
-            ids=[entry_id],
-            embeddings=[embedding],
-            documents=[content],
-            metadatas=[meta]
+        self.client.upsert(
+            collection_name="skills",
+            points=[
+                PointStruct(
+                    id=entry_id,
+                    vector=embedding,
+                    payload=meta
+                )
+            ]
         )
 
         logger.info(f"Added/updated skill: {name}")
@@ -170,35 +165,27 @@ class VectorMemory:
         category: str,
         source: Optional[str] = None
     ) -> str:
-        """
-        Add knowledge/fact to memory
-
-        Args:
-            content: The knowledge content
-            category: Category (e.g., "finance", "coding", "user_preference")
-            source: Where this knowledge came from
-
-        Returns:
-            Memory entry ID
-        """
-        entry_id = f"knowledge_{datetime.now().timestamp()}"
-
-        # Generate embedding
+        """Add knowledge/fact to memory"""
+        entry_id = str(uuid.uuid4())
         embedding = self.embedder.encode(content).tolist()
 
-        # Store metadata
         meta = {
             "category": category,
             "source": source or "unknown",
             "timestamp": datetime.now().isoformat(),
-            "type": "knowledge"
+            "type": "knowledge",
+            "content": content
         }
 
-        self.knowledge.add(
-            ids=[entry_id],
-            embeddings=[embedding],
-            documents=[content],
-            metadatas=[meta]
+        self.client.upsert(
+            collection_name="knowledge",
+            points=[
+                PointStruct(
+                    id=entry_id,
+                    vector=embedding,
+                    payload=meta
+                )
+            ]
         )
 
         logger.debug(f"Added knowledge: {category}")
@@ -210,27 +197,26 @@ class VectorMemory:
         content: str,
         metadata: Optional[Dict] = None
     ) -> str:
-        """
-        Add memory to a specific thread (e.g., "coding", "research", "logistics")
-
-        Thread isolation ensures different contexts don't pollute each other
-        """
-        collection = self.get_thread_collection(thread_name)
-        entry_id = f"{thread_name}_{datetime.now().timestamp()}"
-
+        """Add memory to a specific thread"""
+        entry_id = str(uuid.uuid4())
         embedding = self.embedder.encode(content).tolist()
 
         meta = metadata or {}
         meta.update({
             "thread": thread_name,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "content": content
         })
 
-        collection.add(
-            ids=[entry_id],
-            embeddings=[embedding],
-            documents=[content],
-            metadatas=[meta]
+        self.client.upsert(
+            collection_name="threads",
+            points=[
+                PointStruct(
+                    id=entry_id,
+                    vector=embedding,
+                    payload=meta
+                )
+            ]
         )
 
         logger.debug(f"Added to thread '{thread_name}': {entry_id}")
@@ -242,24 +228,22 @@ class VectorMemory:
         n_results: int = 5,
         filter_metadata: Optional[Dict] = None
     ) -> List[Dict]:
-        """
-        Semantic search across conversation history
-
-        Args:
-            query: Search query
-            n_results: Number of results to return
-            filter_metadata: Filter by metadata (e.g., {"role": "assistant"})
-
-        Returns:
-            List of matching conversation entries
-        """
+        """Semantic search across conversation history"""
         query_embedding = self.embedder.encode(query).tolist()
+        
+        query_filter = None
+        if filter_metadata:
+            must_conds = []
+            for k, v in filter_metadata.items():
+                must_conds.append(FieldCondition(key=k, match=MatchValue(value=v)))
+            query_filter = Filter(must=must_conds)
 
-        results = self.conversations.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            where=filter_metadata
-        )
+        results = self.client.query_points(
+            collection_name="conversations",
+            query=query_embedding,
+            query_filter=query_filter,
+            limit=n_results
+        ).points
 
         return self._format_results(results)
 
@@ -268,22 +252,14 @@ class VectorMemory:
         query: str,
         n_results: int = 3
     ) -> List[Dict]:
-        """
-        Find relevant skills for a task
-
-        Args:
-            query: Task description
-            n_results: Number of skills to return
-
-        Returns:
-            List of relevant skills with success rates
-        """
+        """Find relevant skills for a task"""
         query_embedding = self.embedder.encode(query).tolist()
 
-        results = self.skills.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results
-        )
+        results = self.client.query_points(
+            collection_name="skills",
+            query=query_embedding,
+            limit=n_results
+        ).points
 
         return self._format_results(results)
 
@@ -293,26 +269,21 @@ class VectorMemory:
         category: Optional[str] = None,
         n_results: int = 5
     ) -> List[Dict]:
-        """
-        Search knowledge base
-
-        Args:
-            query: What to search for
-            category: Optional category filter
-            n_results: Number of results
-
-        Returns:
-            List of relevant knowledge entries
-        """
+        """Search knowledge base"""
         query_embedding = self.embedder.encode(query).tolist()
 
-        where = {"category": category} if category else None
+        query_filter = None
+        if category:
+            query_filter = Filter(
+                must=[FieldCondition(key="category", match=MatchValue(value=category))]
+            )
 
-        results = self.knowledge.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            where=where
-        )
+        results = self.client.query_points(
+            collection_name="knowledge",
+            query=query_embedding,
+            query_filter=query_filter,
+            limit=n_results
+        ).points
 
         return self._format_results(results)
 
@@ -322,38 +293,31 @@ class VectorMemory:
         query: str,
         n_results: int = 5
     ) -> List[Dict]:
-        """
-        Search within a specific thread
-
-        Useful for finding relevant context within isolated workstreams
-        """
-        if thread_name not in self.threads:
-            return []
-
-        collection = self.get_thread_collection(thread_name)
+        """Search within a specific thread"""
         query_embedding = self.embedder.encode(query).tolist()
-
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results
+        query_filter = Filter(
+            must=[FieldCondition(key="thread", match=MatchValue(value=thread_name))]
         )
+
+        results = self.client.query_points(
+            collection_name="threads",
+            query=query_embedding,
+            query_filter=query_filter,
+            limit=n_results
+        ).points
 
         return self._format_results(results)
 
-    def _format_results(self, chroma_results: Dict) -> List[Dict]:
-        """Format ChromaDB results into clean list"""
-        if not chroma_results["ids"]:
-            return []
-
+    def _format_results(self, qdrant_results: List[Any]) -> List[Dict]:
+        """Format Qdrant results into clean list of dicts"""
         formatted = []
-        for i in range(len(chroma_results["ids"][0])):
+        for point in qdrant_results:
             formatted.append({
-                "id": chroma_results["ids"][0][i],
-                "content": chroma_results["documents"][0][i],
-                "metadata": chroma_results["metadatas"][0][i],
-                "distance": chroma_results["distances"][0][i] if "distances" in chroma_results else None
+                "id": str(point.id),
+                "content": point.payload.get("content", ""),
+                "metadata": point.payload,
+                "distance": point.score
             })
-
         return formatted
 
     def get_recent_context(
@@ -361,39 +325,33 @@ class VectorMemory:
         limit: int = 10,
         thread: Optional[str] = None
     ) -> List[Dict]:
-        """
-        Get recent conversation context
-
-        Args:
-            limit: Number of recent entries
-            thread: Optional thread filter
-
-        Returns:
-            Recent conversation entries
-        """
-        collection = self.get_thread_collection(thread) if thread else self.conversations
-
-        # Fetch all items so we can sort by timestamp and return the truly most-recent ones.
-        # ChromaDB's get() has no ordering guarantee, so fetching only `limit` items can
-        # silently omit newer entries.
-        all_results = collection.get(
-            include=["documents", "metadatas"]
+        """Get recent conversation context"""
+        collection = "threads" if thread else "conversations"
+        
+        query_filter = None
+        if thread:
+            query_filter = Filter(must=[FieldCondition(key="thread", match=MatchValue(value=thread))])
+            
+        # Qdrant scroll gets points without search
+        results, _ = self.client.scroll(
+            collection_name=collection,
+            scroll_filter=query_filter,
+            limit=limit * 10,  # Get more to sort by timestamp
+            with_payload=True
         )
 
-        if not all_results["ids"]:
+        if not results:
             return []
 
-        # Convert to list of dicts
         entries = [
             {
-                "id": all_results["ids"][i],
-                "content": all_results["documents"][i],
-                "metadata": all_results["metadatas"][i]
+                "id": str(p.id),
+                "content": p.payload.get("content", ""),
+                "metadata": p.payload
             }
-            for i in range(len(all_results["ids"]))
+            for p in results
         ]
 
-        # Sort by timestamp (most recent first) then return top `limit`
         entries.sort(
             key=lambda x: x["metadata"].get("timestamp", ""),
             reverse=True
@@ -403,31 +361,46 @@ class VectorMemory:
 
     def clear_thread(self, thread_name: str):
         """Clear all memories from a specific thread"""
-        if thread_name in self.threads:
-            collection = self.get_thread_collection(thread_name)
-            self.client.delete_collection(f"thread_{thread_name}")
-            del self.threads[thread_name]
+        try:
+            self.client.delete(
+                collection_name="threads",
+                points_selector=Filter(
+                    must=[FieldCondition(key="thread", match=MatchValue(value=thread_name))]
+                )
+            )
             logger.info(f"Cleared thread: {thread_name}")
+        except Exception as e:
+            logger.error(f"Failed to clear thread {thread_name}: {e}")
+
+    def close(self):
+        """Explicitly close the Qdrant client."""
+        if hasattr(self, "client") and self.client:
+            try:
+                # Only close if we're not in the middle of a shutdown crash
+                if sys.meta_path is not None:
+                    self.client.close()
+            except Exception:
+                pass
 
     def get_stats(self) -> Dict:
         """Get memory statistics"""
-        return {
-            "conversations": self.conversations.count(),
-            "skills": self.skills.count(),
-            "knowledge": self.knowledge.count(),
-            "threads": {
-                name: collection.count()
-                for name, collection in self.threads.items()
-            },
-            "total_entries": (
-                self.conversations.count() +
-                self.skills.count() +
-                self.knowledge.count() +
-                sum(c.count() for c in self.threads.values())
-            )
-        }
+        try:
+            conv_count = self.client.count(collection_name="conversations").count
+            skill_count = self.client.count(collection_name="skills").count
+            know_count = self.client.count(collection_name="knowledge").count
+            thread_count = self.client.count(collection_name="threads").count
+            
+            return {
+                "conversations": conv_count,
+                "skills": skill_count,
+                "knowledge": know_count,
+                "threads": thread_count,
+                "total_entries": conv_count + skill_count + know_count + thread_count
+            }
+        except Exception:
+            return {}
 
-# Global vector memory instance (lazily initialized to avoid heavy import-time work)
+# Global vector memory instance
 _vector_memory_instance: Optional[VectorMemory] = None
 
 def get_vector_memory() -> VectorMemory:
@@ -439,7 +412,6 @@ def get_vector_memory() -> VectorMemory:
 
 class _LazyVectorMemoryProxy:
     """Proxy that defers VectorMemory initialization until first attribute access."""
-
     def __getattr__(self, name: str):
         return getattr(get_vector_memory(), name)
 

@@ -5,10 +5,9 @@ in the target server.
 from __future__ import annotations
 import os
 import asyncio
-import time
 from typing import List
 
-from knowledge.fragment import KnowledgeFragment, chunk_text
+from knowledge.fragment import KnowledgeFragment
 
 
 def ingest_discord_channel(channel_id: int, limit: int = 100, tags: List[str] = None) -> List[KnowledgeFragment]:

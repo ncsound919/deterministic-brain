@@ -27,12 +27,13 @@ from __future__ import annotations
 import json
 import logging
 import os
-import threading
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+_DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
 
 try:
     from apscheduler.schedulers.background import BackgroundScheduler
@@ -56,6 +57,19 @@ class TaskDefinition:
     enabled: bool = True
     notify_email: Optional[str] = None
     notify_webhook: Optional[str] = None
+
+    def to_dict(self) -> Dict:
+        return {
+            "name": self.name,
+            "skill": self.skill,
+            "trigger_type": self.trigger_type,
+            "cron_expr": self.cron_expr,
+            "interval_seconds": self.interval_seconds,
+            "inputs": self.inputs,
+            "enabled": self.enabled,
+            "notify_email": self.notify_email,
+            "notify_webhook": self.notify_webhook,
+        }
 
 
 @dataclass
@@ -89,9 +103,9 @@ class NotificationService:
         config_path = os.path.expanduser("~/.deterministic-brain/notifications.json")
         if os.path.exists(config_path):
             try:
-                with open(config_path) as f:
+                with open(config_path, encoding="utf-8") as f:
                     config.update(json.load(f))
-            except:
+            except Exception:
                 pass
         
         return config
@@ -182,6 +196,7 @@ class Scheduler:
     """APScheduler-based task scheduler with notifications."""
     
     def __init__(self, storage_path: str = ".scheduler_tasks.json"):
+        print("DEBUG: Scheduler initialized")
         self.storage_path = storage_path
         self._tasks: Dict[str, TaskDefinition] = {}
         self._results: Dict[str, List[TaskResult]] = {}
@@ -193,15 +208,37 @@ class Scheduler:
         
         self._executor_callback: Optional[Callable] = None
         self._load()
+        self.start()
     
     def _load(self) -> None:
-        """Load tasks from disk."""
+        """Load tasks from disk and schedule them."""
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    rows = pg.execute("SELECT name, data, enabled FROM pg_scheduler.tasks")
+                    import json as _json_module
+                    for name, data, enabled in rows:
+                        task_dict = data if isinstance(data, dict) else _json_module.loads(data)
+                        task = TaskDefinition(**task_dict)
+                        task.enabled = enabled
+                        self._tasks[name] = task
+                        if task.enabled:
+                            self._schedule_job(task)
+                    logger.info(f"Loaded {len(rows)} tasks from PostgreSQL")
+                    return
+            except Exception:
+                pass
+        # fallback to JSON file
+        print(f"DEBUG: Loading tasks from {self.storage_path}")
         if os.path.exists(self.storage_path):
             try:
-                with open(self.storage_path) as f:
+                with open(self.storage_path, encoding="utf-8") as f:
                     data = json.load(f)
+                    print(f"DEBUG: Loaded {len(data)} tasks from JSON")
                     for name, task_data in data.items():
-                        self._tasks[name] = TaskDefinition(
+                        task = TaskDefinition(
                             name=task_data["name"],
                             skill=task_data["skill"],
                             trigger_type=task_data["trigger_type"],
@@ -212,41 +249,42 @@ class Scheduler:
                             notify_email=task_data.get("notify_email"),
                             notify_webhook=task_data.get("notify_webhook"),
                         )
-                logger.info(f"Loaded {len(self._tasks)} scheduled tasks")
+                        self._tasks[name] = task
+                        if task.enabled:
+                            print(f"DEBUG: Scheduling job for {name}")
+                            self._schedule_job(task)
+                logger.info(f"Loaded and scheduled {len(self._tasks)} tasks")
             except Exception as e:
+                print(f"DEBUG: Failed to load tasks: {e}")
                 logger.warning(f"Failed to load tasks: {e}")
-    
+
     def _save(self) -> None:
-        """Save tasks to disk."""
-        data = {}
-        for name, task in self._tasks.items():
-            data[name] = {
-                "name": task.name,
-                "skill": task.skill,
-                "trigger_type": task.trigger_type,
-                "cron_expr": task.cron_expr,
-                "interval_seconds": task.interval_seconds,
-                "inputs": task.inputs,
-                "enabled": task.enabled,
-                "notify_email": task.notify_email,
-                "notify_webhook": task.notify_webhook,
-            }
-        with open(self.storage_path, "w") as f:
-            json.dump(data, f, indent=2)
-    
-    def set_executor(self, callback: Callable) -> None:
-        """Set the callback that executes skills."""
-        self._executor_callback = callback
-    
-    def add_task(self, task: TaskDefinition) -> str:
-        """Add a task to the scheduler."""
-        if not APSCHEDULER_AVAILABLE:
-            raise RuntimeError("APScheduler not installed")
-        
-        self._tasks[task.name] = task
-        
+        """Save tasks to persistent storage."""
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    import json as _json_module
+                    for name, task in self._tasks.items():
+                        pg.execute(
+                            "INSERT INTO pg_scheduler.tasks (name, data, enabled) VALUES "
+                            "(%s, %s::jsonb, %s) ON CONFLICT (name) DO UPDATE SET data = EXCLUDED.data, enabled = EXCLUDED.enabled",
+                            (name, _json_module.dumps(task.to_dict()), task.enabled),
+                        )
+                    logger.debug(f"Saved {len(self._tasks)} tasks to PostgreSQL")
+                    return
+            except Exception:
+                pass
+        # fallback to JSON file
+        data = {name: task.to_dict() for name, task in self._tasks.items()}
+        with open(self.storage_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, default=str)
+        logger.debug(f"Saved {len(self._tasks)} tasks to {self.storage_path}")
+
+    def _schedule_job(self, task: TaskDefinition) -> None:
+        """Helper to add job to APScheduler."""
         job_id = f"task_{task.name}"
-        
         if task.trigger_type == "cron":
             trigger = CronTrigger.from_crontab(task.cron_expr)
         else:
@@ -257,8 +295,18 @@ class Scheduler:
             trigger=trigger,
             id=job_id,
             name=task.name,
+            args=[task.name],
             replace_existing=True,
         )
+
+    def add_task(self, task: TaskDefinition) -> str:
+        """Add a task to the scheduler."""
+        if not APSCHEDULER_AVAILABLE:
+            raise RuntimeError("APScheduler not installed")
+        
+        self._tasks[task.name] = task
+        if task.enabled:
+            self._schedule_job(task)
         
         self._save()
         logger.info(f"Scheduled task: {task.name} ({task.trigger_type})")
@@ -266,11 +314,19 @@ class Scheduler:
     
     def remove_task(self, name: str) -> bool:
         """Remove a task from the scheduler."""
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    pg.execute("DELETE FROM pg_scheduler.tasks WHERE name = %s", (name,))
+            except Exception:
+                pass
         if name in self._tasks:
             job_id = f"task_{name}"
             try:
                 self._aps_scheduler.remove_job(job_id)
-            except:
+            except Exception:
                 pass
             del self._tasks[name]
             self._save()
@@ -278,10 +334,63 @@ class Scheduler:
             return True
         return False
     
+    def toggle_task(self, name: str) -> Dict:
+        """Toggle a task's enabled state."""
+        if _DISTRIBUTED:
+            try:
+                from tools.postgres import get_pg_pool
+                pg = get_pg_pool()
+                if pg.available:
+                    task = self._tasks.get(name)
+                    if task:
+                        pg.execute(
+                            "UPDATE pg_scheduler.tasks SET enabled = %s WHERE name = %s",
+                            (not task.enabled, name),
+                        )
+            except Exception:
+                pass
+        if name not in self._tasks:
+            raise ValueError(f"Task not found: {name}")
+        task = self._tasks[name]
+        task.enabled = not task.enabled
+        job_id = f"task_{name}"
+        if task.enabled:
+            if task.trigger_type == "cron":
+                trigger = CronTrigger.from_crontab(task.cron_expr)
+            else:
+                trigger = IntervalTrigger(seconds=task.interval_seconds)
+            self._aps_scheduler.add_job(
+                self._execute_task,
+                trigger=trigger,
+                id=job_id,
+                name=task.name,
+                args=[task.name],
+                replace_existing=True,
+            )
+        else:
+            try:
+                self._aps_scheduler.remove_job(job_id)
+            except Exception:
+                pass
+        self._save()
+        return {"name": name, "enabled": task.enabled}
+    
     def list_tasks(self) -> List[Dict]:
         """List all scheduled tasks."""
-        jobs = self._aps_scheduler.get_jobs() if self._aps_scheduler else []
-        job_ids = {j.id: j.next_run_time for j in jobs}
+        job_ids = {}
+        
+        if self._aps_scheduler and self._aps_scheduler.running:
+            try:
+                jobs = self._aps_scheduler.get_jobs() or []
+                for j in jobs:
+                    try:
+                        next_time = getattr(j, 'next_run_time', None)
+                        job_ids[j.id] = next_time
+                    except Exception as e:
+                        logger.debug(f"Could not get next_run_time for job {j.id}: {e}")
+                        job_ids[j.id] = None
+            except Exception as e:
+                logger.warning(f"Could not get jobs: {e}")
         
         return [
             {
@@ -318,46 +427,49 @@ class Scheduler:
             "error": result.error,
         }
     
-    def _execute_task(self) -> None:
-        """Execute a scheduled task."""
-        for name, task in list(self._tasks.items()):
-            if not task.enabled:
-                continue
-            
-            logger.info(f"Executing scheduled task: {name}")
-            
-            started = datetime.utcnow()
-            status = "success"
-            output = None
-            error_msg = None
-            
-            try:
-                if self._executor_callback:
-                    output = self._executor_callback(task.skill, task.inputs)
-                else:
-                    output = {"status": "no_executor", "skill": task.skill}
-            except Exception as e:
-                status = "error"
-                error_msg = str(e)
-                logger.error(f"Task {name} failed: {e}")
-            
-            finished = datetime.utcnow()
-            
-            result = TaskResult(
-                name=name,
-                skill=task.skill,
-                started_at=started,
-                finished_at=finished,
-                status=status,
-                output=output,
-                error=error_msg,
-            )
-            
-            if name not in self._results:
-                self._results[name] = []
-            self._results[name].append(result)
-            
-            self._notifications.notify(task, result)
+    def _execute_task(self, name: str) -> None:
+        """Execute a specific scheduled task."""
+        task = self._tasks.get(name)
+        if not task or not task.enabled:
+            return
+        
+        logger.info(f"Executing scheduled task: {name}")
+        
+        started = datetime.now(timezone.utc)
+        status = "success"
+        output = None
+        error_msg = None
+        
+        try:
+            if self._executor_callback:
+                output = self._executor_callback(task.skill, task.inputs)
+            else:
+                output = {"status": "no_executor", "skill": task.skill}
+        except Exception as e:
+            status = "error"
+            error_msg = str(e)
+            logger.error(f"Task {name} failed: {e}")
+        
+        finished = datetime.now(timezone.utc)
+        
+        result = TaskResult(
+            name=name,
+            skill=task.skill,
+            started_at=started,
+            finished_at=finished,
+            status=status,
+            output=output,
+            error=error_msg,
+        )
+        
+        if name not in self._results:
+            self._results[name] = []
+        self._results[name].append(result)
+        # Cap history to prevent unbounded memory growth
+        if len(self._results[name]) > 100:
+            self._results[name] = self._results[name][-50:]
+        
+        self._notifications.notify(task, result)
     
     def start(self) -> None:
         """Start the scheduler."""

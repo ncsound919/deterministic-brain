@@ -8,8 +8,7 @@ import json
 import time
 import pytest
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from datetime import datetime
 
 
 METRICS_FILE = Path.home() / ".deterministic-brain" / "test_metrics.json"

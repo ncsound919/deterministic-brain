@@ -36,8 +36,7 @@ _SAFE_BUILTINS: dict[str, Any] = {
         'sorted': sorted, 'reversed': reversed, 'enumerate': enumerate,
         'zip': zip, 'map': map, 'filter': filter, 'sum': sum, 'min': min,
         'max': max, 'abs': abs, 'round': round, 'isinstance': isinstance,
-        'issubclass': issubclass, 'hasattr': hasattr, 'getattr': getattr,
-        'setattr': setattr, 'type': type, 'repr': repr, 'print': print,
+        'issubclass': issubclass, 'hasattr': hasattr, 'type': type, 'repr': repr, 'print': print,
         'TypeError': TypeError, 'ValueError': ValueError,
         'KeyError': KeyError, 'IndexError': IndexError,
         'AttributeError': AttributeError, 'StopIteration': StopIteration,
@@ -46,6 +45,15 @@ _SAFE_BUILTINS: dict[str, Any] = {
         'True': True, 'False': False, 'None': None,
     }
 }
+
+
+def _safe_getattr(obj: Any, name: str, default: Any = None) -> Any:
+    """Restricted getattr to prevent reaching dangerous internals."""
+    if name.startswith("_"):
+        raise AttributeError(f"Access to private attribute '{name}' is blocked")
+    return getattr(obj, name, default)
+
+_SAFE_BUILTINS['__builtins__']['getattr'] = _safe_getattr
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +92,18 @@ def execute_code(code: str, tests: list[str]) -> dict:
     """
     old_recursion = sys.getrecursionlimit()
     sys.setrecursionlimit(_MAX_RECURSION)
+
+    # 1. Static Analysis
+    analysis = static_analysis(code)
+    if not analysis['clean']:
+        return {
+            'passed': False,
+            'reason': 'security_blocked',
+            'stdout': '',
+            'errors': [f"Dangerous pattern detected: {', '.join(analysis['flags'])}"],
+            'tests_run': len(tests),
+            'tests_passed': 0,
+        }
 
     stdout = io.StringIO()
     scope: dict[str, Any] = dict(_SAFE_BUILTINS)

@@ -1,7 +1,7 @@
 """Stat calculation for DevPet — deterministic formulas."""
 from __future__ import annotations
 from math import floor
-from .models import DevPet, BattleStats, Tier
+from .models import DevPet, BattleStats
 
 
 def calculate_stats(pet: DevPet) -> BattleStats:

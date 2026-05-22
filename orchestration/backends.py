@@ -1,6 +1,7 @@
 """Skill backend adapters — unified interface for local and external skill systems."""
 from __future__ import annotations
 import os
+import re
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
@@ -8,6 +9,25 @@ from typing import Any, Dict, Optional
 logger = logging.getLogger(__name__)
 
 _BUILDS_DIR = "builds"
+
+_RE_CODE_BLOCK = re.compile(r"^```(\w*)\n(.*?)\n```", re.DOTALL | re.MULTILINE)
+_RE_FRONTMATTER = re.compile(r'^---\n(.*?)\n---\n', re.DOTALL)
+_RE_STRIP_FM = re.compile(r'^---\n.*?\n---\n', re.DOTALL)
+_RE_STEP = re.compile(r'## Step (\d+)\n(.*?)(?=\n## |\Z)', re.DOTALL)
+_RE_TEMPLATE = re.compile(r'Render template `([^`]+)`')
+_RE_WRITE = re.compile(r'Write result to `([^`]+)`')
+_RE_CODE_CMD = re.compile(r'`([^`]+)`')
+
+_ANTHROPIC_CLIENT = None
+
+
+def _get_anthropic_client(api_key: str) -> Any:
+    """Lazily create and cache an Anthropic client (thread-safe by GIL on init)."""
+    global _ANTHROPIC_CLIENT
+    if _ANTHROPIC_CLIENT is None and api_key:
+        import anthropic
+        _ANTHROPIC_CLIENT = anthropic.Anthropic(api_key=api_key)
+    return _ANTHROPIC_CLIENT
 
 
 class SkillBackend(ABC):
@@ -60,21 +80,24 @@ class LocalSkillBackend(SkillBackend):
     def run(self, skill_id: str, task: Dict, context: Dict) -> Dict[str, Any]:
         from tools.file_io import file_write
         from jinja2 import Template
-        import re
 
-        skill_path = os.path.join(self.skill_packs_root, skill_id, "skill.md")
-        alt_path = os.path.join(self.skill_packs_root, skill_id, "SKILL.md")
-        if not os.path.exists(skill_path) and os.path.exists(alt_path):
-            skill_path = alt_path
-        if not os.path.exists(skill_path):
-            # Try nested path lookup
-            for root, dirs, files in os.walk(self.skill_packs_root):
-                for d in dirs:
-                    for ext in ("skill.md", "SKILL.md"):
-                        candidate = os.path.join(root, d, ext)
-                        if os.path.exists(candidate) and skill_id in candidate:
-                            skill_path = candidate
-                            break
+        # Use path from metadata if available (avoids os.walk re-scan)
+        skill_path = task.get("_skill_path", "")
+        if skill_path and os.path.exists(skill_path):
+            pass
+        else:
+            skill_path = os.path.join(self.skill_packs_root, skill_id, "skill.md")
+            alt_path = os.path.join(self.skill_packs_root, skill_id, "SKILL.md")
+            if not os.path.exists(skill_path) and os.path.exists(alt_path):
+                skill_path = alt_path
+            if not os.path.exists(skill_path):
+                for root, dirs, files in os.walk(self.skill_packs_root):
+                    for d in dirs:
+                        for ext in ("skill.md", "SKILL.md"):
+                            candidate = os.path.join(root, d, ext)
+                            if os.path.exists(candidate) and skill_id in candidate:
+                                skill_path = candidate
+                                break
 
         if not os.path.exists(skill_path):
             return {
@@ -89,11 +112,9 @@ class LocalSkillBackend(SkillBackend):
 
         front_matter, steps = self._parse_skill_md(content)
 
-        # If no executable ## Step blocks and no code blocks, try LLM fallback
+        # If no executable ## Step blocks, try deterministic extraction before LLM
         if not steps:
-            code_blocks = re.findall(
-                r"```(\w+)?\n(.*?)```", content, re.DOTALL
-            )
+            code_blocks = _RE_CODE_BLOCK.findall(content)
             if code_blocks:
                 artifacts = [
                     {"lang": lang or "text", "content": code.strip()}
@@ -107,6 +128,22 @@ class LocalSkillBackend(SkillBackend):
                         f"Extracted {len(artifacts)} code blocks from skill.md",
                         *[f"  [{a['lang']}] {len(a['content'])} chars" for a in artifacts],
                     ],
+                }
+
+            # Fallback: extract plain Python/script from skill body (no code blocks)
+            body = _RE_STRIP_FM.sub('', content).strip()
+            code_lines = [l for l in body.split('\n') if l.strip() and not l.strip().startswith('#')]
+            if code_lines and any(
+                l.lstrip().startswith(prefix)
+                for prefix in ('def ', 'class ', 'import ', 'from ', 'print(', 'return ', 'if ', 'for ', 'while ')
+                for l in code_lines
+            ):
+                extracted = '\n'.join(code_lines)
+                return {
+                    "success": True,
+                    "output": f"Skill: {skill_id} — extracted {len(code_lines)} lines of code",
+                    "artifacts": [{"lang": "python", "content": extracted}],
+                    "logs": [f"Extracted {len(code_lines)} lines of plain code from skill.md"],
                 }
 
             return self._llm_fallback(skill_id, content, task, context)
@@ -145,11 +182,10 @@ class LocalSkillBackend(SkillBackend):
         }
 
     def _parse_skill_md(self, content: str) -> tuple[Dict, list[Dict]]:
-        import re
         front_matter = {}
         steps = []
 
-        fm_match = re.match(r'^---\n(.*?)\n---\n', content, re.DOTALL)
+        fm_match = _RE_FRONTMATTER.match(content)
         if fm_match:
             import yaml
             try:
@@ -157,24 +193,23 @@ class LocalSkillBackend(SkillBackend):
             except Exception:
                 pass
 
-        step_pattern = r'## Step (\d+)\n(.*?)(?=\n## |\Z)'
-        for match in re.finditer(step_pattern, content, re.DOTALL):
+        for match in _RE_STEP.finditer(content):
             step_text = match.group(2).strip()
             step = {"description": step_text}
 
             # Parse "Render template `X` with context" → template action
-            tmpl_match = re.search(r'Render template `([^`]+)`', step_text)
+            tmpl_match = _RE_TEMPLATE.search(step_text)
             if tmpl_match:
                 step["template"] = tmpl_match.group(1)
 
             # Parse "Write result to `path`" → output path
-            write_match = re.search(r'Write result to `([^`]+)`', step_text)
+            write_match = _RE_WRITE.search(step_text)
             if write_match:
                 step["output"] = write_match.group(1)
 
             # Parse backtick content as command (fallback)
             if not step.get("template"):
-                code_match = re.search(r'`([^`]+)`', step_text)
+                code_match = _RE_CODE_CMD.search(step_text)
                 if code_match:
                     step["command"] = code_match.group(1)
 
@@ -192,10 +227,8 @@ class LocalSkillBackend(SkillBackend):
         return None
 
     def _llm_fallback(self, skill_id: str, skill_content: str, task: Dict, context: Dict) -> Dict[str, Any]:
-        """When a skill has no templates or code, use LLM to generate actual code."""
         import hashlib
         import time
-        import re
 
         user_query = task.get("raw", task.get("task", "build something"))
         soul_context = task.get("soul_context", "")
@@ -253,25 +286,25 @@ If writing HTML, include ALL styles inline in <style> tags — make it look prod
                     result = response
                 else:
                     raise Exception("OpenRouter not available")
-            except Exception:
-                pass
+            except Exception as _or_err:
+                logs.append(f"OpenRouter failed: {_or_err}, trying Anthropic fallback")
 
             # 3. Anthropic fallback
             if not result:
                 try:
+                    from config import cfg
                     import os as _os
                     ak = _os.getenv("ANTHROPIC_API_KEY", "")
                     if ak:
-                        import anthropic
-                        cl = anthropic.Anthropic(api_key=ak)
+                        cl = _get_anthropic_client(ak)
                         resp = cl.messages.create(
-                            model="claude-sonnet-4-5-20250514",
+                            model=cfg.model_coding,
                             max_tokens=4096,
                             system=prompt,
                             messages=[{"role": "user", "content": user_query}],
                         )
                         result = resp.content[0].text if resp.content else ""
-                        logs.append("Using Anthropic for code generation")
+                        logs.append(f"Using Anthropic ({cfg.model_coding}) for code generation")
                     else:
                         return {
                             "success": False,
@@ -295,7 +328,7 @@ If writing HTML, include ALL styles inline in <style> tags — make it look prod
                 "logs": ["ERROR: Empty response from LLM"],
             }
 
-        code_blocks = re.findall(r"```(\w*)\n(.*?)```", result, re.DOTALL)
+        code_blocks = _RE_CODE_BLOCK.findall(result)
         if not code_blocks:
             code_blocks = [("text", result)]
 
@@ -382,8 +415,7 @@ class ClaudeSkillBackend(SkillBackend):
             return self._fallback_to_openrouter(skill_id, task, context)
 
         try:
-            import anthropic
-            client = anthropic.Anthropic(api_key=self.api_key)
+            client = _get_anthropic_client(self.api_key)
 
             system_prompt = self._build_skill_prompt(skill_id, context)
             user_message = task.get("raw", "")
@@ -636,21 +668,28 @@ class HermesSkillBackend(SkillBackend):
 
 
 _BACKENDS: Dict[str, SkillBackend] = {}
+_BACKENDS_LOCK = None
 
 
 def get_backend(backend_name: str) -> SkillBackend:
-    """Get or create a backend instance by name."""
+    """Get or create a backend instance by name (thread-safe)."""
+    global _BACKENDS_LOCK
+    if _BACKENDS_LOCK is None:
+        import threading
+        _BACKENDS_LOCK = threading.Lock()
     if backend_name not in _BACKENDS:
-        if backend_name == "local":
-            _BACKENDS[backend_name] = LocalSkillBackend()
-        elif backend_name == "claude":
-            _BACKENDS[backend_name] = ClaudeSkillBackend()
-        elif backend_name == "openclaw":
-            _BACKENDS[backend_name] = OpenClawSkillBackend()
-        elif backend_name == "hermes":
-            _BACKENDS[backend_name] = HermesSkillBackend()
-        else:
-            raise ValueError(f"Unknown backend: {backend_name}")
+        with _BACKENDS_LOCK:
+            if backend_name not in _BACKENDS:
+                if backend_name == "local":
+                    _BACKENDS[backend_name] = LocalSkillBackend()
+                elif backend_name == "claude":
+                    _BACKENDS[backend_name] = ClaudeSkillBackend()
+                elif backend_name == "openclaw":
+                    _BACKENDS[backend_name] = OpenClawSkillBackend()
+                elif backend_name == "hermes":
+                    _BACKENDS[backend_name] = HermesSkillBackend()
+                else:
+                    raise ValueError(f"Unknown backend: {backend_name}")
     return _BACKENDS[backend_name]
 
 

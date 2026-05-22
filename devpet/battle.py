@@ -3,9 +3,9 @@ from __future__ import annotations
 import random
 import hashlib
 from math import floor
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
-from .models import DevPet, BattleStats
+from .models import DevPet
 from .stats import get_available_skills
 
 
