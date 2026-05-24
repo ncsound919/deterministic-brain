@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, DollarSign, Briefcase, MessageSquare, Settings,
   Radio, ChevronRight, BarChart3, Zap, Image, Globe, Folder, Rocket, Music,
-  Brain, Code, Timer, Heart, MousePointer, FolderGit2, Clock, Cpu
+  Brain, Code, Timer, Heart, MousePointer, FolderGit2, Clock, Cpu, Target
 } from 'lucide-react';
 import { AppProvider, useAppContext, useKeyboardShortcuts, sessionManager } from './stateManager';
 import ToastNotifications from './components/ToastNotifications';
@@ -26,6 +26,7 @@ import BrowserAutomation from './pages/BrowserAutomation';
 import GitHubManager from './pages/GitHubManager';
 import ChatPage from './pages/Chat';
 import ModelsPage from './pages/Models';
+import AcquisitionTracker from './pages/AcquisitionTracker';
 
 const PAGES = [
   // ── Overview ──────────────────────────────────────────
@@ -49,6 +50,7 @@ const PAGES = [
   { id: 'media', label: 'Media', icon: Image, color: '#FFD700', section: 'Business' },
   { id: 'betting', label: 'Betting', icon: BarChart3, color: 'var(--accent)', section: 'Business' },
   { id: 'finance', label: 'Finance', icon: DollarSign, color: 'var(--warning)', section: 'Business' },
+  { id: 'acquisition', label: 'Acquisition', icon: Target, color: '#FF4500', section: 'Business' },
   
   // ── Tools ─────────────────────────────────────────────
   { id: 'browser', label: 'Browser', icon: MousePointer, color: '#00FF9F', section: 'Tools' },
@@ -74,6 +76,7 @@ const PAGE_MAP = {
   social: ContentSocial,
   betting: SportsBetting,
   finance: FinancePage,
+  acquisition: AcquisitionTracker,
   portal: Portal,
   settings: SettingsPage,
   chat: ChatPage,

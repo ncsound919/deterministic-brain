@@ -125,7 +125,7 @@ class SkillExecutor:
             if action == "render_template":
                 from jinja2 import Environment, FileSystemLoader
 
-                env = Environment(loader=FileSystemLoader("."))
+                env = Environment(loader=FileSystemLoader("."), autoescape=True)
                 tmpl = env.get_template(params["template"])
                 ctx["_rendered"] = tmpl.render(**ctx)
             elif action == "file_write":
@@ -168,7 +168,8 @@ class DeterministicCodingAgent:
         # New integrations
         try:
             self.priority_engine = PriorityEngine()
-        except Exception:
+        except Exception as e:
+            logger.warning("[dca_engine] PriorityEngine init failed — running without: %s", e)
             self.priority_engine = None
 
         # conservative default: allow up to 6 concurrent units
@@ -278,10 +279,8 @@ class DeterministicCodingAgent:
                 fragments = bank.query(raw, top_k=3) if raw else []
                 if fragments:
                     l2_score = sum(getattr(f, "confidence", 0.5) for f, _ in fragments) / len(fragments)
-        except Exception:
-            pass
-
-        # L3: evidence from session history
+        except Exception as e:
+            logger.debug("[dca_engine] L2 knowledge-bank score unavailable: %s", e)
         l3_score = 0.5
         try:
             sid = state.get("session_id", "")
@@ -291,10 +290,8 @@ class DeterministicCodingAgent:
                 if history:
                     successes = sum(1 for h in history if h.get("status") == "ok")
                     l3_score = min(1.0, successes / max(len(history), 1))
-        except Exception:
-            pass
-
-        # L3b: bias from ContextGraph causal history
+        except Exception as e:
+            logger.debug("[dca_engine] L3 session-history score unavailable: %s", e)
         try:
             if self.context_graph and skill_id:
                 raw_text = task.get("raw", task.get("task", ""))
@@ -307,10 +304,8 @@ class DeterministicCodingAgent:
                     avg_weight = sum(factor_weights.values()) / max(len(factor_weights), 1)
                     # Blend: L3 (session-local) + CG (cross-session historical)
                     l3_score = 0.7 * l3_score + 0.3 * min(1.0, avg_weight)
-        except Exception:
-            pass
-
-        # Only apply stacking if router has a matching route
+        except Exception as e:
+            logger.debug("[dca_engine] L3b context-graph causal score unavailable: %s", e)
         route_name = skill_id or "default"
         if route_name not in self.confidence_router.routes:
             def passthrough_primary(x):
@@ -419,10 +414,8 @@ class DeterministicCodingAgent:
                             f"Healer learned constraint: avoid '{pattern[:80]}' from {skill_ref}",
                         )
                     )
-        except Exception:
-            pass
-
-        return constraints
+        except Exception as e:
+            logger.debug("[dca_engine] Healer constraint load failed: %s", e)
 
     def _variable_domains(self, task: Dict):
         domains = {}

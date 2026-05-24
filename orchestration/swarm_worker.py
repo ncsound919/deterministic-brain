@@ -756,18 +756,22 @@ class SwarmWorker:
 # ── Singleton ───────────────────────────────────────────────────────────
 
 _WORKER: Optional[SwarmWorker] = None
+_WORKER_LOCK = threading.Lock()
 
 
 def get_swarm_worker() -> SwarmWorker:
     global _WORKER
     if _WORKER is None:
-        _WORKER = SwarmWorker()
+        with _WORKER_LOCK:
+            if _WORKER is None:
+                _WORKER = SwarmWorker()
     return _WORKER
 
 
 def reset_swarm_worker() -> SwarmWorker:
     global _WORKER
-    _WORKER = SwarmWorker()
+    with _WORKER_LOCK:
+        _WORKER = SwarmWorker()
     return _WORKER
 
 

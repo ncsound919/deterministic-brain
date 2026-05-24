@@ -192,3 +192,14 @@ export const toolsRegister = (name, type, config) =>
 export const toolsList = () => fetchJSON(`${BRAIN_API}/tools`);
 export const toolsExecute = (name, input) =>
   fetchJSON(`${BRAIN_API}/tools/${name}/execute`, { method: 'POST', body: JSON.stringify({ input }) });
+
+// ─── Acquisition Tracker ─────────────────────────────────────
+export const getAcquisitionStatus = () => fetchJSON(`${BRAIN_API}/api/acquisition/status`);
+export const getAcquisitionLog = () => fetchJSON(`${BRAIN_API}/api/acquisition/daily-log`);
+export const postAcquisitionLog = (data) => fetchJSON(`${BRAIN_API}/api/acquisition/daily-log`, { method: 'POST', body: JSON.stringify(data) });
+export const getAcquisitionProgress = () => fetchJSON(`${BRAIN_API}/api/acquisition/progress`);
+export const postAcquisitionProgress = (data) => fetchJSON(`${BRAIN_API}/api/acquisition/progress`, { method: 'POST', body: JSON.stringify(data) });
+export const getAcquisitionInsights = () => fetchJSON(`${BRAIN_API}/api/acquisition/insights`);
+export const postAcquisitionInsight = (data) => fetchJSON(`${BRAIN_API}/api/acquisition/insights`, { method: 'POST', body: JSON.stringify(data) });
+export const getAcquisitionMetrics = () => fetchJSON(`${BRAIN_API}/api/acquisition/metrics`);
+export const postAcquisitionMetrics = (data) => fetchJSON(`${BRAIN_API}/api/acquisition/metrics`, { method: 'POST', body: JSON.stringify(data) });

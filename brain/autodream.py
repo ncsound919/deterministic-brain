@@ -55,7 +55,6 @@ def _neo4j_driver():
 
 
 def analyze_session_patterns(db_path: str = "traces.db") -> Dict:
-    conn = _wal_conn(db_path)
     patterns = {
         "total_sessions": 0,
         "sessions_by_status": {},
@@ -66,41 +65,42 @@ def analyze_session_patterns(db_path: str = "traces.db") -> Dict:
     }
 
     try:
-        cursor = conn.execute("SELECT data FROM events WHERE event = 'handle'")
-        while True:
-            batch = cursor.fetchmany(500)
-            if not batch:
-                break
-            for (row,) in batch:
-                try:
-                    data = json.loads(row)
-                except Exception:
-                    continue
+        with closing(_wal_conn(db_path)) as conn:
+            cursor = conn.execute("SELECT data FROM events WHERE event = 'handle'")
+            while True:
+                batch = cursor.fetchmany(500)
+                if not batch:
+                    break
+                for (row,) in batch:
+                    try:
+                        data = json.loads(row)
+                    except Exception:
+                        continue
 
-            status = data.get("status", "unknown")
-            task_data = data.get("task", {})
-            lane = task_data.get("task", "unknown") if isinstance(task_data, dict) else "unknown"
-            conf = data.get("confidence", 0.0)
-            query = data.get("query", "")
+                    status = data.get("status", "unknown")
+                    task_data = data.get("task", {})
+                    lane = task_data.get("task", "unknown") if isinstance(task_data, dict) else "unknown"
+                    conf = data.get("confidence", 0.0)
+                    query = data.get("query", "")
 
-            patterns["total_sessions"] += 1
-            patterns["sessions_by_status"][status] = patterns["sessions_by_status"].get(status, 0) + 1
-            patterns["sessions_by_lane"][lane] = patterns["sessions_by_lane"].get(lane, 0) + 1
+                    patterns["total_sessions"] += 1
+                    patterns["sessions_by_status"][status] = patterns["sessions_by_status"].get(status, 0) + 1
+                    patterns["sessions_by_lane"][lane] = patterns["sessions_by_lane"].get(lane, 0) + 1
 
-            if lane not in patterns["avg_confidence"]:
-                patterns["avg_confidence"][lane] = []
-            patterns["avg_confidence"][lane].append(conf)
+                    if lane not in patterns["avg_confidence"]:
+                        patterns["avg_confidence"][lane] = []
+                    patterns["avg_confidence"][lane].append(conf)
 
-            if status in ("failed", "low_confidence", "blocked"):
-                patterns["failed_queries"].append({
-                    "query": query[:100],
-                    "status": status,
-                    "confidence": conf,
-                })
+                    if status in ("failed", "low_confidence", "blocked"):
+                        patterns["failed_queries"].append({
+                            "query": query[:100],
+                            "status": status,
+                            "confidence": conf,
+                        })
 
-            for word in query.lower().split():
-                if len(word) > 3:
-                    patterns["common_keywords"][word] = patterns["common_keywords"].get(word, 0) + 1
+                    for word in query.lower().split():
+                        if len(word) > 3:
+                            patterns["common_keywords"][word] = patterns["common_keywords"].get(word, 0) + 1
 
         for lane in patterns["avg_confidence"]:
             vals = patterns["avg_confidence"][lane]
@@ -111,9 +111,8 @@ def analyze_session_patterns(db_path: str = "traces.db") -> Dict:
         )
 
     except Exception as e:
+        logger.exception("[autodream] analyze_session_patterns failed")
         patterns["error"] = str(e)
-    finally:
-        conn.close()
 
     return patterns
 
@@ -243,8 +242,6 @@ def vacuum_traces(db_path: str = "traces.db", retention_days: int = 30, dry_run:
 
 
 def analyze_and_correct(config_file: str = ".autodream_corrections.jsonl") -> List[Dict]:
-    conn = _wal_conn("traces.db")
-
     # Read existing corrections to avoid duplicates
     existing_patterns = set()
     if os.path.exists(config_file):
@@ -262,38 +259,39 @@ def analyze_and_correct(config_file: str = ".autodream_corrections.jsonl") -> Li
             pass
 
     corrections = []
+    new_corrections = []
 
     try:
-        rows = conn.execute(
-            "SELECT data FROM events WHERE event = 'handle' "
-            "AND (data LIKE '%\"status\": \"failed\"%' OR data LIKE '%\"status\": \"low_confidence\"%')"
-        ).fetchall()
+        with closing(_wal_conn("traces.db")) as conn:
+            rows = conn.execute(
+                "SELECT data FROM events WHERE event = 'handle' "
+                "AND (data LIKE '%\"status\": \"failed\"%' OR data LIKE '%\"status\": \"low_confidence\"%')"
+            ).fetchall()
 
-        for r in rows:
-            try:
-                data = json.loads(r[0])
-            except Exception:
-                continue
+            for r in rows:
+                try:
+                    data = json.loads(r[0])
+                except Exception:
+                    continue
 
-            query = data.get("query", "")
-            reasoning = data.get("reasoning", {})
-            chosen = reasoning.get("chosen_skill", "")
+                query = data.get("query", "")
+                reasoning = data.get("reasoning", {})
+                chosen = reasoning.get("chosen_skill", "")
 
-            if not chosen:
-                continue
+                if not chosen:
+                    continue
 
-            keywords = list(set(w.lower() for w in query.split() if len(w) > 3))[:5]
-            correction = {
-                "ts": datetime.utcnow().isoformat(),
-                "pattern_keywords": keywords,
-                "failed_skill": chosen,
-                "confidence": reasoning.get("confidence", 0.0),
-                "suggested_action": "review_skill_selection",
-            }
-            corrections.append(correction)
+                keywords = list(set(w.lower() for w in query.split() if len(w) > 3))[:5]
+                correction = {
+                    "ts": datetime.utcnow().isoformat(),
+                    "pattern_keywords": keywords,
+                    "failed_skill": chosen,
+                    "confidence": reasoning.get("confidence", 0.0),
+                    "suggested_action": "review_skill_selection",
+                }
+                corrections.append(correction)
 
         # Filter out duplicates
-        new_corrections = []
         for c in corrections:
             pattern_key = json.dumps(c.get("pattern_keywords", []), sort_keys=True)
             if pattern_key not in existing_patterns:
@@ -306,9 +304,8 @@ def analyze_and_correct(config_file: str = ".autodream_corrections.jsonl") -> Li
                     f.write(json.dumps(c) + "\n")
 
     except Exception as e:
+        logger.exception("[autodream] analyze_and_correct failed")
         new_corrections = [{"error": str(e)}]
-    finally:
-        conn.close()
 
     return new_corrections
 

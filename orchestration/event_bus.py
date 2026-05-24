@@ -65,11 +65,11 @@ class EventBus:
                         try:
                             data = json.loads(message)
                             callback(**data)
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("EventBus: Redis subscriber %s failed: %s", callback, exc)
                     r.subscribe(f"event:{event_type}", redis_callback)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("EventBus: Redis subscribe unavailable for %s: %s", event_type, exc)
 
     def unsubscribe(self, event_type: str, callback: Callable) -> None:
         with self._lock:
@@ -100,8 +100,8 @@ class EventBus:
                 if r.available:
                     import json
                     r.publish(f"event:{event_type}", json.dumps({"ts": time.time(), **data}, default=str))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("EventBus: Redis publish failed for %s: %s", event_type, exc)
 
     def recent_events(self, limit: int = 100) -> List[Dict]:
         with self._lock:
