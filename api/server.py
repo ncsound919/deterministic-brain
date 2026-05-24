@@ -116,6 +116,8 @@ from api.routes.evolution import router as evolution_router
 from api.routes.social import router as social_router
 from api.routes.media import router as media_router
 from api.routes.knowledge import router as knowledge_router
+from api.routes.agi import router as agi_router
+from api.routes.acquisition import router as acquisition_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -248,6 +250,8 @@ app.include_router(evolution_router)
 app.include_router(social_router)
 app.include_router(media_router)
 app.include_router(knowledge_router)
+app.include_router(agi_router)
+app.include_router(acquisition_router)
 
 # Notifications
 try:
