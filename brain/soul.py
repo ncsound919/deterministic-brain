@@ -98,8 +98,9 @@ class Soul:
             )
             return False
         try:
-            with open(self.path, encoding="utf-8") as f:
-                data = yaml.safe_load(f) or {}
+            with _soul_lock:
+                with open(self.path, encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
         except yaml.YAMLError as e:
             logger.error("[soul] Failed to parse .soul.yaml: %s", e)
             return False
@@ -163,64 +164,69 @@ class Soul:
         return True
 
     def save(self) -> bool:
-        data = {
-            "identity": {
-                "name": self.name,
-                "role": self.role,
-                "timezone": self.timezone,
-                "pronouns": self.pronouns,
-            },
-            "agenda": {
-                "mission": self.mission,
-                "goals": self.goals,
-                "anti_goals": self.anti_goals,
-                "autonomous_directives": self.autonomous_directives,
-            },
-            "context": {
-                "expertise": self.expertise,
-                "learning": self.learning,
-                "stack": {
-                    "languages": self.stack_languages,
-                    "frameworks": self.stack_frameworks,
-                    "tools": self.stack_tools,
+        with _soul_lock:
+            data = {
+                "identity": {
+                    "name": self.name,
+                    "role": self.role,
+                    "timezone": self.timezone,
+                    "pronouns": self.pronouns,
                 },
-                "notes": self.notes,
-            },
-            "preferences": {
-                "code_style": self.code_style,
-                "naming": self.naming,
-                "testing": self.testing,
-                "deploy": self.deploy,
-                "communication": {
-                    "verbosity": self.verbosity,
-                    "tone": self.tone,
+                "agenda": {
+                    "mission": self.mission,
+                    "goals": self.goals,
+                    "anti_goals": self.anti_goals,
+                    "autonomous_directives": self.autonomous_directives,
                 },
-            },
-            "knowledge_sources": self.knowledge_sources,
-            "project_templates": self.project_templates,
-            "meta": {
-                "version": self.meta_version,
-                "created": self.meta_created or time.strftime("%Y-%m-%d %H:%M"),
-                "updated": time.strftime("%Y-%m-%d %H:%M"),
-                "sessions": self.meta_sessions + 1,
-            },
-        }
-        try:
-            fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(self.path) or ".", suffix=".soul.tmp")
+                "context": {
+                    "expertise": self.expertise,
+                    "learning": self.learning,
+                    "stack": {
+                        "languages": self.stack_languages,
+                        "frameworks": self.stack_frameworks,
+                        "tools": self.stack_tools,
+                    },
+                    "notes": self.notes,
+                },
+                "preferences": {
+                    "code_style": self.code_style,
+                    "naming": self.naming,
+                    "testing": self.testing,
+                    "deploy": self.deploy,
+                    "communication": {
+                        "verbosity": self.verbosity,
+                        "tone": self.tone,
+                    },
+                },
+                "knowledge_sources": self.knowledge_sources,
+                "project_templates": self.project_templates,
+                "meta": {
+                    "version": self.meta_version,
+                    "created": self.meta_created or time.strftime("%Y-%m-%d %H:%M"),
+                    "updated": time.strftime("%Y-%m-%d %H:%M"),
+                    "sessions": self.meta_sessions + 1,
+                },
+            }
             try:
-                with os.fdopen(fd, "w", encoding="utf-8") as f:
-                    yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-                if os.path.exists(self.path):
-                    bak_path = self.path + ".bak"
-                    os.replace(self.path, bak_path)
-                os.replace(tmp_path, self.path)
-            except Exception:
-                os.unlink(tmp_path)
-                raise
-            return True
-        except Exception as e:
-            logger.error("[soul] Soul save failed: %s", e)
-            return False
+                fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(self.path) or ".", suffix=".soul.tmp")
+                try:
+                    with os.fdopen(fd, "w", encoding="utf-8") as f:
+                        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+                    if os.path.exists(self.path):
+                        bak_path = self.path + ".bak"
+                        os.replace(self.path, bak_path)
+                    os.replace(tmp_path, self.path)
+                    return True
+                except Exception:
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+                    os.unlink(tmp_path)
+                    raise
+            except Exception as e:
+                logger.error("[soul] Soul save failed: %s", e)
+                return False
 
     def pulse(self) -> Dict:
         """Called on every session start. Increments session counter, saves."""

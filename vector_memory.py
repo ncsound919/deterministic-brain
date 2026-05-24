@@ -129,10 +129,7 @@ class VectorMemory:
     ) -> str:
         """Add a learned skill to memory"""
         # Create a deterministic UUID for the skill based on its name
-        import hashlib
-        m = hashlib.md5()
-        m.update(name.encode('utf-8'))
-        entry_id = str(uuid.UUID(m.hexdigest()))
+        entry_id = str(uuid.uuid5(uuid.NAMESPACE_OID, name))
 
         content = f"{name}: {description}\nWorkflow: {workflow}"
         embedding = self.embedder.encode(content).tolist()
