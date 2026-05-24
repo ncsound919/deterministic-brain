@@ -102,3 +102,20 @@ class BaseAdapter:
 
     async def health(self) -> AdapterCallResult:
         raise NotImplementedError
+
+    async def execute(
+        self,
+        action: str,
+        payload: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> AdapterCallResult:
+        """Execute a normalized adapter action.
+
+        Each adapter can map generic Governor actions to the target system's
+        concrete API and return a normalized AdapterCallResult.
+        """
+        raise NotImplementedError(f"{self.name} adapter does not support execute() for action='{action}'")
+
+    @property
+    def supported_actions(self) -> List[str]:
+        return []

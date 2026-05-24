@@ -79,6 +79,46 @@ class AetherDeskAdapter(BaseAdapter):
                 logger.warning("AetherDesk health check failed: %s", e)
                 return AdapterCallResult(ok=False, status_code=0, data=None, error=str(e))
 
+    async def execute(self, action: str, payload: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None) -> AdapterCallResult:
+        payload = payload or {}
+        try:
+            if action in ("call_center", "campaign_stats"):
+                stats = await self.get_campaign_stats()
+                return AdapterCallResult(ok=True, status_code=200, data={
+                    "id": stats.id,
+                    "status": stats.status,
+                    "leads_queued": stats.leads_queued,
+                })
+
+            if action in ("usage", "usage_report", "billing"):
+                report = await self.get_usage_and_billing()
+                return AdapterCallResult(ok=True, status_code=200, data={
+                    "calls": report.calls,
+                    "minutes": report.minutes,
+                    "cost": report.cost,
+                })
+
+            if action in ("launch_campaign", "campaign_launch"):
+                config_data = payload.get("config", {}) or payload
+                config = CampaignConfig(
+                    profile_id=str(config_data.get("profile_id", "default")),
+                    max_concurrent=int(config_data.get("max_concurrent", 1)),
+                    delay_between_calls=float(config_data.get("delay_between_calls", 1.0)),
+                    filter_status=str(config_data.get("filter_status", "new")),
+                    lead_limit=int(config_data.get("lead_limit", 10)),
+                    tenant_id=str(config_data.get("tenant_id", "TENANT-001")),
+                )
+                status = await self.launch_campaign(config, payload.get("idempotency_key", ""))
+                return AdapterCallResult(ok=True, status_code=200, data={
+                    "id": status.id,
+                    "status": status.status,
+                    "leads_queued": status.leads_queued,
+                })
+
+            raise NotImplementedError(f"AetherDeskAdapter does not support action '{action}'")
+        except Exception as e:
+            return AdapterCallResult(ok=False, status_code=0, data=None, error=str(e))
+
     # ---- Stats / usage ---- #
 
     async def get_campaign_stats(self) -> CampaignStats:

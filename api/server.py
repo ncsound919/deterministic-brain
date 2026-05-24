@@ -28,6 +28,8 @@ from tools.web_fetcher import web_fetch
 from tools.relay import relay
 from api.middleware import RequestLoggingMiddleware, get_route_stats
 from tools.metrics import get_metrics
+from adapters.bbtech import BBTechAdapter
+from governor import get_governor
 import logging as _api_log
 _api_logger = _api_log.getLogger(__name__)
 
@@ -41,6 +43,47 @@ _API_PORT = int(os.environ.get("API_PORT", 8000))
 
 # Bundle config cache (avoid YAML parse on every /bundles request)
 _BUNDLES_CACHE = {"mtime": 0, "bundles": []}
+
+# BB-Tech Adapter (shared instance for research workflow routing)
+_bbtech_adapter = BBTechAdapter(
+    base_url=os.environ.get("BBTECH_API_URL", "http://127.0.0.1:8005"),
+    api_key=os.environ.get("BBTECH_API_KEY", "pipeline-key-dev"),
+)
+
+# OpenHub Adapter (shared instance for developer workflow routing)
+from adapters.openhub import OpenHubAdapter
+_openhub_adapter = OpenHubAdapter(
+    base_url=os.environ.get("OPENHUB_API_URL", "http://127.0.0.1:3001"),
+)
+
+# AetherDesk Adapter (shared instance for call center routing)
+from adapters.aetherdesk import AetherDeskAdapter
+_aetherdesk_adapter = AetherDeskAdapter(
+    base_url=os.environ.get("AETHERDESK_API_URL", "http://127.0.0.1:3002"),
+    api_key=os.environ.get("AETHERDESK_API_KEY", "dev-key"),
+)
+
+# Uplift-Venture Adapter (shared instance for business operations)
+from adapters.uplift_venture import UpliftVentureAdapter
+_uplift_adapter = UpliftVentureAdapter(
+    base_url=os.environ.get("UPLIFT_API_URL", "http://127.0.0.1:3003"),
+)
+
+# UL2 Adapter (shared instance for community platform)
+from adapters.ul2 import UL2Adapter
+_ul2_adapter = UL2Adapter(
+    base_url=os.environ.get("UL2_API_URL", "http://127.0.0.1:3004"),
+)
+
+# Inject adapters into the deterministic governor once, so the route handler
+# can dispatch through a shared adapter registry rather than creating clients
+# on each request.
+_governor = get_governor()
+_governor.register_adapter("bb-tech", _bbtech_adapter)
+_governor.register_adapter("openhub", _openhub_adapter)
+_governor.register_adapter("aetherdesk", _aetherdesk_adapter)
+_governor.register_adapter("uplift-venture", _uplift_adapter)
+_governor.register_adapter("ul2", _ul2_adapter)
 
 def _get_bundles_cached():
     import yaml
@@ -141,6 +184,8 @@ async def lifespan(app: FastAPI):
                 _api_logger.warning("Redis backend: unavailable — using in-memory fallback")
         except Exception as e:
             _api_logger.warning("Redis backend: error — %s", e)
+    # Register daily research pipeline
+    _register_daily_research()
     yield
     _close_sqlite_connections()
 
@@ -178,6 +223,15 @@ def _close_sqlite_connections():
         from devpet.tracker import DevPetTracker
     except Exception:
         pass
+
+
+def _register_daily_research():
+    _api_logger.info(
+        "Research pipeline available via: "
+        "POST /workflows/research/run (ad-hoc), "
+        "POST /governor/route (routed), "
+        "DailyOrchestrator.run_deep_research() (scheduled)"
+    )
 
 
 app = FastAPI(title="Deterministic Brain", version="2.5.0", lifespan=lifespan)
@@ -2284,8 +2338,18 @@ _GOVERNOR_ROUTES = [
     {"patterns": ["research", "simulation", "clinical", "archetype", "playbook", "bio", "genome"], "target": "bb-tech", "action": "research_experiment"},
 ]
 
+_GOVERNOR_ADAPTERS = {
+    "bb-tech": _bbtech_adapter,
+    "openhub": _openhub_adapter,
+    "aetherdesk": _aetherdesk_adapter,
+    "uplift-venture": _uplift_adapter,
+    "ul2": _ul2_adapter,
+}
+
 class GovernorRouteRequest(BaseModel):
     task: str
+    target: Optional[str] = None
+    action: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
 
 class GovernorActionRequest(BaseModel):
@@ -2295,8 +2359,38 @@ class GovernorActionRequest(BaseModel):
 class GovernorModeRequest(BaseModel):
     mode: str
 
+async def _execute_governor_adapter(target: str, action: str, task: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    adapter = _GOVERNOR_ADAPTERS.get(target)
+    if adapter is None:
+        return {"status": "failed", "error": f"Unknown governor target: {target}"}
+
+    payload = {
+        "task": task,
+        "context": context,
+        "spec": task[:200],
+        "idempotency_key": context.get("idempotency_key", f"gov-{int(time.time())}"),
+        "module": context.get("module", "workforce"),
+        "feature": context.get("feature", "education"),
+        "target_type": context.get("target_type", "product"),
+        "target_ids": context.get("target_ids", task.split()),
+        "days_back": context.get("days_back", 1),
+    }
+    try:
+        result = await adapter.execute(action, payload, context)
+    except NotImplementedError as e:
+        return {"status": "failed", "error": str(e)}
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
+
+    return {
+        "status": "completed" if result.ok else "failed",
+        "status_code": result.status_code,
+        "data": result.data,
+        "error": result.error,
+    }
+
 @app.post("/governor/route")
-def governor_route(req: GovernorRouteRequest) -> Dict:
+async def governor_route(req: GovernorRouteRequest) -> Dict:
     task_lower = req.task.lower()
     context = req.context or {}
 
@@ -2306,20 +2400,30 @@ def governor_route(req: GovernorRouteRequest) -> Dict:
         if score > best_match["score"]:
             best_match = {**route, "score": score}
 
+    target = (req.target or best_match["target"]).lower()
+    action = req.action or best_match["action"]
+    if req.target and not req.action:
+        target_action = next((route["action"] for route in _GOVERNOR_ROUTES if route["target"] == target), None)
+        if target_action:
+            action = target_action
+
+    if target not in _GOVERNOR_ADAPTERS:
+        raise HTTPException(status_code=400, detail=f"Unknown governor target: {target}")
+
     confidence = min(0.95, 0.5 + best_match["score"] * 0.1)
     amount = context.get("amount", 0)
     requires_oversight = confidence < 0.7 or amount > 500
 
     decision = {
-        "target_system": best_match["target"],
-        "action": best_match["action"],
+        "target_system": target,
+        "action": action,
         "confidence": round(confidence, 2),
         "requires_oversight": requires_oversight,
         "oversight_mode": _governor_state["mode"] if requires_oversight else "none",
     }
 
     if requires_oversight and _governor_state["mode"] == "checkpoint":
-        esc_id = f"ESC-{int(time.time())}-{best_match['target'][:3]}"
+        esc_id = f"ESC-{int(time.time())}-{target[:3]}"
         _governor_state["queue"].append({
             "id": esc_id,
             "task": req.task,
@@ -2329,6 +2433,8 @@ def governor_route(req: GovernorRouteRequest) -> Dict:
         })
         return {"status": "awaiting_oversight", "escalation_id": esc_id, "decision": decision}
 
+    execution = await _execute_governor_adapter(target, action, req.task, context)
+    decision["execution"] = execution
     return {"status": "routed", "decision": decision}
 
 @app.post("/governor/approve")
@@ -2368,6 +2474,83 @@ def governor_mode(req: GovernorModeRequest) -> Dict:
         raise HTTPException(status_code=400, detail="Invalid mode. Must be shadow, checkpoint, or recovery")
     _governor_state["mode"] = req.mode
     return {"status": "updated", "mode": req.mode}
+
+
+# ── Research Workflow API ─────────────────────────────────────────
+_workflow_store: Dict[str, Dict] = {}
+
+class RunResearchRequest(BaseModel):
+    experiment_id: str = ""
+    target_type: str = "product"
+    target_ids: list[str] = []
+    state_codes: list[str] = ["ALL"]
+    days_back: int = 1
+    tenant: str = "northside-smoke"
+
+@app.post("/workflows/research/run")
+async def workflow_run_research(req: RunResearchRequest) -> Dict:
+    from workflows.research_experiment import (
+        ResearchExperiment, ExperimentStatus, ExperimentEntryMode, ResearchInput,
+    )
+    experiment = ResearchExperiment(
+        experiment_id=req.experiment_id or f"wf-{int(time.time())}",
+        entry_mode=ExperimentEntryMode.ADHOC,
+        status=ExperimentStatus.PENDING,
+        input=ResearchInput(
+            target_type=req.target_type,
+            target_ids=req.target_ids,
+            state_codes=req.state_codes,
+            days_back=req.days_back,
+            tenant=req.tenant,
+        ),
+    )
+    experiment.status = ExperimentStatus.RUNNING
+    experiment.add_provenance(hop="workflow-api", action="user_triggered")
+    result = await _bbtech_adapter.run_pipeline(experiment.input)
+    if result.ok:
+        experiment.status = ExperimentStatus.COMPLETED
+        experiment.result_summary = result.data or {}
+    else:
+        experiment.status = ExperimentStatus.FAILED
+        experiment.error = result.error
+    experiment.completed_at = datetime.utcnow().isoformat()
+    _workflow_store[experiment.experiment_id] = experiment.to_dict()
+    return {"status": "ok", "experiment": experiment.to_dict()}
+
+@app.get("/workflows/research/{experiment_id}/status")
+def workflow_research_status(experiment_id: str) -> Dict:
+    exp = _workflow_store.get(experiment_id)
+    if not exp:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return {"status": "ok", "experiment_id": experiment_id, "experiment_status": exp.get("status")}
+
+@app.get("/workflows/research/{experiment_id}/results")
+def workflow_research_results(experiment_id: str) -> Dict:
+    exp = _workflow_store.get(experiment_id)
+    if not exp:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return {
+        "status": "ok",
+        "experiment_id": experiment_id,
+        "result_summary": exp.get("result_summary", {}),
+        "artifacts": exp.get("artifacts", []),
+        "provenance": exp.get("provenance", []),
+        "completed_at": exp.get("completed_at"),
+    }
+
+@app.get("/workflows/research/latest")
+async def workflow_research_latest() -> Dict:
+    result = await _bbtech_adapter.get_latest_pipeline_run()
+    if not result.ok:
+        raise HTTPException(status_code=502, detail="BB-Tech unreachable")
+    return {"status": "ok", "pipeline": result.data}
+
+@app.get("/workflows/research/criteria")
+async def workflow_research_criteria() -> Dict:
+    result = await _bbtech_adapter.get_quality_criteria()
+    if not result.ok:
+        raise HTTPException(status_code=502, detail="BB-Tech unreachable")
+    return {"status": "ok", "criteria": result.data}
 
 
 # ── Autonomy Enhanced ─────────────────────────────────────────────

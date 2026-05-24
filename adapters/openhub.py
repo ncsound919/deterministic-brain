@@ -58,6 +58,42 @@ class OpenHubAdapter(BaseAdapter):
         except Exception as e:
             return AdapterCallResult(ok=False, status_code=0, data=None, error=str(e))
 
+    async def execute(self, action: str, payload: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None) -> AdapterCallResult:
+        payload = payload or {}
+        try:
+            if action in ("pipeline", "run_pipeline", "trigger_pipeline"):
+                spec = payload.get("spec", payload.get("task", ""))
+                idempotency_key = payload.get("idempotency_key", "")
+                result = await self.trigger_pipeline(spec=spec, idempotency_key=idempotency_key)
+                return AdapterCallResult(ok=True, status_code=200, data={
+                    "pipeline_id": result.pipeline_id,
+                    "status": result.status,
+                    "files_generated": result.files_generated,
+                })
+
+            if action in ("velocity", "project_velocity"):
+                since = payload.get("since")
+                if isinstance(since, str):
+                    try:
+                        since = datetime.fromisoformat(since)
+                    except Exception:
+                        since = datetime.utcnow()
+                if since is None:
+                    since = datetime.utcnow()
+                report = await self.get_project_velocity(since)
+                return AdapterCallResult(ok=True, status_code=200, data={
+                    "commits_today": report.commits_today,
+                    "deploys_today": report.deploys_today,
+                    "tests_passed": report.tests_passed,
+                    "tests_failed": report.tests_failed,
+                    "pipelines_completed": report.pipelines_completed,
+                    "avg_pipeline_duration_seconds": report.avg_pipeline_duration_seconds,
+                })
+
+            raise NotImplementedError(f"OpenHubAdapter does not support action '{action}'")
+        except Exception as e:
+            return AdapterCallResult(ok=False, status_code=0, data=None, error=str(e))
+
     async def get_pipeline_status(self) -> PipelineSummary:
         async with self._client() as client:
             resp = await client.get("/api/pipeline/status")
