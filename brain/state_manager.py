@@ -101,7 +101,7 @@ class StateManager:
                 return False
             conn = pg._pool.getconn()
             try:
-                conn.set_session(autocommit=False)
+                conn.autocommit = False
                 with conn.cursor() as cur:
                     cur.execute("SELECT data FROM pg_state.sessions WHERE session_id = %s FOR UPDATE", (session_id,))
                     row = cur.fetchone()
@@ -117,12 +117,14 @@ class StateManager:
                     )
                 conn.commit()
                 return True
-            except Exception:
+            except Exception as e:
                 conn.rollback()
+                logger.warning("PG update failed for session=%s: %s", session_id, e)
                 return False
             finally:
                 pg._pool.putconn(conn)
-        except Exception:
+        except Exception as e:
+            logger.warning("PG pool unavailable for session=%s: %s", session_id, e)
             return False
 
     def _save_to_pg(self, session_id: str, data: Dict) -> None:
@@ -190,21 +192,22 @@ class StateManager:
         Returns:
             True if successful
         """
-        if _DISTRIBUTED and self._current_session:
-            def _do_update(data):
-                data["state"].update(updates)
-                data["updated_at"] = datetime.utcnow().isoformat()
-            if self._update_in_pg(self._current_session, _do_update):
-                return True
         with self._lock:
-            if not self._current_session:
+            session_id = self._current_session
+            if _DISTRIBUTED and session_id:
+                def _do_update(data):
+                    data["state"].update(updates)
+                    data["updated_at"] = datetime.utcnow().isoformat()
+                if self._update_in_pg(session_id, _do_update):
+                    return True
+            if not session_id:
                 return False
-            session = self.load_session(self._current_session)
+            session = self.load_session(session_id)
             if not session:
                 return False
             session["state"].update(updates)
             session["updated_at"] = datetime.utcnow().isoformat()
-            self._save_session(self._current_session, session)
+            self._save_session(session_id, session)
             return True
 
     def append_history(self, entry: Dict[str, Any]) -> bool:
@@ -216,21 +219,22 @@ class StateManager:
         Returns:
             True if successful
         """
-        if _DISTRIBUTED and self._current_session:
-            def _do_update(data):
-                entry["timestamp"] = datetime.utcnow().isoformat()
-                data["history"].append(entry)
-            if self._update_in_pg(self._current_session, _do_update):
-                return True
         with self._lock:
-            if not self._current_session:
+            session_id = self._current_session
+            if _DISTRIBUTED and session_id:
+                def _do_update(data):
+                    entry["timestamp"] = datetime.utcnow().isoformat()
+                    data["history"].append(entry)
+                if self._update_in_pg(session_id, _do_update):
+                    return True
+            if not session_id:
                 return False
-            session = self.load_session(self._current_session)
+            session = self.load_session(session_id)
             if not session:
                 return False
             entry["timestamp"] = datetime.utcnow().isoformat()
             session["history"].append(entry)
-            self._save_session(self._current_session, session)
+            self._save_session(session_id, session)
             return True
 
     def add_artifact(self, artifact: Dict[str, Any]) -> bool:

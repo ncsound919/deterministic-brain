@@ -10,6 +10,7 @@ from loguru import logger
 import uuid
 import atexit
 import sys
+import threading
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
@@ -402,12 +403,15 @@ class VectorMemory:
 
 # Global vector memory instance
 _vector_memory_instance: Optional[VectorMemory] = None
+_vector_memory_lock = threading.Lock()
 
 def get_vector_memory() -> VectorMemory:
     """Get the shared VectorMemory instance, creating it on first use."""
     global _vector_memory_instance
     if _vector_memory_instance is None:
-        _vector_memory_instance = VectorMemory()
+        with _vector_memory_lock:
+            if _vector_memory_instance is None:
+                _vector_memory_instance = VectorMemory()
     return _vector_memory_instance
 
 class _LazyVectorMemoryProxy:

@@ -77,8 +77,9 @@ class MoERouter:
             full_path = os.path.join(base, path)
             skill_file = os.path.join(full_path, "skill.md")
             if not os.path.exists(skill_file):
-                return None
-        return path
+                return "general"
+            return path
+        return "general"
 
     def register(self, task_name: str, expert_path: str) -> None:
         """Dynamically register a new route at runtime."""
