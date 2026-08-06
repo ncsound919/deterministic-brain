@@ -187,11 +187,12 @@ class DecisionStore:
         return conn
 
     @classmethod
-    def get_instance(cls) -> "DecisionStore":
-        if cls._instance is None:
+    def get_instance(cls, db_path: Optional[Path] = None) -> "DecisionStore":
+        # A non-None db_path forces a fresh store (used by tests for isolation).
+        if cls._instance is None or db_path is not None:
             with cls._lock:
-                if cls._instance is None:
-                    cls._instance = cls()
+                if cls._instance is None or db_path is not None:
+                    cls._instance = cls(db_path if db_path is not None else DB_PATH)
         return cls._instance
 
     def _ensure_schema(self) -> None:

@@ -10,7 +10,6 @@ Analyses every incoming query and classifies it across three dimensions:
 The classifications are cached and stored in the session state so the
 permission layer and lane selector can use them without re-querying.
 """
-from __future__ import annotations
 import json
 from tools.llm.router import chat
 

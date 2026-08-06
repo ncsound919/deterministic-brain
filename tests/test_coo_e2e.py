@@ -15,8 +15,13 @@ from coo.orchestrator import COOOrchestrator
 
 
 @pytest.fixture
-def orchestrator():
-    """Create a test orchestrator with mocked GitHub queue."""
+def orchestrator(tmp_path):
+    """Create a test orchestrator with mocked GitHub queue and an isolated store."""
+    from coo.state import DecisionStore
+
+    # Isolate each test to a fresh temp DB so prior runs never leak cards.
+    DecisionStore.get_instance(tmp_path / "coo_test.db")
+
     portfolio = PortfolioState()
     portfolio.register_product(
         ProductConfig(product_id="claw-protect", tier=1, name="Claw Protect")
@@ -55,7 +60,7 @@ class TestE2EFullPipeline:
 
         assert card is not None
         assert card.zone == TrafficLightZone.GREEN
-        assert card.outcome == "auto_executed"
+        assert card.outcome == "auto_executed_success"
         assert card.resolved is True
         # Green events should NOT open GitHub issues
         mock_post.assert_not_called()

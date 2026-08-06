@@ -17,9 +17,53 @@ import asyncio
 import httpx
 
 from adapters.base import AdapterCallResult, BaseAdapter
-from workflows.research_experiment import (
-    ResearchExperiment, ExperimentStatus, ExperimentEntryMode, ResearchInput,
-)
+
+# `workflows.research_experiment` ships in the separate BB-Tech project and is
+# NOT vendored here. Fail-soft: the API server must boot without it, and the
+# research_experiment action reports a clear error until it's installed.
+try:  # pragma: no cover - depends on external repo
+    from workflows.research_experiment import (
+        ResearchExperiment, ExperimentStatus, ExperimentEntryMode, ResearchInput,
+    )
+    _WORKFLOWS_OK = True
+except ImportError:
+    _WORKFLOWS_OK = False
+
+    @dataclass
+    class ResearchInput:
+        """Fallback contract (fields derived from adapter usage)."""
+        target_type: str = "product"
+        target_ids: list = field(default_factory=list)
+        days_back: int = 1
+
+    class _EntryModeValue:
+        def __init__(self, value: str):
+            self.value = value
+
+    class ExperimentEntryMode:
+        ADHOC = _EntryModeValue("adhoc")
+        SCHEDULED = _EntryModeValue("scheduled")
+
+    class ExperimentStatus:
+        COMPLETED = "completed"
+        FAILED = "failed"
+        PENDING = "pending"
+
+    class ResearchExperiment:
+        """Fallback contract so the adapter imports; runtime use is blocked."""
+        def __init__(self, experiment_id: str = "", entry_mode=None, input=None, **kwargs):
+            self.experiment_id = experiment_id
+            self.entry_mode = entry_mode or ExperimentEntryMode.ADHOC
+            self.input = input or ResearchInput()
+            self.result_summary: Optional[dict] = None
+            self.error: Optional[str] = None
+            self.status = ExperimentStatus.PENDING
+            self.completed_at: Optional[str] = None
+            self.updated_at: Optional[str] = None
+            self._provenance: list = []
+
+        def add_provenance(self, hop: str, action: str, metadata: Optional[dict] = None):
+            self._provenance.append({"hop": hop, "action": action, "metadata": metadata or {}})
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +114,15 @@ class BBTechAdapter(BaseAdapter):
     async def execute(self, action: str, payload: Optional[dict] = None, context: Optional[dict] = None) -> AdapterCallResult:
         payload = payload or {}
         if action in ("research_experiment", "pipeline", "run_pipeline"):
-            from workflows.research_experiment import ResearchInput
+            if not _WORKFLOWS_OK:
+                return AdapterCallResult(
+                    ok=False, status_code=0, data=None,
+                    error="workflows.research_experiment not installed — it ships in the BB-Tech project.",
+                )
+            try:
+                from workflows.research_experiment import ResearchInput
+            except ImportError as exc:  # pragma: no cover - defensive
+                return AdapterCallResult(ok=False, status_code=0, data=None, error=str(exc))
 
             input_ = ResearchInput(
                 target_type=payload.get("target_type", "product"),

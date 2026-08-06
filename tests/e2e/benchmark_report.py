@@ -3,8 +3,6 @@ from __future__ import annotations
 import json, time, sys, traceback
 import requests
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 BASE = "http://localhost:8000"
 RESULTS = {}
 

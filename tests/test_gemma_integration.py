@@ -4,11 +4,18 @@ import pytest
 from tools.local_gemma import get_gemma
 
 
+def _require_gemma():
+    """Skip tests that need a running local llama-server (Gemma) at :8088."""
+    if not get_gemma().is_available():
+        pytest.skip("llama-server (Gemma) not running on localhost:8088")
+
+
 class TestGemmaIntegrationRouter:
     """Test Gemma integration in tools/llm/router.py."""
 
     def test_generate_text_via_gemma(self):
         """generate_text() should route to local Gemma and return a response."""
+        _require_gemma()
         from tools.llm.router import generate_text
         result = generate_text("What is 2+2? Answer in one number.")
         assert result and isinstance(result, str) and len(result) > 0
@@ -16,6 +23,7 @@ class TestGemmaIntegrationRouter:
 
     def test_generate_code_via_gemma(self):
         """generate_code() should route to local Gemma and return code."""
+        _require_gemma()
         from tools.llm.router import generate_code
         result = generate_code("Write a Python function that returns 'hello world'")
         assert result and len(result) > 0
@@ -85,6 +93,7 @@ class TestGemmaIntegrationBackend:
 
     def test_llm_fallback_prefers_gemma(self):
         """backends should try local Gemma before OpenRouter."""
+        _require_gemma()
         from orchestration.backends import LocalSkillBackend
         backend = LocalSkillBackend()
         task = {"raw": "build a hello world Python script"}
@@ -110,11 +119,13 @@ class TestGemmaEndToEnd:
 
     def test_gemma_health_check(self):
         """Verify Gemma is running and responsive."""
+        _require_gemma()
         gemma = get_gemma()
         assert gemma.is_available(), "Gemma/llama-server must be running at localhost:8088"
 
     def test_gemma_text_generation(self):
         """Gemma should generate coherent text completions."""
+        _require_gemma()
         gemma = get_gemma()
         result = gemma.complete("Python is a", n_predict=32, temperature=0.1)
         assert result and len(result) > 0
@@ -122,6 +133,7 @@ class TestGemmaEndToEnd:
 
     def test_gemma_json_parsing(self):
         """Gemma should produce parseable JSON when prompted."""
+        _require_gemma()
         gemma = get_gemma()
         prompt = (
             'Parse this into JSON: "Issue: password reset broken, Priority: high, ID: USR-123"\n'
@@ -132,6 +144,7 @@ class TestGemmaEndToEnd:
 
     def test_gemma_code_generation(self):
         """Gemma should generate simple code snippets."""
+        _require_gemma()
         gemma = get_gemma()
         prompt = "Write a one-line Python function hello() that returns 'hi':\n```python\n"
         result = gemma.complete(prompt, n_predict=64, temperature=0.1)

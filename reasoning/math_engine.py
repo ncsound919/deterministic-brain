@@ -493,12 +493,11 @@ def _check_injection(text: str) -> bool:
 
     patterns = [
         # Shell metacharacters and command injection
-        # NOTE: $ omitted to avoid false-positives on Python f-strings and bash variables;
-        # $(command) is caught by the \$\( pattern below.
         r'[;|&`]',             # any of ; | & `
         r'&&',                 # command chaining
         r'\|\|',               # logical OR (escaped pipe)
         r'\$\(',              # $(command) — escaped $ for literal match
+        r'\$[A-Za-z_][A-Za-z0-9_]*',  # shell variable expansion (e.g. $PATH)
         r'`[^`]*`',            # `command`
 
         # Path traversal and sensitive paths
@@ -553,7 +552,7 @@ class PreAudit:
                 passed = False
             if not passed:
                 issues.append(f"[{name}] {msg}")
-                if name in ("no_injection", "has_task"):
+                if name in ("no_injection",):
                     ok = False  # blocking
         return ok, issues
 

@@ -2489,9 +2489,17 @@ class RunResearchRequest(BaseModel):
 
 @app.post("/workflows/research/run")
 async def workflow_run_research(req: RunResearchRequest) -> Dict:
-    from workflows.research_experiment import (
-        ResearchExperiment, ExperimentStatus, ExperimentEntryMode, ResearchInput,
-    )
+    try:
+        from workflows.research_experiment import (
+            ResearchExperiment, ExperimentStatus, ExperimentEntryMode, ResearchInput,
+        )
+    except ImportError:
+        # Fail-soft: the workflows package ships in the BB-Tech project.
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=503,
+            detail="workflows.research_experiment not installed — it ships in the BB-Tech project.",
+        )
     experiment = ResearchExperiment(
         experiment_id=req.experiment_id or f"wf-{int(time.time())}",
         entry_mode=ExperimentEntryMode.ADHOC,

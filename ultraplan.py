@@ -9,9 +9,9 @@ ULTRAPLAN handles complex planning tasks that require:
 - Session persistence and resumption
 - Resource-intensive computation
 """
-⚠️ WARNING: This module uses LLM routing via router.execute_with_routing().
-This contradicts the repo's README claim of "zero LLM" architecture.
-ULTRAPLAN is effectively a **HYBRID MODE** component.
+# WARNING: This module uses LLM routing via router.execute_with_routing().
+# This contradicts the repo's README claim of "zero LLM" architecture.
+# ULTRAPLAN is effectively a **HYBRID MODE** component.
 
 import json
 import uuid

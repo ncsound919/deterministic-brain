@@ -7,8 +7,6 @@ import requests
 from playwright.sync_api import sync_playwright
 
 # Fix UTF-8 output for Windows
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 DASHBOARD_URL = "http://localhost:5173" if __name__ != "__main__" else "http://localhost:5173"
 API_BASE = "http://localhost:8000"
 ENGINE_API = "http://localhost:8100"

@@ -7,8 +7,6 @@ import time, json, sys, io, os
 import requests
 from playwright.sync_api import sync_playwright
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 DASHBOARD_URL = "http://localhost:5173"
 API_BASE = "http://localhost:8000"
 ENGINE_API = "http://localhost:8100"

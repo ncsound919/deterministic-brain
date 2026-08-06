@@ -6,8 +6,6 @@ import time, json, sys, io, os
 import requests
 from playwright.sync_api import sync_playwright
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 BASE = 'http://localhost:8000'
 ENGINE = 'http://localhost:8100'
 DASH = 'http://localhost:5173'
