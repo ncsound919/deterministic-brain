@@ -5,6 +5,27 @@ import pickle
 from typing import List, Tuple
 
 
+class _RestrictedUnpickler(pickle.Unpickler):
+    """Unpickler that only allows numpy/scipy/sklearn classes.
+
+    The index files live on disk (built by build_index()); restricting the
+    class whitelist prevents RCE if an index dir is ever replaced by an
+    untrusted source.
+    """
+
+    _SAFE_MODULES = ("numpy", "scipy.sparse", "sklearn.feature_extraction.text")
+
+    def find_class(self, module: str, name: str):
+        if not any(module == m or module.startswith(m + ".") for m in self._SAFE_MODULES):
+            raise pickle.UnpicklingError(f"forbidden pickle module: {module}")
+        return super().find_class(module, name)
+
+
+def _safe_load(path: str):
+    with open(path, "rb") as f:
+        return _RestrictedUnpickler(f).load()
+
+
 class TFIDFSearch:
     """
     Offline TF-IDF search over a pre-built index.
@@ -24,10 +45,8 @@ class TFIDFSearch:
             self.documents    = []
             self.vectorizer   = None
             return
-        with open(matrix_path, "rb") as f:
-            self.tfidf_matrix = pickle.load(f)
-        with open(vect_path, "rb") as f:
-            self.vectorizer = pickle.load(f)
+        self.tfidf_matrix = _safe_load(matrix_path)
+        self.vectorizer   = _safe_load(vect_path)
         with open(docs_path) as f:
             self.documents = [l.strip() for l in f]
 
