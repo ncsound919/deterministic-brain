@@ -58,6 +58,7 @@ numpy>=1.26.0
 # pandas>=2.0.0                  # Data analysis
 # scipy>=1.11.0                  # Scientific computing
 # yfinance>=0.2.0                # Market data
+# kagglehub>=0.3.0               # Kaggle dataset downloads (optional; manager uses REST by default)
 
 # --- Document processing ---
 # pymupdf>=1.23.0                # PDF read/extract

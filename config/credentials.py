@@ -5,6 +5,7 @@ or auto-generated on first boot and persisted to .brain_key.
 
 Category-based typed access:
   - github      → token, webhook_secret
+  - kaggle      → username, api_key, token
   - openrouter  → api_key
   - email_smtp  → host, port, user, password, from_addr
   - stripe      → secret_key, publishable_key, webhook_secret
@@ -64,6 +65,7 @@ class CredentialVault:
     Credential categories and their expected keys:
 
         github:       token, webhook_secret
+        kaggle:       username, api_key, token
         openrouter:   api_key
         email_smtp:   host, port, user, password, from_addr
         stripe:       secret_key, publishable_key, webhook_secret
@@ -163,6 +165,10 @@ class CredentialVault:
             # GitHub
             ("github", "token"): "GITHUB_TOKEN",
             ("github", "webhook_secret"): "GITHUB_WEBHOOK_SECRET",
+            # Kaggle
+            ("kaggle", "username"): "KAGGLE_USERNAME",
+            ("kaggle", "api_key"): ["KAGGLE_KEY", "KAGGLE_API_TOKEN"],
+            ("kaggle", "token"): "KAGGLE_API_TOKEN",
             # OpenRouter
             ("openrouter", "api_key"): "OPENROUTER_API_KEY",
             # Stripe (webhook and api_key for finance_client)

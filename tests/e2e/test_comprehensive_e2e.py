@@ -557,6 +557,16 @@ class TestUIAllPagesAPI:
         code, _ = api_get("/github/search?q=test&per_page=3")
         assert code == 200
 
+    def test_kaggle_manager_data(self):
+        """Kaggle routes respond (status, search, snapshots)."""
+        code, data = api_get("/kaggle/status")
+        assert code == 200
+        assert "configured" in data
+        code, _ = api_get("/kaggle/datasets/search?q=nba&per_page=3")
+        assert code == 200
+        code, _ = api_get("/kaggle/snapshots")
+        assert code == 200
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # True Playwright Browser Tests

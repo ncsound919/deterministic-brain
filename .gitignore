@@ -108,3 +108,8 @@ htmlcov/
 
 # Node
 node_modules/
+
+# Generated runtime artifacts
+.qdrant_data/
+builds/
+datasets/kaggle/

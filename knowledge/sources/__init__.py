@@ -3,6 +3,7 @@ from knowledge.sources.gdrive import ingest_gdrive
 from knowledge.sources.github_docs import ingest_github
 from knowledge.sources.reddit import ingest_reddit
 from knowledge.sources.discord import ingest_discord_channel
+from knowledge.sources.kaggle import ingest_kaggle_snapshot
 
 __all__ = [
     "ingest_web_url",
@@ -10,4 +11,5 @@ __all__ = [
     "ingest_github",
     "ingest_reddit",
     "ingest_discord_channel",
+    "ingest_kaggle_snapshot",
 ]

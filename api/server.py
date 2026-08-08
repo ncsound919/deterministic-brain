@@ -1401,6 +1401,75 @@ def github_expand_skills(max_downloads: int = 5) -> Dict:
     return gh.download_skill_packs("skill_packs")
 
 
+# ── Kaggle ────────────────────────────────────────────────────────
+@app.get("/kaggle/status")
+def kaggle_status() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return get_kaggle().status()
+
+
+@app.get("/kaggle/whoami")
+def kaggle_whoami() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return get_kaggle().whoami()
+
+
+@app.get("/kaggle/datasets/search")
+def kaggle_datasets_search(q: str = "", per_page: int = 10, sort_by: str = "hottest") -> Dict:
+    from features.kaggle_manager import get_kaggle
+    kg = get_kaggle()
+    return {"datasets": [d.to_dict() for d in kg.search_datasets(q, per_page, sort_by)]}
+
+
+@app.get("/kaggle/competitions")
+def kaggle_competitions() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return {"competitions": get_kaggle().list_competitions()}
+
+
+@app.get("/kaggle/datasets/files")
+def kaggle_dataset_files(ref: str = "") -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return {"files": get_kaggle().dataset_files(ref)}
+
+
+@app.post("/kaggle/datasets/download")
+def kaggle_dataset_download(dataset: str = "", force: bool = False, unzip: bool = True) -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return get_kaggle().download_dataset(dataset, force=force, unzip=unzip)
+
+
+@app.get("/kaggle/snapshots")
+def kaggle_snapshots() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return {"snapshots": get_kaggle().list_snapshots()}
+
+
+# ── Kaggle Research Feed ──────────────────────────────────────────
+@app.post("/kaggle/research/feed")
+def kaggle_research_feed(dataset: str = "", force: bool = False,
+                         index_tfidf: bool = True, tags: str = "") -> Dict:
+    from features.kaggle_research import get_kaggle_research
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    return get_kaggle_research().feed_dataset(dataset, tags=tag_list or None,
+                                              force=force, index_tfidf=index_tfidf)
+
+
+@app.get("/kaggle/research/feeds")
+def kaggle_research_feeds() -> Dict:
+    from features.kaggle_research import get_kaggle_research
+    return {"feeds": get_kaggle_research().list_feeds()}
+
+
+@app.get("/kaggle/research/status")
+def kaggle_research_status() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    from features.kaggle_research import get_kaggle_research
+    base = get_kaggle().status()
+    base["feeds"] = len(get_kaggle_research().list_feeds())
+    return base
+
+
 # ── Planner ────────────────────────────────────────────────────────
 @app.get("/planner/tasks")
 @cached_endpoint(ttl=10)
