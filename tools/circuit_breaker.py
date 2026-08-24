@@ -1,7 +1,8 @@
 """Lightweight circuit breaker for external API calls.
 
 Three-state: closed → open (on threshold failures) → half_open (after cooldown) → closed.
-threading.Lock for thread safety. Logs transitions via tracing.log_event.
+threading.Lock for thread safety. Retry/backoff sequencing delegated to tenacity;
+state transitions and tracing hooks remain local. Logs via tracing.log_event.
 """
 from __future__ import annotations
 import time
@@ -9,6 +10,8 @@ import threading
 import logging
 from functools import wraps
 from typing import Callable, Dict, Optional
+
+from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
@@ -85,23 +88,22 @@ class CircuitBreaker:
         if not self._check():
             return {"status": "circuit_open", "breaker": self.name,
                     "message": f"Circuit breaker open for {self.name}"}
-        last_error = None
-        attempts = 0
         max_attempts = 1 + self.retries
-        while attempts < max_attempts:
-            attempts += 1
-            try:
-                result = fn(*args, **kwargs)
-                self._record_success()
-                return result
-            except Exception as e:
-                last_error = str(e)
-                self._record_failure()
-                if attempts < max_attempts:
-                    wait = self.backoff_ms * (2 ** (attempts - 1)) / 1000.0
-                    time.sleep(wait)
-        return {"status": "failed", "breaker": self.name,
-                "error": last_error, "attempts": attempts}
+        try:
+            result = Retrying(
+                stop=stop_after_attempt(max_attempts),
+                wait=wait_exponential(
+                    multiplier=self.backoff_ms / 2000.0, exp_base=2
+                ),
+                reraise=True,
+                before_sleep=lambda rs: self._record_failure(),
+            )(fn, *args, **kwargs)
+            self._record_success()
+            return result
+        except Exception as e:
+            self._record_failure()
+            return {"status": "failed", "breaker": self.name,
+                    "error": str(e), "attempts": max_attempts}
 
 
 _BREAKERS: Dict[str, CircuitBreaker] = {}
