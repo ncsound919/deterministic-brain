@@ -25,7 +25,7 @@ _SOUL_SCHEMA: Dict[str, type] = {
     "preferences": dict,
 }
 
-_soul_lock: threading.Lock = threading.Lock()
+_soul_lock: threading.RLock = threading.RLock()
 
 
 def _validate_soul_yaml(data: Dict) -> List[str]:

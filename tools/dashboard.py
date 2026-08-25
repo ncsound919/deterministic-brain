@@ -120,7 +120,7 @@ class Dashboard:
     def audit_feed(self) -> List[Dict]:
         return [
             e for e in self.recent_events(100)
-            if e["event"] in ("audit_repo", "handle", "step")
+            if e["event"] in ("audit_repo", "handle", "step", "cancer_verify")
         ]
 
     def clear_events(self) -> None:

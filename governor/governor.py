@@ -82,15 +82,51 @@ class ModelRouter:
 
         Mirrors Math X's selectProvider(): maps formula/deep-solve to qwen,
         scientist/hypothesis/synergy to ollama, default to claude.
+        Prefers the unified local model service when it is actually live.
         """
-        ollama_available = bool(os.getenv("OLLAMA_BASE_URL", ""))
         mode_lower = mode.lower()
 
-        if mode_lower in ("formula", "deep-solve") and ollama_available:
+        if mode_lower in ("formula", "deep-solve") and ModelRouter._local_ready():
             return "qwen"
-        if mode_lower in ("scientist", "hypothesis", "synergy") and ollama_available:
+        if mode_lower in ("scientist", "hypothesis", "synergy") and ModelRouter._local_ready():
             return "ollama"
         return "claude"
+
+    @staticmethod
+    def _local_ready() -> bool:
+        """True when a unified local backend is running with a model installed."""
+        try:
+            from tools.local_model import get_local_model
+            return get_local_model().is_available()
+        except Exception:
+            return False
+
+    @staticmethod
+    def run_reasoning(task: str, mode: str = "general") -> Dict[str, Any]:
+        """Execute a reasoning task on the best available model.
+
+        Uses the unified local model service first (no API keys needed),
+        then falls back to the configured remote provider (Claude).
+        """
+        try:
+            from tools.local_model import get_local_model
+            local = get_local_model()
+            if local.is_available():
+                provider = ModelRouter.select_provider(mode)
+                model = ModelRouter.get_model_for_provider(provider) if provider != "claude" else None
+                answer = local.generate_text(task, max_tokens=2048)
+                if answer:
+                    return {
+                        "ok": True,
+                        "provider": "local",
+                        "backend": local.active_backend().name if local.active_backend() else "unknown",
+                        "model": model or (local.active_backend().model_name() if local.active_backend() else "unknown"),
+                        "answer": answer,
+                    }
+        except Exception:
+            pass
+
+        return {"ok": False, "provider": "none", "answer": ""}
 
     @staticmethod
     def check_ollama_health(base_url: str | None = None) -> bool:
@@ -203,8 +239,8 @@ class ProjectRouter:
 
             if selected_provider in ("qwen", "ollama"):
                 base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-                if not ModelRouter.check_ollama_health(base_url):
-                    fallback_reason = f"Ollama unreachable at {base_url}, fell back to Claude"
+                if not ModelRouter._local_ready():
+                    fallback_reason = f"Local model unavailable, fell back to Claude"
                     selected_provider = "claude"
 
             return GovernorDecision(

@@ -1,0 +1,72 @@
+{
+  "username": "aria_ml",
+  "goal": "ml-engineer",
+  "level": "contributor",
+  "bio": "ML practitioner working on tabular pipelines and applied NLP. I publish reproducible notebooks and share cleaned datasets with usage examples so others can build on them.",
+  "specialties": ["tabular", "nlp"],
+  "external_links": {
+    "github": "https://github.com/aria-ml",
+    "linkedin": "https://www.linkedin.com/in/aria-ml",
+    "website": null,
+    "cv_or_summary": true
+  },
+  "notebooks": [
+    {
+      "title": "Gradient boosting baseline for tabular data",
+      "upvotes": 18,
+      "documented": true,
+      "reproducible": true,
+      "has_intro_conclusion": true
+    },
+    {
+      "title": "Feature engineering walkthrough",
+      "upvotes": 9,
+      "documented": true,
+      "reproducible": true,
+      "has_intro_conclusion": false
+    },
+    {
+      "title": "Quick sentiment EDA",
+      "upvotes": 4,
+      "documented": false,
+      "reproducible": false,
+      "has_intro_conclusion": false
+    },
+    {
+      "title": "Transformer fine-tuning notes",
+      "upvotes": 11,
+      "documented": true,
+      "reproducible": false,
+      "has_intro_conclusion": true
+    }
+  ],
+  "datasets": [
+    {
+      "title": "Cleaned retail sales 2019-2023",
+      "documented": true,
+      "has_usage_example": true
+    },
+    {
+      "title": "Curated product reviews sample",
+      "documented": true,
+      "has_usage_example": false
+    }
+  ],
+  "competitions": [
+    {
+      "name": "Tabular Playground Series",
+      "rank_percentile": 14,
+      "medal": "bronze",
+      "writeup": true
+    },
+    {
+      "name": "Text Classification Challenge",
+      "rank_percentile": 38,
+      "medal": null,
+      "writeup": false
+    }
+  ],
+  "recent_activity_days": 20,
+  "professional_summary_present": true,
+  "discussions_count": 6
+}

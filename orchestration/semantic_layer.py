@@ -5,7 +5,7 @@ from loguru import logger
 
 
 class MicroLLMParse:
-    """Schema-driven text -> structured object parsing via local Gemma."""
+    """Schema-driven text -> structured object parsing via the unified local model."""
 
     SCHEMAS = {
         "ticket": {
@@ -55,8 +55,8 @@ class MicroLLMParse:
 
     def _get_gemma(self):
         if self._gemma is None:
-            from tools.local_gemma import get_gemma
-            self._gemma = get_gemma()
+            from tools.local_model import get_local_model
+            self._gemma = get_local_model()
         return self._gemma
 
     def parse(self, text: str, target_schema_name: str) -> Dict[str, Any]:
@@ -74,13 +74,16 @@ class MicroLLMParse:
         gemma = self._get_gemma()
         if gemma.is_available():
             try:
-                result = gemma.complete(prompt, n_predict=192, temperature=0.05)
+                # Fast tier: micro-parsing is latency-sensitive; the big
+                # text model can't finish a JSON budget on CPU in time.
+                result = gemma.generate_json(prompt, max_tokens=192,
+                                             temperature=0.05, fast=True)
                 if result:
-                    parsed = json.loads(result.strip())
+                    parsed = result
                     logger.info(f"Micro-LLM parsed {target_schema_name}: {list(parsed.keys())}")
                     return parsed
             except (json.JSONDecodeError, Exception) as e:
-                logger.warning(f"Gemma parse failed for {target_schema_name}: {e}")
+                logger.warning(f"Local model parse failed for {target_schema_name}: {e}")
 
         return self._fallback(target_schema_name, text)
 

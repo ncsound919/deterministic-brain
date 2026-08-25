@@ -55,8 +55,11 @@ def knowledge_ingest(req: IngestRequest):
 @router.post("/ingest-text")
 def knowledge_ingest_text(req: IngestTextRequest):
     bank = _get_bank()
-    result = bank.ingest_text(req.text, title=req.title, tags=req.tags or [])
-    return {"status": "ok", "snippet_id": result}
+    from knowledge.ingester import get_ingester
+    fragments = get_ingester().ingest_text(req.text, title=req.title or "ingested text",
+                                            tags=req.tags or [])
+    added = bank.add_fragments(fragments)
+    return {"status": "ok", "added": added, "snippet_id": fragments[0].id if fragments else None}
 
 
 @router.post("/search")

@@ -78,7 +78,7 @@ chains:
       email: "weekly-repo-health"
 
   learning-consolidation:
-    description: "AutoDream + knowledge bank + bandit evolve -- full learning loop"
+    description: "AutoDream + knowledge bank + bandit evolve + local-harness memory -- full learning loop"
     trigger: "cron"
     cron: "0 3 * * *"
     steps:
@@ -88,6 +88,9 @@ chains:
       - call: "reward_tracker.feed_bandit"
       - call: "reward_tracker.feed_evolver"
       - call: "nightly_scorer.run_daily_score"
+      - call: "tools.local_harness.consolidate_now"
+        inputs: { "max_episodes": 12 }
+      - call: "tools.local_harness.evolve_now"
       - skill: "skill_expander"
         inputs: { "max_downloads": 2 }
 
@@ -259,7 +262,7 @@ chains:
         parallel: true
 
   morning-briefing:
-    description: "Weather + top news + HN + exchange rates + crypto"
+    description: "Weather + top news + HN + exchange rates + crypto + local-model briefing"
     trigger: "cron"
     cron: "0 7 * * *"
     steps:
@@ -278,6 +281,8 @@ chains:
       - skill: "crypto-top"
         inputs: { "per_page": 5 }
         parallel: true
+    post:
+      - call: "tools.local_harness.briefing_now"
     notify:
       summary: "Morning briefing ready"
 

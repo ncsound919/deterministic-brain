@@ -57,6 +57,7 @@ class TaskDefinition:
     enabled: bool = True
     notify_email: Optional[str] = None
     notify_webhook: Optional[str] = None
+    notify_openchat: bool = False
 
     def to_dict(self) -> Dict:
         return {
@@ -69,6 +70,7 @@ class TaskDefinition:
             "enabled": self.enabled,
             "notify_email": self.notify_email,
             "notify_webhook": self.notify_webhook,
+            "notify_openchat": self.notify_openchat,
         }
 
 
@@ -191,6 +193,20 @@ Finished: {result.finished_at.isoformat()}
                 "error": result.error,
             })
 
+        if task_def.notify_openchat:
+            try:
+                from tools.ntfy import report_brain
+                level = "error" if result.status == "error" else "ok"
+                detail = result.error if result.error else str(result.output)[:500]
+                report_brain(
+                    task=task_def.name,
+                    summary=f"[{result.status.upper()}] {task_def.skill}\n{detail}",
+                    level=level,
+                    speak=False,
+                )
+            except Exception as e:
+                logger.error(f"Failed to notify Open-Chat: {e}")
+
 
 class Scheduler:
     """APScheduler-based task scheduler with notifications."""
@@ -209,6 +225,10 @@ class Scheduler:
         self._executor_callback: Optional[Callable] = None
         self._load()
         self.start()
+
+    def set_executor(self, callback: Callable) -> None:
+        """Set the callback used to run a scheduled task's skill."""
+        self._executor_callback = callback
     
     def _load(self) -> None:
         """Load tasks from disk and schedule them."""
@@ -248,6 +268,7 @@ class Scheduler:
                             enabled=task_data.get("enabled", True),
                             notify_email=task_data.get("notify_email"),
                             notify_webhook=task_data.get("notify_webhook"),
+                            notify_openchat=bool(task_data.get("notify_openchat", False)),
                         )
                         self._tasks[name] = task
                         if task.enabled:
@@ -402,6 +423,7 @@ class Scheduler:
                 "enabled": t.enabled,
                 "notify_email": t.notify_email is not None,
                 "notify_webhook": t.notify_webhook is not None,
+                "notify_openchat": t.notify_openchat,
                 "next_run": job_ids.get(f"task_{t.name}"),
             }
             for t in self._tasks.values()
@@ -554,6 +576,7 @@ def schedule_task(
     inputs: Dict = None,
     notify_email: str = None,
     notify_webhook: str = None,
+    notify_openchat: bool = False,
 ) -> str:
     """Schedule a task with optional notifications.
     
@@ -593,6 +616,7 @@ def schedule_task(
         inputs=inputs or {},
         notify_email=notify_email,
         notify_webhook=notify_webhook,
+        notify_openchat=notify_openchat,
     )
     
     return scheduler.add_task(task)

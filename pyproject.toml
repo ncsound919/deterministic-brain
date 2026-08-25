@@ -1,6 +1,11 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 python_files = ["test_*.py", "*_test.py"]
+asyncio_mode = "strict"
 filterwarnings = ["ignore::DeprecationWarning"]
 log_cli = true
 log_cli_level = "WARNING"
+markers = [
+  "mutation: marks mutation/evolution tests",
+]

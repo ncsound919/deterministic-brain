@@ -24,14 +24,16 @@ _SEED: int = int(os.getenv('LLM_SEED', '42'))
 # ---------------------------------------------------------------------------
 # Per-lane model routing
 # ---------------------------------------------------------------------------
-# These can all be overridden via environment variables.
+# These are the OpenRouter *fallback* models, used only after local + the
+# funded opencode Go tier are unavailable. Defaults are cheap (DeepSeek-chat)
+# per fleet OPS — never premium frontier models. Override via env.
 LANE_MODELS: dict[str, str] = {
-    'coding':         os.getenv('MODEL_CODING',         'openai/o3'),
-    'business_logic': os.getenv('MODEL_BUSINESS_LOGIC', 'anthropic/claude-opus-4'),
-    'agent_brain':    os.getenv('MODEL_AGENT_BRAIN',    'anthropic/claude-sonnet-4-5'),
-    'tool_calling':   os.getenv('MODEL_TOOL_CALLING',   'meta-llama/llama-3.3-70b-instruct'),
-    'cross_domain':   os.getenv('MODEL_CROSS_DOMAIN',   'google/gemini-2.5-pro'),
-    'default':        os.getenv('MODEL_DEFAULT',        'openai/gpt-4o'),
+    'coding':         os.getenv('MODEL_CODING',         'openrouter/deepseek/deepseek-chat'),
+    'business_logic': os.getenv('MODEL_BUSINESS_LOGIC', 'openrouter/deepseek/deepseek-chat'),
+    'agent_brain':    os.getenv('MODEL_AGENT_BRAIN',    'openrouter/deepseek/deepseek-chat'),
+    'tool_calling':   os.getenv('MODEL_TOOL_CALLING',   'openrouter/meta-llama/llama-3.3-70b-instruct'),
+    'cross_domain':   os.getenv('MODEL_CROSS_DOMAIN',   'openrouter/deepseek/deepseek-chat'),
+    'default':        os.getenv('MODEL_DEFAULT',        'openrouter/deepseek/deepseek-chat'),
 }
 
 
@@ -44,6 +46,8 @@ class OpenRouterClient:
             self._client = OpenAI(
                 api_key=_API_KEY,
                 base_url=_BASE_URL,
+                timeout=float(os.getenv('OPENROUTER_TIMEOUT', '60')),
+                max_retries=0,
                 default_headers={
                     'HTTP-Referer': _SITE_URL,
                     'X-Title': _SITE_NAME,

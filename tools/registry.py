@@ -233,6 +233,49 @@ class ToolRegistry:
             logger.debug(f"ollama_client not available: {e}")
 
         try:
+            from tools.local_model import get_local_model
+            local = get_local_model()
+            self.register("local_model_status", local.status)
+            self.register("local_model_models", local.list_models)
+            self.register("local_model_chat", local.chat)
+            self.register("local_model_complete", local.complete)
+            self.register("local_model_json", local.generate_json)
+            self.register("local_model_text", local.generate_text)
+            self.register("local_model_ensure", local.ensure_model)
+            self.register("local_model_warm", local.warm)
+            self.register("local_model_vision", local.chat_with_image)
+            self.register("local_model_tools", local.call_tools)
+            self.register("local_model_supports_vision", local.supports_vision)
+            logger.info("Registered tools: local_model_* (unified local service)")
+        except ImportError as e:
+            logger.debug(f"local_model not available: {e}")
+
+        try:
+            from tools.local_harness import get_harness
+            harness = get_harness()
+            self.register("local_harness_status", harness.status)
+            self.register("local_harness_chat", harness.chat)
+            self.register("local_harness_json", harness.generate_json)
+            self.register("local_harness_reason", harness.reason)
+            self.register("local_harness_classify", harness.classify)
+            self.register("local_harness_summarize", harness.summarize)
+            self.register("local_harness_extract", harness.extract)
+            self.register("local_harness_remember", harness.remember)
+            self.register("local_harness_recall", harness.recall)
+            self.register("local_harness_consolidate", harness.consolidate)
+            self.register("local_harness_warm", harness.warm)
+            self.register("local_harness_vision", harness.analyze_image)
+            self.register("local_harness_tools", harness.call_tools)
+            self.register("local_harness_supports_vision", harness.supports_vision)
+            self.register("local_harness_briefing", harness.briefing)
+            self.register("local_harness_fast_reason", harness.fast_reason)
+            self.register("local_harness_evolve", harness.evolve_memory)
+            self.register("local_harness_derive_skills", harness.derive_skills)
+            logger.info("Registered tools: local_harness_* (memory+ecosystem harness)")
+        except ImportError as e:
+            logger.debug(f"local_harness not available: {e}")
+
+        try:
             from tools.litellm_proxy import LiteLLMRouter
             router = LiteLLMRouter()
             self.register("llm_complete", router.complete)
@@ -241,6 +284,24 @@ class ToolRegistry:
             logger.info("Registered tools: llm_complete, llm_chat, llm_status")
         except ImportError as e:
             logger.debug(f"litellm_proxy not available: {e}")
+
+        try:
+            from tools.llm.gotier_client import get_gotier
+            gotier = get_gotier()
+            self.register("gotier_available", lambda: {"ok": gotier.available, "gateway": gotier.litellm_url, "model": gotier.litellm_model})
+            self.register("gotier_chat", gotier.chat)
+            self.register("gotier_complete", gotier.complete)
+            self.register("gotier_json", gotier.generate_json)
+            self.register("gotier_status", lambda: {
+                "available": gotier.available,
+                "gateway": gotier.litellm_url,
+                "model": gotier.litellm_model,
+                "direct_url": gotier.direct_url,
+                "direct_model": gotier.direct_model,
+            })
+            logger.info("Registered tools: gotier_* (funded opencode Go tier)")
+        except ImportError as e:
+            logger.debug(f"gotier_client not available: {e}")
 
         try:
             from tools.github_client import GitHubClient
@@ -371,6 +432,60 @@ class ToolRegistry:
             logger.info("Registered tool: execute_code")
         except ImportError as e:
             logger.debug(f"execute_code not available: {e}")
+
+        # ── Deterministic research paper → Global Lens ──────────────────
+        try:
+            from features.research_publisher import publish_research, get_publisher
+            self.register("publish_research", publish_research)
+            self.register("research_paper", lambda **kw: get_publisher().render_paper(**kw))
+            logger.info("Registered tools: publish_research, research_paper")
+        except ImportError as e:
+            logger.debug(f"research_publisher not available: {e}")
+
+        # ── Open-source capability tools (no LLM) ────────────────────────
+        try:
+            from tools.oss_tools import (
+                fetch_article,
+                web_search,
+                web_search_to_findings,
+                extract_pdf,
+                lint_python,
+                scan_python_security,
+                convert_doc,
+                gather_web_findings,
+            )
+            self.register("fetch_article", fetch_article)
+            self.register("web_search", web_search)
+            self.register("web_search_to_findings", web_search_to_findings)
+            self.register("extract_pdf", extract_pdf)
+            self.register("lint_python", lint_python)
+            self.register("scan_python_security", scan_python_security)
+            self.register("convert_doc", convert_doc)
+            self.register("gather_web_findings", gather_web_findings)
+            logger.info("Registered tools: fetch_article, web_search, extract_pdf, lint_python, scan_python_security, convert_doc, gather_web_findings")
+        except ImportError as e:
+            logger.debug(f"oss_tools not available: {e}")
+
+        # ── Open-Chat / ntfy reporting (report + communicate to the operator) ──
+        try:
+            from tools.ntfy import publish_ntfy, notify_openchat, report_brain
+            self.register("ntfy_publish", publish_ntfy)
+            self.register("notify_openchat", notify_openchat)
+            self.register("brain_report", report_brain)
+            logger.info("Registered tools: ntfy_publish, notify_openchat, brain_report")
+        except ImportError as e:
+            logger.debug(f"ntfy not available: {e}")
+
+        # ── Draymond bridge (invoke Draymond entities/chains + report) ──
+        try:
+            from tools.draymond_bridge import get_draymond_bridge
+            _db = get_draymond_bridge()
+            self.register("draymond_invoke", _db.invoke)
+            self.register("draymond_report", _db.report)
+            self.register("draymond_entities", _db.list_entities)
+            logger.info("Registered tools: draymond_invoke, draymond_report, draymond_entities")
+        except ImportError as e:
+            logger.debug(f"draymond_bridge not available: {e}")
 
     def register(self, name: str, fn: Callable) -> None:
         self._tools[name] = fn

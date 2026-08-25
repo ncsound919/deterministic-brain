@@ -7,6 +7,7 @@ from knowledge.sources.web import ingest_web_url
 from knowledge.sources.gdrive import ingest_gdrive
 from knowledge.sources.github_docs import ingest_github
 from knowledge.sources.reddit import ingest_reddit
+from knowledge.sources.kaggle import ingest_kaggle_snapshot
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,11 @@ class KnowledgeIngester:
 
     def ingest_reddit_post(self, url: str, tags: List[str] = None) -> List[KnowledgeFragment]:
         return ingest_reddit(url, tags or [])
+
+    def ingest_kaggle_snapshot(self, snapshot_dir: str, ref: str,
+                               tags: List[str] = None) -> List[KnowledgeFragment]:
+        """Ingest a downloaded Kaggle dataset snapshot dir into fragments."""
+        return ingest_kaggle_snapshot(snapshot_dir, ref, tags or [])
 
 
 _INGESTER: KnowledgeIngester | None = None
