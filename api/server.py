@@ -38,7 +38,7 @@ _DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "
 # ── Hermes Integration ─────────────────────────────────────────
 HERMES_URL = os.getenv("HERMES_URL", "http://127.0.0.1:9119")
 LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8082")
-LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "gemma-4-e2b.gguf")
+LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen3.5:4b")
 _API_PORT = int(os.environ.get("API_PORT", 8000))
 
 # Bundle config cache (avoid YAML parse on every /bundles request)
@@ -1127,6 +1127,7 @@ def integrations_status() -> Dict:
 # ── Smart Chat (intent routing) ────────────────────────────────────
 class ChatRequest(BaseModel):
     text: str
+    model: str = ""
 
 
 @app.post("/chat")
@@ -1284,16 +1285,64 @@ def local_model_list() -> Dict:
 
 @app.post("/models/local/chat")
 def local_model_chat(req: ChatRequest) -> Dict:
-    """Chat directly with the unified local model."""
+    """Chat directly with the unified local model.
+
+    Optional req.model pins an explicit lane model (e.g. medgemma:4b for
+    biomed, deepseek-ocr:3b for document OCR). Empty/unknown -> default.
+    """
     try:
         from tools.local_model import get_local_model
         svc = get_local_model()
         if not svc.is_available():
             return {"_error": "No local model backend running"}
-        text = svc.chat("You are a helpful assistant.", req.text, max_tokens=1024)
-        return {"choices": [{"message": {"content": text, "role": "assistant"}}], "model": svc.active_backend().model_name() if svc.active_backend() else None}
+        used = getattr(req, "model", "") or ""
+        text = svc.chat_with_model(used, "You are a helpful assistant.", req.text, max_tokens=1024) if used else svc.chat("You are a helpful assistant.", req.text, max_tokens=1024)
+        return {"choices": [{"message": {"content": text, "role": "assistant"}}], "model": used or (svc.active_backend().model_name() if svc.active_backend() else None)}
     except Exception as e:
         return {"_error": f"Model unavailable: {str(e)}"}
+
+
+@app.get("/models/local/lanes")
+def local_model_lanes() -> Dict:
+    """Domain-lane model resolution for ecosystem tools (science, ocr, vision)."""
+    try:
+        from tools.local_model import get_local_model
+        svc = get_local_model()
+        if not svc.is_available():
+            return {"available": False}
+        active = svc.active_backend()
+        return {
+            "available": True,
+            "default": active.model_name() if active else None,
+            "fast": active.fast_model_name() if active else None,
+            "vision": active.vision_model_name() if active else None,
+            "biomed": svc.biomed_model_name(),
+            "ocr": svc.ocr_model_name(),
+        }
+    except Exception as e:
+        return {"available": False, "error": str(e)}
+
+
+class ScienceEmbedRequest(BaseModel):
+    texts: List[str]
+    embedder: str = "pubmedncl"
+
+
+@app.post("/embeddings/science")
+def science_embeddings(req: ScienceEmbedRequest) -> Dict:
+    """Scientific paper embeddings (PubMedNCL 768d / SciRus-tiny 312d).
+
+    Allocation point for the overlay science tools: metamap/bbtech/decon
+    embed abstracts and paper chunks here instead of general-purpose nomic.
+    """
+    try:
+        from tools.science_embeddings import get_science_embedder
+        emb = get_science_embedder(req.embedder)
+        vecs = emb.encode(req.texts)
+        return {"embedder": emb.name, "model": emb.model_id, "dimension": emb.dimension,
+                "embeddings": [list(map(float, v)) for v in vecs]}
+    except Exception as e:
+        return {"_error": str(e)}
 
 
 @app.post("/models/local/proxy")

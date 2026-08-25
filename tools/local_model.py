@@ -192,7 +192,8 @@ class OllamaBackend(LocalModelBackend):
     # ---- generation ----
     def _chat_payload(self, messages: List[Dict[str, str]], max_tokens: int,
                       temperature: float, seed: int, json_mode: bool = False,
-                      fast: bool = False, native: bool = False) -> Dict[str, Any]:
+                      fast: bool = False, native: bool = False,
+                      model_override: str = "") -> Dict[str, Any]:
         keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", "5m")
         if native:
             # The native /api/chat endpoint requires a duration unit ("-1m"
@@ -202,7 +203,7 @@ class OllamaBackend(LocalModelBackend):
             elif keep_alive.isdigit():
                 keep_alive = f"{keep_alive}m"
         payload: Dict[str, Any] = {
-            "model": self.fast_model_name() if fast else self.model_name(),
+            "model": model_override or (self.fast_model_name() if fast else self.model_name()),
             "messages": messages,
             "stream": False,
             "think": False,
@@ -271,7 +272,32 @@ class OllamaBackend(LocalModelBackend):
                     return "vision" in caps
         except Exception:  # noqa: BLE001
             pass
-        return "gemma-4" in self.vision_model_name() or "gemma3" in self.vision_model_name()
+        name = self.vision_model_name().lower()
+        return any(tag in name for tag in ("gemma-4", "gemma3", "qwen3.5", "medgemma", "vl", "llava"))
+
+    def biomed_model_name(self) -> str:
+        """Biomed/clinical specialist (medgemma), falling back to the default."""
+        for m in self.list_models():
+            if "medgemma" in m.lower():
+                return m
+        return self.model_name()
+
+    def ocr_model_name(self) -> Optional[str]:
+        """Document-OCR specialist, or None when not installed."""
+        for m in self.list_models():
+            if "deepseek-ocr" in m.lower():
+                return m
+        return None
+
+    def chat_with_model(self, model: str, system: str, user: str,
+                        max_tokens: int = DEFAULT_MAX_TOKENS,
+                        temperature: float = DEFAULT_TEMPERATURE) -> str:
+        """Chat against an explicitly named installed model (domain lanes)."""
+        b = self._first_available()
+        if not b or not model:
+            return ""
+        return b.chat(model=model, system=system, user=user,
+                      max_tokens=max_tokens, temperature=temperature)
 
     def chat_with_image(self, prompt: str, image_path: str, max_tokens: int = 512,
                         temperature: float = DEFAULT_TEMPERATURE) -> str:
@@ -352,12 +378,13 @@ class OllamaBackend(LocalModelBackend):
 
     def chat(self, system: str, user: str, max_tokens: int = DEFAULT_MAX_TOKENS,
              temperature: float = DEFAULT_TEMPERATURE, use_cot: bool = False,
-             fast: bool = False) -> str:
+             fast: bool = False, model: str = "") -> str:
         messages: List[Dict[str, str]] = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": user})
-        payload = self._chat_payload(messages, max_tokens, temperature, DEFAULT_SEED, fast=fast)
+        payload = self._chat_payload(messages, max_tokens, temperature, DEFAULT_SEED,
+                                     fast=fast, model_override=model)
         data = self._post("/v1/chat/completions", payload)
         if not data:
             return ""
@@ -481,7 +508,7 @@ class LlamaServerBackend(LocalModelBackend):
             for m in installed:
                 if pref.lower() in m.lower():
                     return m
-        return installed[0] if installed else "gemma-4-e2b.gguf"
+        return installed[0] if installed else "qwen3.5:4b"
 
     def chat(self, system: str, user: str, max_tokens: int = DEFAULT_MAX_TOKENS,
              temperature: float = DEFAULT_TEMPERATURE, use_cot: bool = False) -> str:
@@ -731,6 +758,30 @@ class LocalModelService:
         if not b:
             return ""
         return b.complete(prompt, max_tokens=max_tokens, temperature=temperature)
+
+    def biomed_model_name(self) -> str:
+        """Biomed/clinical specialist (medgemma), falling back to the default."""
+        b = self._first_available()
+        if b and hasattr(b, "biomed_model_name"):
+            return b.biomed_model_name()
+        return ""
+
+    def ocr_model_name(self) -> Optional[str]:
+        """Document-OCR specialist, or None when not installed."""
+        b = self._first_available()
+        if b and hasattr(b, "ocr_model_name"):
+            return b.ocr_model_name()
+        return None
+
+    def chat_with_model(self, model: str, system: str, user: str,
+                        max_tokens: int = DEFAULT_MAX_TOKENS,
+                        temperature: float = DEFAULT_TEMPERATURE) -> str:
+        """Chat against an explicitly named installed model (domain lanes)."""
+        b = self._first_available()
+        if not b or not model:
+            return ""
+        return b.chat(model=model, system=system, user=user,
+                      max_tokens=max_tokens, temperature=temperature)
 
     def generate_text(self, prompt: str, system: str | None = None,
                       max_tokens: int = DEFAULT_MAX_TOKENS,
