@@ -55,19 +55,15 @@ DEFAULT_TIMEOUT = 120
 
 # Ordered preference when no explicit LOCAL_MODEL_NAME is set.
 # Names are matched by case-insensitive substring against installed models.
-# On CPU-class hardware the smaller E2B (4.6B) is ~2x faster and more
-# reliable for JSON than the E4B (7.5B IQ2), so it ranks first.
+# 2026-08-24 roster: qwen3.5:4b is the mid/vision/reasoning workhorse,
+# phi4-mini the terse backup, medgemma:4b the biomed specialist.
 DEFAULT_MODEL_PREFERENCE: List[str] = [
     os.getenv("LOCAL_MODEL_NAME", ""),
     os.getenv("OLLAMA_MODEL", ""),
-    "gemma-4-E2B",
-    "gemma-4-E4B",
-    "gemma3:4b",
-    "gemma3",
-    "qwen3:4b",
+    "qwen3.5",
+    "phi4-mini",
+    "medgemma",
     "qwen3",
-    "deepseek-r1",
-    "qwen2.5",
 ]
 # Filter empty preference entries lazily at runtime.
 DEFAULT_MODEL_PREFERENCE = [m for m in DEFAULT_MODEL_PREFERENCE if m]
@@ -257,8 +253,9 @@ class OllamaBackend(LocalModelBackend):
             for m in installed:
                 if m == override or m.endswith(f":{override}"):
                     return m
-        # gemma-4 GGUF line carries vision; prefer the lighter E2B for speed.
-        for pref in ("gemma-4-E2B", "gemma-4-E4B", "gemma3", "llava", "qwen2.5-vl"):
+        # qwen3.5:4b is multimodal (image+video) and beat the gemma-4 line
+        # on this host; medgemma:4b carries a SigLIP vision tower as backup.
+        for pref in ("qwen3.5", "medgemma", "gemma-4", "gemma3", "llava", "qwen2.5-vl"):
             for m in installed:
                 if pref.lower() in m.lower():
                     return m
