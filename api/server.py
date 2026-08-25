@@ -1318,6 +1318,7 @@ def local_model_lanes() -> Dict:
             "vision": active.vision_model_name() if active else None,
             "biomed": svc.biomed_model_name(),
             "ocr": svc.ocr_model_name(),
+            "chem": svc.chem_model_name(),
         }
     except Exception as e:
         return {"available": False, "error": str(e)}

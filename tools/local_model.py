@@ -289,6 +289,13 @@ class OllamaBackend(LocalModelBackend):
                 return m
         return None
 
+    def chem_model_name(self) -> Optional[str]:
+        """Therapeutics/ADMET specialist (TxGemma), or None when not installed."""
+        for m in self.list_models():
+            if "txgemma" in m.lower():
+                return m
+        return None
+
     def chat_with_model(self, model: str, system: str, user: str,
                         max_tokens: int = DEFAULT_MAX_TOKENS,
                         temperature: float = DEFAULT_TEMPERATURE) -> str:
@@ -771,6 +778,13 @@ class LocalModelService:
         b = self._first_available()
         if b and hasattr(b, "ocr_model_name"):
             return b.ocr_model_name()
+        return None
+
+    def chem_model_name(self) -> Optional[str]:
+        """Therapeutics/ADMET specialist, or None when not installed."""
+        b = self._first_available()
+        if b and hasattr(b, "chem_model_name"):
+            return b.chem_model_name()
         return None
 
     def chat_with_model(self, model: str, system: str, user: str,
