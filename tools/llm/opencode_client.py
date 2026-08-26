@@ -1,15 +1,17 @@
 from __future__ import annotations
 """
-OpenCode client — specialised coding backbone routed through OpenRouter.
+OpenCode client — specialised coding backbone routed through the funded
+opencode Go tier (LiteLLM gateway :4100 → direct zen/go deepseek-v4-flash).
 
-OpenCode (opencode/opencode) is a state-of-the-art open coding model.
-This module wraps it with coding-specific prompt templates and a
-self-repair loop that feeds test failures back into the model.
+Per fleet OPS, codegen ALWAYS uses the paid Go tier — never the free tier and
+never premium OpenRouter defaults. This module wraps the Go tier with
+coding-specific prompt templates and a self-repair loop that feeds test
+failures back into the model.
 """
 import os
-from tools.llm.openrouter_client import get_client
+from tools.llm.gotier_client import get_gotier
 
-_MODEL: str = os.getenv('MODEL_OPENCODE', 'openai/o3')  # override with opencode/opencode when available on OpenRouter
+_MODEL: str = os.getenv('MODEL_OPENCODE', 'openrouter/deepseek/deepseek-chat')
 _MAX_TOKENS: int = int(os.getenv('LLM_MAX_TOKENS', '2048'))
 
 
@@ -24,15 +26,15 @@ Return ONLY the raw Python code, no markdown fences."""
 
 
 class OpenCodeClient:
-    """Coding-specialist LLM backed by OpenCode via OpenRouter."""
+    """Coding-specialist LLM backed by the funded opencode Go tier."""
 
     def __init__(self) -> None:
-        self._or = get_client()
+        self._gotier = get_gotier()
         self._model = _MODEL
 
     @property
     def available(self) -> bool:
-        return self._or.available
+        return self._gotier.available
 
     def generate_code(
         self,
@@ -51,9 +53,8 @@ class OpenCodeClient:
             {'role': 'system', 'content': _SYSTEM_PROMPT},
             {'role': 'user',   'content': user_msg},
         ]
-        return self._or.complete(
+        return self._gotier._complete(
             messages,
-            model=self._model,
             max_tokens=max_tokens,
             temperature=0.0,
         )
@@ -80,9 +81,8 @@ class OpenCodeClient:
             {'role': 'system', 'content': _SYSTEM_PROMPT},
             {'role': 'user',   'content': user_msg},
         ]
-        return self._or.complete(
+        return self._gotier._complete(
             messages,
-            model=self._model,
             max_tokens=max_tokens,
             temperature=0.0,
         )
@@ -93,7 +93,7 @@ class OpenCodeClient:
         max_tokens: int = _MAX_TOKENS,
     ) -> str:
         """General text generation using the coding model."""
-        return self._or.generate_text(prompt, lane='coding', max_tokens=max_tokens)
+        return self._gotier.generate_text(prompt, max_tokens=max_tokens)
 
 
 # Module-level singleton

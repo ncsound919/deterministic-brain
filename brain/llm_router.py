@@ -38,7 +38,7 @@ class CostOrchestrator:
     
     # Local model configuration
     LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8082")
-    LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "gemma-4-e2b.gguf")
+    LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen3.5:4b")
     LOCAL_MODEL_ENABLED = os.getenv("LOCAL_MODEL_ENABLED", "true").lower() == "true"
     DETERMINISTIC_MODE = os.getenv("DETERMINISTIC_MODE", "true").lower() == "true"
 

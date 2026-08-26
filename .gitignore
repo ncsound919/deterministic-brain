@@ -69,6 +69,9 @@ _long_run_log.txt
 .brain_key
 .credentials.enc
 
+# Local model harness memory (episodic/semantic/summaries)
+.local_memory/
+
 # External Repos (Temporary)
 Paper2Video-main/
 Superalgos-master/
@@ -98,6 +101,13 @@ skill_index.npy
 *.db-shm
 *.db-wal
 *.db.bak
+.skill_expansion.json
+data/ceo_state.json
+planner_tasks.json
+.benchmark_report.json
+.soul.yaml.bak
+_st_test.py
+_soul_test.py
 
 # Scraped data (fetched at runtime)
 backtesting/prizepicks_props.json

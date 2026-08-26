@@ -8,7 +8,7 @@ EXT_COMMANDS = {
     ".tsx": ["npx", "eslint"],
     ".ts":  ["npx", "eslint"],
     ".js":  ["npx", "eslint"],
-    ".py":  ["pylint", "--errors-only"],
+    ".py":  ["ruff", "check"],  # ruff is the modern fast Python linter
 }
 
 

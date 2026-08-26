@@ -28,15 +28,17 @@ except ImportError:
 
 LITELLM_MODELS = {
     # Provider → model mapping with vault key resolution
+    # Defaults are cheap (DeepSeek-chat / local) per fleet OPS — the funded
+    # opencode Go tier is preferred over all of these via tools/llm/router.py.
     "openrouter": {
-        "coding": "openrouter/openai/o3",
-        "reasoning": "openrouter/anthropic/claude-opus-4",
-        "general": "openrouter/openai/gpt-4o",
+        "coding": "openrouter/deepseek/deepseek-chat",
+        "reasoning": "openrouter/deepseek/deepseek-chat",
+        "general": "openrouter/deepseek/deepseek-chat",
         "fast": "openrouter/meta-llama/llama-3.3-70b-instruct",
     },
     "anthropic": {
-        "pro": "claude-opus-4-20250514",
-        "balanced": "claude-sonnet-4-20250514",
+        "pro": "claude-3-5-haiku-20241022",
+        "balanced": "claude-3-5-haiku-20241022",
         "fast": "claude-3-5-haiku-20241022",
     },
     "deepseek": {
@@ -44,7 +46,7 @@ LITELLM_MODELS = {
         "reasoning": "deepseek/deepseek-reasoner",
     },
     "gemini": {
-        "pro": "gemini/gemini-2.5-pro",
+        "pro": "gemini/gemini-2.0-flash",
         "flash": "gemini/gemini-2.0-flash",
     },
     "xai": {

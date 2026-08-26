@@ -38,6 +38,16 @@ def build_issue_payload(card: DecisionCard) -> GitHubIssuePayload:
     zone_tag = card.zone.value.upper()
     title = f"[{zone_tag}] {card.summary}"
 
+    # Pre-compute the optional code-change block so no backslash appears
+    # inside an f-string expression (SyntaxError on Python < 3.12).
+    if card.code_change:
+        pr_num = card.github_pr_number
+        code_change_section = (
+            f"### \U0001f4dd Code Change (PR #{pr_num})\n{card.code_change}\n"
+        )
+    else:
+        code_change_section = ""
+
     body = f"""## [{zone_tag}] {card.summary}
 
 ### Product
@@ -45,19 +55,18 @@ def build_issue_payload(card: DecisionCard) -> GitHubIssuePayload:
 - **Event ID:** {card.event_id}
 - **Zone:** {card.zone.value}
 
-### 🚨 Diagnostic Report
+### \U0001f6a8 Diagnostic Report
 {card.diagnosis}
 
-### 🔍 Analysis
+### \U0001f50d Analysis
 The COO Brain has analyzed the telemetry and identified the root cause.
 This event requires human review before any autonomous action is taken.
 
-### 🛠️ Proposed Solution
+### \U0001f6e0\ufe0f Proposed Solution
 {card.proposed_fix}
 
-{f'### 📝 Code Change (PR #{card.github_pr_number})\n{card.code_change}\n' if card.code_change else ''}
-
-### 📥 Instructions to Proceed
+{code_change_section}
+### \U0001f4e5 Instructions to Proceed
 1. To **APPROVE** and execute, simply **CLOSE this issue**.
 2. To **REJECT** or revise, comment on this issue.
 3. For **RED** zone events: do not auto-merge — escalate to principal immediately.

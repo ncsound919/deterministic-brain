@@ -264,16 +264,16 @@ If writing HTML, include ALL styles inline in <style> tags — make it look prod
         result = None
         logs = []
 
-        # 1. Try local Gemma first (fastest, free, deterministic)
+        # 1. Try unified local model first (fastest, free, deterministic)
         try:
-            from tools.local_gemma import get_gemma
-            gemma = get_gemma()
-            if gemma.is_available():
-                result = gemma.complete(prompt, n_predict=512, temperature=0.1)
+            from tools.local_model import get_local_model
+            local = get_local_model()
+            if local.is_available():
+                result = local.complete(prompt, max_tokens=512, temperature=0.1)
                 if result:
-                    logs.append("Using local Gemma for code generation")
+                    logs.append("Using unified local model for code generation")
         except Exception as gemma_err:
-            logs.append(f"Gemma unavailable: {gemma_err}")
+            logs.append(f"Local model unavailable: {gemma_err}")
 
         # 2. OpenRouter fallback
         if not result:

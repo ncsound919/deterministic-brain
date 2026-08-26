@@ -1,6 +1,9 @@
 """MetricsCollector — request latency, error rates, cache stats, SQLite timing.
 
 Singleton accessible via get_metrics(). Thread-safe with minimal locking.
+Prometheus exposition is maintained in parallel via prometheus_client
+(rendered by render_prometheus() for the /metrics endpoint); the JSON
+snapshot() contract is unchanged.
 """
 from __future__ import annotations
 import os
@@ -11,6 +14,120 @@ from typing import Optional
 
 _DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
 
+try:
+    from prometheus_client import (
+        CollectorRegistry,
+        Counter as _PmCounter,
+        Gauge as _PmGauge,
+        Histogram as _PmHistogram,
+        generate_latest,
+        CONTENT_TYPE_LATEST,
+    )
+
+    class _PrometheusMirror:
+        """Mirrors MetricsCollector state into a prometheus_client registry."""
+
+        def __init__(self) -> None:
+            self.registry = CollectorRegistry()
+            self._counters: dict[str, any] = {}
+            self._error_counters: dict[str, any] = {}
+            self._latencies: dict[str, any] = {}
+            self.requests_total = _PmCounter(
+                "brain_requests_total", "Total requests", ["route"], registry=self.registry
+            )
+            self.errors_total = _PmCounter(
+                "brain_request_errors_total", "Total errors (status >= 400)", ["route"], registry=self.registry
+            )
+            self.cache_hits = _PmCounter(
+                "brain_cache_hits_total", "Cache hits", registry=self.registry
+            )
+            self.cache_misses = _PmCounter(
+                "brain_cache_misses_total", "Cache misses", registry=self.registry
+            )
+            self.sqlite_seconds = _PmCounter(
+                "brain_sqlite_seconds_total", "Cumulative time spent in SQLite", registry=self.registry
+            )
+            self.sqlite_calls = _PmCounter(
+                "brain_sqlite_calls_total", "SQLite call count", registry=self.registry
+            )
+            self.uptime = _PmGauge(
+                "brain_uptime_seconds", "Process uptime in seconds", registry=self.registry
+            )
+            self.uptime.set_function(lambda: time.time() - _START_TS)
+
+        def _counter(self, route: str, table: dict, metric_cls, name: str, doc: str):
+            c = table.get(route)
+            if c is None:
+                c = metric_cls(name, doc, ["route"], registry=self.registry)
+                c = c.labels(route)
+                table[route] = c
+            return c
+
+        def record_request(self, route: str, elapsed_ms: float, status_code: int) -> None:
+            try:
+                self._counter(
+                    route, self._counters, _PmCounter, "brain_route_requests_total", "Requests per route"
+                ).inc()
+                h = self._latencies.get(route)
+                if h is None:
+                    h = _PmHistogram(
+                        "brain_route_latency_seconds",
+                        "Request latency per route",
+                        ["route"],
+                        buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+                        registry=self.registry,
+                    ).labels(route)
+                    self._latencies[route] = h
+                h.observe(max(elapsed_ms, 0.0) / 1000.0)
+                if status_code >= 400:
+                    self._counter(
+                        route, self._error_counters, _PmCounter, "brain_route_errors_total", "Errors per route"
+                    ).inc()
+                    self.errors_total.labels(route).inc()
+            except Exception:
+                pass
+
+        def record_cache_hit(self) -> None:
+            try:
+                self.cache_hits.inc()
+            except Exception:
+                pass
+
+        def record_cache_miss(self) -> None:
+            try:
+                self.cache_misses.inc()
+            except Exception:
+                pass
+
+        def record_sqlite(self, elapsed_ms: float) -> None:
+            try:
+                self.sqlite_calls.inc()
+                self.sqlite_seconds.inc(max(elapsed_ms, 0.0) / 1000.0)
+            except Exception:
+                pass
+
+    def _new_mirror():
+        return _PrometheusMirror()
+
+except ImportError:  # prometheus-client optional; JSON snapshot still works
+    def _new_mirror():
+        return None
+
+_START_TS = time.time()
+_PROM: Optional[_PrometheusMirror] = None
+
+
+def get_prometheus_mirror():
+    """Lazily created Prometheus mirror (None if prometheus-client missing)."""
+    global _PROM
+    if _DISTRIBUTED:
+        return None  # Redis path owns counters in distributed mode
+    if _PROM is None:
+        with threading.Lock():
+            if _PROM is None:
+                _PROM = _new_mirror()
+    return _PROM
+
 
 class MetricsCollector:
     """Thread-safe singleton for runtime performance metrics."""
@@ -20,6 +137,7 @@ class MetricsCollector:
 
     def __init__(self):
         self._lock = threading.Lock()
+        self._prom = get_prometheus_mirror()
         # Per-endpoint bucketed latency (ms)
         self._buckets: dict[str, list[int]] = defaultdict(list)
         # Per-endpoint hit count
@@ -61,6 +179,8 @@ class MetricsCollector:
                 cutoff = now - self.ERROR_WINDOW_SEC
                 self._error_timeline[route] = [t for t in timeline if t > cutoff]
                 self._error_timeline[route].append(now)
+        if self._prom is not None:
+            self._prom.record_request(route, elapsed_ms, status_code)
 
     def record_cache_hit(self) -> None:
         if _DISTRIBUTED:
@@ -73,6 +193,8 @@ class MetricsCollector:
                 pass
         with self._lock:
             self._cache_hits += 1
+        if self._prom is not None:
+            self._prom.record_cache_hit()
 
     def record_cache_miss(self) -> None:
         if _DISTRIBUTED:
@@ -85,6 +207,8 @@ class MetricsCollector:
                 pass
         with self._lock:
             self._cache_misses += 1
+        if self._prom is not None:
+            self._prom.record_cache_miss()
 
     def record_sqlite(self, elapsed_ms: float) -> None:
         if _DISTRIBUTED:
@@ -98,6 +222,8 @@ class MetricsCollector:
         with self._lock:
             self._sqlite_ms += elapsed_ms
             self._sqlite_calls += 1
+        if self._prom is not None:
+            self._prom.record_sqlite(elapsed_ms)
 
     def get_latency_percentiles(self, route: str) -> dict:
         with self._lock:
@@ -233,3 +359,18 @@ def reset_metrics() -> None:
     global _METRICS
     with _METRICS_LOCK:
         _METRICS = None
+
+
+def render_prometheus() -> tuple[bytes, str]:
+    """Render Prometheus text exposition format (for GET /metrics).
+
+    Returns (body, content_type); (b'', '') when prometheus-client or the
+    mirror is unavailable.
+    """
+    prom = get_prometheus_mirror()
+    if prom is None:
+        return b"", ""
+    try:
+        return generate_latest(prom.registry), CONTENT_TYPE_LATEST
+    except Exception:
+        return b"", ""

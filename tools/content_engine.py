@@ -1,6 +1,8 @@
 """Content Engine for Deterministic Brain.
 
-Uses local Gemma (Ollama) to generate and schedule content across platforms.
+Uses the unified local model (Ollama / llama-server / llama.cpp) to generate
+and schedule content across platforms. Falls back gracefully when no local
+backend is running.
 """
 
 from typing import Dict, List, Optional
@@ -10,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from loguru import logger
 
-from tools.local_gemma import get_gemma
+from tools.local_model import get_local_model
 from knowledge.bank import get_knowledge_bank
 
 class ContentEngine:
@@ -19,7 +21,7 @@ class ContentEngine:
     def __init__(self, drafts_dir: str = "data/content_drafts"):
         self.drafts_dir = Path(drafts_dir)
         self.drafts_dir.mkdir(parents=True, exist_ok=True)
-        self.gemma = get_gemma()
+        self.llm = get_local_model()
         self.kb = get_knowledge_bank()
         
     def generate_post(self, topic: str, platform: str, context: Optional[str] = None) -> str:
@@ -36,7 +38,7 @@ class ContentEngine:
             prompt += "\nFocus on visual descriptions and include many hashtags."
         elif platform == "email":
             prompt += "\nWrite a compelling subject line and a persuasive body."
-        return self.gemma.complete(prompt, n_predict=300, temperature=0.7)
+        return self.llm.complete(prompt, max_tokens=300, temperature=0.7)
 
     def generate_campaign(self, topic: str, platforms: List[str]) -> Dict[str, str]:
         """Generate a full campaign across multiple platforms."""

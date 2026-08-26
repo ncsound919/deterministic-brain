@@ -6,7 +6,7 @@ Calls SkillEvolver.evolve() and writes a report.
 
 from __future__ import annotations
 import json
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict
 
@@ -23,7 +23,7 @@ class NightlyScorer:
 
     def run_daily_score(self) -> Dict:
         """Score all skills, evolve weights, and return report."""
-        now = datetime.now(UTC).isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         # Evolve weights based on accumulated performance data
         evolved = self.evolver.evolve()

@@ -4,7 +4,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import traceback
 import asyncio
 from functools import wraps
@@ -38,7 +38,7 @@ _DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "
 # ── Hermes Integration ─────────────────────────────────────────
 HERMES_URL = os.getenv("HERMES_URL", "http://127.0.0.1:9119")
 LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8082")
-LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "gemma-4-e2b.gguf")
+LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen3.5:4b")
 _API_PORT = int(os.environ.get("API_PORT", 8000))
 
 # Bundle config cache (avoid YAML parse on every /bundles request)
@@ -186,6 +186,45 @@ async def lifespan(app: FastAPI):
             _api_logger.warning("Redis backend: error — %s", e)
     # Register daily research pipeline
     _register_daily_research()
+    # Preload the semantic ranker model so the first /reason after a restart is
+    # fast (MiniLM lazy-loads ~50s on first use, which would trip Draymond's
+    # 45s brain-decision timeout). Best-effort.
+    try:
+        from reasoning.semantic_ranker import FlatEmbeddingIndex
+        if os.path.exists("skill_index.npy"):
+            idx = FlatEmbeddingIndex()
+            if idx.load("skill_index.npy"):
+                idx.model  # force model load
+                _api_logger.info("Semantic ranker model preloaded (warm /reason)")
+    except Exception as e:
+        _api_logger.warning("Semantic ranker preload skipped: %s", e)
+    # Register deterministic cron chains from skill_chains.yaml so the brain's
+    # own automation (morning kickstart, content publish, learning
+    # consolidation, agent health, repo health, ...) runs 24/7 — not just the
+    # API. Best-effort: a chain-load failure must never take the server down.
+    try:
+        from features.skill_chains_loader import load_all_chains
+        chain_stats = load_all_chains()
+        _api_logger.info(
+            "Cron chains: %s total, %s cron, %s manual",
+            chain_stats.get("total", "?"),
+            chain_stats.get("cron_registered", "?"),
+            chain_stats.get("manual_available", "?"),
+        )
+        if chain_stats.get("errors"):
+            _api_logger.warning("Chain load warnings: %s", chain_stats["errors"])
+    except Exception as e:
+        _api_logger.warning("Cron chain registration skipped: %s", e)
+    # Preload the local model (keep_alive=-1) so the first local call after a
+    # restart doesn't pay the multi-second model load. Gated on
+    # LOCAL_MODEL_WARM_ON_BOOT (default on) so it can be disabled on slow boots.
+    if os.getenv("LOCAL_MODEL_WARM_ON_BOOT", "true").lower() != "false":
+        try:
+            from tools.local_harness import get_harness
+            get_harness().warm()
+            _api_logger.info("Local model preloaded (warm)")
+        except Exception as e:
+            _api_logger.warning("Local model warm skipped: %s", e)
     yield
     _close_sqlite_connections()
 
@@ -520,7 +559,9 @@ def cached_endpoint(ttl: int = 60):
                 result = await func(*args, **kwargs)
             else:
                 loop = asyncio.get_running_loop()
-                result = await loop.run_in_executor(None, func, *args, **kwargs)
+                import functools
+                bound = functools.partial(func, *args, **kwargs)
+                result = await loop.run_in_executor(None, bound)
 
             _CACHE.set(key, result, ttl)
             return result
@@ -580,6 +621,7 @@ def reason_only(req: TaskRequest) -> Dict:
         scorer_fn=agent._decision_scorer,
         constraints=agent._build_constraints(task),
         variable_domains=agent._variable_domains(task),
+        advisory=True,  # pure reasoning — downgrade injection flags to warnings
     )
     if decision.chosen_skill and decision.chosen_skill in text_to_id:
         decision.chosen_skill = text_to_id[decision.chosen_skill]
@@ -949,11 +991,18 @@ def llm_status() -> Dict:
         available = get_client().available
     except Exception:
         available = False
+    local = None
+    try:
+        from tools.local_model import get_local_model
+        local = get_local_model().status()
+    except Exception:
+        pass
     return {
         "enabled": enabled,
-        "available": available,
+        "available": available or bool(local and local.get("available")),
         "provider": provider,
         "has_keys": {"openrouter": has_openrouter, "anthropic": has_anthropic, "openai": has_openai},
+        "local": local,
     }
 
 
@@ -1082,6 +1131,7 @@ def integrations_status() -> Dict:
 # ── Smart Chat (intent routing) ────────────────────────────────────
 class ChatRequest(BaseModel):
     text: str
+    model: str = ""
 
 
 @app.post("/chat")
@@ -1215,37 +1265,89 @@ def hermes_assign_model(body: Dict) -> Dict:
         return {"_error": str(e)}
 
 
-# ── Local Model (Gemma-4 via llama.cpp) ────────────────────────
+# ── Local Model (unified service: Ollama / llama-server / llama.cpp) ────
 @app.get("/models/local/status")
 def local_model_status() -> Dict:
-    """Check if the local Gemma-4 model is running."""
+    """Check all local model backends and report which are live."""
     try:
-        import httpx
-        with httpx.Client(timeout=3) as client:
-            resp = client.get(f"{LOCAL_MODEL_URL}/v1/models")
-            if resp.status_code >= 400:
-                return {"connected": False, "models": []}
-            return {"connected": True, "models": resp.json()}
-    except Exception:
-        return {"connected": False, "models": []}
+        from tools.local_model import get_local_model
+        return get_local_model().status()
+    except Exception as e:
+        return {"available": False, "error": str(e)}
+
+
+@app.get("/models/local/list")
+def local_model_list() -> Dict:
+    """List models installed on the active local backend(s)."""
+    try:
+        from tools.local_model import get_local_model
+        svc = get_local_model()
+        return {"models": svc.list_models(), "available": svc.is_available()}
+    except Exception as e:
+        return {"models": [], "available": False, "error": str(e)}
 
 
 @app.post("/models/local/chat")
 def local_model_chat(req: ChatRequest) -> Dict:
-    """Chat directly with the local Gemma-4 model."""
+    """Chat directly with the unified local model.
+
+    Optional req.model pins an explicit lane model (e.g. medgemma:4b for
+    biomed, deepseek-ocr:3b for document OCR). Empty/unknown -> default.
+    """
     try:
-        import httpx
-        with httpx.Client(timeout=120) as client:
-            resp = client.post(f"{LOCAL_MODEL_URL}/v1/chat/completions", json={
-                "model": LOCAL_MODEL_NAME,
-                "messages": [{"role": "user", "content": req.text}],
-                "stream": False,
-            })
-            if resp.status_code >= 400:
-                return {"_error": f"Model returned {resp.status_code}"}
-            return resp.json()
+        from tools.local_model import get_local_model
+        svc = get_local_model()
+        if not svc.is_available():
+            return {"_error": "No local model backend running"}
+        used = getattr(req, "model", "") or ""
+        text = svc.chat_with_model(used, "You are a helpful assistant.", req.text, max_tokens=1024) if used else svc.chat("You are a helpful assistant.", req.text, max_tokens=1024)
+        return {"choices": [{"message": {"content": text, "role": "assistant"}}], "model": used or (svc.active_backend().model_name() if svc.active_backend() else None)}
     except Exception as e:
         return {"_error": f"Model unavailable: {str(e)}"}
+
+
+@app.get("/models/local/lanes")
+def local_model_lanes() -> Dict:
+    """Domain-lane model resolution for ecosystem tools (science, ocr, vision)."""
+    try:
+        from tools.local_model import get_local_model
+        svc = get_local_model()
+        if not svc.is_available():
+            return {"available": False}
+        active = svc.active_backend()
+        return {
+            "available": True,
+            "default": active.model_name() if active else None,
+            "fast": active.fast_model_name() if active else None,
+            "vision": active.vision_model_name() if active else None,
+            "biomed": svc.biomed_model_name(),
+            "ocr": svc.ocr_model_name(),
+            "chem": svc.chem_model_name(),
+        }
+    except Exception as e:
+        return {"available": False, "error": str(e)}
+
+
+class ScienceEmbedRequest(BaseModel):
+    texts: List[str]
+    embedder: str = "pubmedncl"
+
+
+@app.post("/embeddings/science")
+def science_embeddings(req: ScienceEmbedRequest) -> Dict:
+    """Scientific paper embeddings (PubMedNCL 768d / SciRus-tiny 312d).
+
+    Allocation point for the overlay science tools: metamap/bbtech/decon
+    embed abstracts and paper chunks here instead of general-purpose nomic.
+    """
+    try:
+        from tools.science_embeddings import get_science_embedder
+        emb = get_science_embedder(req.embedder)
+        vecs = emb.encode(req.texts)
+        return {"embedder": emb.name, "model": emb.model_id, "dimension": emb.dimension,
+                "embeddings": [list(map(float, v)) for v in vecs]}
+    except Exception as e:
+        return {"_error": str(e)}
 
 
 @app.post("/models/local/proxy")
@@ -1268,6 +1370,148 @@ async def local_model_proxy(request: Request) -> Dict:
             return resp.json()
     except Exception as e:
         return {"_error": f"Local model proxy failed: {str(e)}"}
+
+
+# ── Local Model Harness (memory + ecosystem-aware) ─────────────────────
+
+@app.get("/local/harness/status")
+def local_harness_status() -> Dict:
+    """Status of the local model harness: backend, memory, ecosystem."""
+    try:
+        from tools.local_harness import get_harness
+        return get_harness().status()
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/warm")
+def local_harness_warm() -> Dict:
+    """Preload the local model so subsequent calls are fast."""
+    try:
+        from tools.local_harness import get_harness
+        return {"warmed": get_harness().warm()}
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/chat")
+def local_harness_chat(req: ChatRequest) -> Dict:
+    """Memory-aware chat through the local harness."""
+    try:
+        from tools.local_harness import get_harness
+        text = get_harness().chat("You are a helpful assistant.", req.text, thread="default")
+        return {"reply": text}
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/reason")
+def local_harness_reason(body: Dict) -> Dict:
+    """Reasoning through the local harness.
+
+    Defaults to the FAST tier (qwen3:0.6b, thinking disabled) for time-boxed
+    ops triage — returns {answer}. Pass {"mode":"cot"} for a full chain-of-
+    thought (slow on this CPU) → {scratchpad, answer}.
+    """
+    try:
+        from tools.local_harness import get_harness
+        h = get_harness()
+        problem = body.get("problem", "")
+        thread = body.get("thread", "default")
+        if body.get("mode") == "cot":
+            scratch, answer = h.reason(problem, thread=thread)
+            return {"scratchpad": scratch, "answer": answer}
+        answer = h.fast_reason(problem, thread=thread)
+        return {"answer": answer}
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/classify")
+def local_harness_classify(body: Dict) -> Dict:
+    """Classify text into one of the given labels."""
+    try:
+        from tools.local_harness import get_harness
+        result = get_harness().classify(
+            body.get("text", ""),
+            body.get("labels", []),
+            thread=body.get("thread", "default"),
+        )
+        return result
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/remember")
+def local_harness_remember(body: Dict) -> Dict:
+    """Write an episode into the local harness's episodic memory."""
+    try:
+        from tools.local_harness import get_harness
+        ep_id = get_harness().remember(
+            body.get("prompt", ""),
+            body.get("result", ""),
+            role=body.get("role", "task"),
+            metadata=body.get("metadata"),
+        )
+        return {"episode_id": ep_id}
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/recall")
+def local_harness_recall(body: Dict) -> Dict:
+    """Retrieve relevant memories for a query."""
+    try:
+        from tools.local_harness import get_harness
+        memories = get_harness().recall(body.get("query", ""), top_k=int(body.get("top_k", 5)))
+        return {"memories": memories}
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+@app.post("/local/harness/consolidate")
+def local_harness_consolidate(body: Dict = None) -> Dict:
+    """Sleep-time compute: distill episodes into semantic facts + a lesson."""
+    try:
+        from tools.local_harness import get_harness
+        body = body or {}
+        return get_harness().consolidate(max_episodes=int(body.get("max_episodes", 8)))
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+# ── Local model vision + tool calling ─────────────────────────────────────
+
+@app.post("/local/vision/analyze")
+def local_vision_analyze(body: Dict) -> Dict:
+    """Analyse an image with the local gemma vision model (zero cost)."""
+    try:
+        import asyncio
+        from vision_analysis import vision_analyzer
+        result = asyncio.run(vision_analyzer.analyze_image(
+            body.get("image_path", ""),
+            body.get("prompt", "Describe this image."),
+            quality=body.get("quality", "fast"),
+        ))
+        return result.__dict__
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/local/tools/call")
+def local_tools_call(body: Dict) -> Dict:
+    """Tool calling via the local model (qwen3 tool-capable tier)."""
+    try:
+        from tools.local_model import get_local_model
+        svc = get_local_model()
+        result = svc.call_tools(
+            body.get("prompt", ""),
+            body.get("tools", []),
+            max_tokens=int(body.get("max_tokens", 256)),
+        )
+        return result
+    except Exception as e:
+        return {"_error": str(e)}
 
 
 # ── Tool Registration (command-code, opencode) ─────────────────
@@ -2333,6 +2577,216 @@ def synthesize_knowledge(tag: str) -> Dict:
     return result
 
 
+@app.post("/research/publish")
+def research_publish(req: Dict) -> Dict:
+    """Deterministic research paper → Overlay Global Lens publish.
+
+    Body:
+      topic       (required) — research subject
+      title       (optional) — paper title (defaults to topic)
+      abstract    (optional) — abstract string
+      findings    (optional) — inline findings list [{title, summary, url, ...}]
+      category    (optional) — Global Lens category (default 'global')
+      pillar      (optional) — pillar (default 'research')
+      source_name (optional) — attribution (default 'Overlay365 Deterministic Brain')
+      publish     (optional) — POST to Global Lens (default true)
+      attach_paper(optional) — attach a research_papers row (default true)
+
+    Runs fully deterministically (no LLM): sources via arXiv/news/Wikipedia when
+    reachable, renders the research-paper skill template, writes the build, and
+    publishes to Global Lens /api/publish (idempotent).
+    """
+    from features.research_publisher import get_publisher
+
+    topic = str(req.get("topic", "")).strip()
+    if not topic:
+        return {"ok": False, "error": "topic is required"}
+
+    result = get_publisher().create_and_publish(
+        topic=topic,
+        title=str(req.get("title") or "").strip() or None,
+        abstract=str(req.get("abstract") or "").strip() or None,
+        findings=req.get("findings") or None,
+        category=str(req.get("category", "global")),
+        pillar=str(req.get("pillar", "research")),
+        source_name=str(req.get("source_name", "Overlay365 Deterministic Brain")),
+        url=str(req.get("url", "")),
+        publish=bool(req.get("publish", True)),
+        attach_paper=bool(req.get("attach_paper", True)),
+    )
+    return result
+
+
+# ── Open-Chat / Draymond reporting (report + communicate to the operator) ──
+
+@app.post("/ntfy")
+def ntfy_publish(req: Dict) -> Dict:
+    """Publish a JSON message to an ntfy topic (Open-Chat pub/sub stream).
+
+    Body:
+      title    (required) — message title
+      message  (required) — message body
+      tags     (optional) — list of ntfy tags (e.g. ["report"], ["call"] for auto-speak)
+      priority (optional) — 1-5, default 3
+      topic    (optional) — ntfy topic (defaults to NTFY_TOPIC_RESULTS)
+      click    (optional) — tap-through URL
+    """
+    from tools.ntfy import publish_ntfy
+    return publish_ntfy(
+        title=str(req.get("title", "")),
+        message=str(req.get("message", "")),
+        tags=req.get("tags") or None,
+        priority=int(req.get("priority", 3)),
+        topic=str(req.get("topic", "")) or None,
+        click=str(req.get("click", "")) or None,
+    )
+
+
+@app.post("/notify/openchat")
+def notify_openchat(req: Dict) -> Dict:
+    """Publish a report/message to the Open-Chat Fleet Alerts topic.
+
+    Body:
+      title   (required) — message title
+      message (required) — message body
+      tags    (optional) — extra ntfy tags
+      speak   (optional) — if true, add the `call` tag so Open-Chat auto-speaks
+      topic   (optional) — override topic (defaults to NTFY_TOPIC_RESULTS)
+    """
+    from tools.ntfy import notify_openchat as _notify
+    return _notify(
+        title=str(req.get("title", "")),
+        message=str(req.get("message", "")),
+        tags=req.get("tags") or None,
+        priority=int(req.get("priority", 3)),
+        topic=str(req.get("topic", "")) or None,
+        speak=bool(req.get("speak", False)),
+    )
+
+
+# ── Cancer verification (deterministic, zero-LLM) ──────────────────
+@app.post("/cancer/verify")
+def cancer_verify(req: Dict) -> Dict:
+    """Deterministic (zero-LLM) verification of a CureMind cancer hypothesis.
+
+    Body:
+      target               (optional) — gene/protein target symbol
+      mechanism            (optional) — proposed intervention mechanism
+      testable_prediction  (optional) — testable, falsifiable prediction
+      contradictory_papers (optional) — list of contradicting citations
+      hypothesis_id        (optional) — CureMind hypothesis id
+      disease              (optional) — cancer type (default 'cancer')
+      modality             (optional) — modality label
+      manifest_hash        (optional) — Oncology engine manifest SHA-256 to anchor the audit
+
+    Reuses the brain's structural-validation + event-bus audit machinery. Emits
+    a `cancer_verify` audit event on the event bus (retrievable via
+    GET /cancer/verify/events) and to the trace/audit feed surfaced by
+    GET /dashboard/audit. No LLM call.
+    """
+    from features.cancer_verify import get_verifier
+
+    verifier = get_verifier(emit=event_bus.emit)
+    result = verifier.verify(
+        target=str(req.get("target", "")),
+        mechanism=str(req.get("mechanism", "")),
+        testable_prediction=str(req.get("testable_prediction", "")),
+        contradictory_papers=req.get("contradictory_papers"),
+        hypothesis_id=str(req.get("hypothesis_id", "")),
+        disease=str(req.get("disease", "cancer")),
+        modality=str(req.get("modality", "")),
+        manifest_hash=str(req.get("manifest_hash", "")),
+    )
+    # Persist to the trace DB so /dashboard/audit surfaces it (same store as
+    # audit_repo/handle/step events).
+    try:
+        from tools.tracing import log_event
+        log_event("cancer_verify", {
+            "target": req.get("target", ""),
+            "hypothesis_id": req.get("hypothesis_id", ""),
+            "manifest_hash": req.get("manifest_hash", ""),
+            "verdict": result.get("verdict", ""),
+            "score": result.get("score", 0),
+            "signature": result.get("signature", ""),
+            "llm_used": result.get("llm_used", False),
+        })
+    except Exception:
+        pass
+    return result
+
+
+@app.get("/cancer/verify/events")
+def cancer_verify_events(limit: int = 100) -> Dict:
+    """Recent deterministic cancer-verification audit events from the event bus.
+
+    Note: these events are carried on the in-process event bus (not the
+    /dashboard/audit SQLite feed), so they are surfaced here directly.
+    """
+    try:
+        events = [
+            e for e in event_bus.recent_events(min(limit, 500))
+            if e.get("type") == "cancer_verify"
+        ]
+        return {"events": events, "count": len(events)}
+    except Exception as exc:  # noqa: BLE001
+        return {"events": [], "count": 0, "error": str(exc)}
+
+
+@app.get("/cancer/verify/health")
+def cancer_verify_health() -> Dict:
+    """Liveness/probe for the deterministic cancer verifier."""
+    from features.cancer_verify import THRESHOLDS
+    return {
+        "ok": True,
+        "service": "deterministic-brain",
+        "endpoint": "/cancer/verify",
+        "llm_used": False,
+        "thresholds": THRESHOLDS,
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.post("/report")
+def brain_report(req: Dict) -> Dict:
+    """High-level 'brain → operator' report through Open-Chat.
+
+    Body:
+      task    (required) — short task label, e.g. "NBA ingest" or "Research grading"
+      summary (required) — what the brain did / found
+      level   (optional) — info|ok|warning|error (default info)
+      speak   (optional) — auto-speak on the phone (default false)
+      topic   (optional) — override topic
+    """
+    from tools.ntfy import report_brain
+    return report_brain(
+        task=str(req.get("task", "")),
+        summary=str(req.get("summary", "")),
+        level=str(req.get("level", "info")),
+        speak=bool(req.get("speak", False)),
+        topic=str(req.get("topic", "")) or None,
+    )
+
+
+@app.post("/draymond/invoke")
+def draymond_invoke(req: Dict) -> Dict:
+    """Invoke a Draymond entity/chain via the live Draymond bridge.
+
+    Body:
+      slug    (required) — Draymond entity slug (or use `path` for a raw route)
+      payload (optional) — JSON body to send
+      path    (optional) — raw Draymond route to POST (overrides slug routing)
+    """
+    from tools.draymond_bridge import get_draymond_bridge
+    slug = str(req.get("slug", "")).strip()
+    if not slug and not req.get("path"):
+        return {"status": "error", "error": "slug (or path) is required"}
+    return get_draymond_bridge().invoke(
+        slug=slug,
+        payload=req.get("payload") or {},
+        path=str(req.get("path", "")) or None,
+    )
+
+
 @app.post("/news/summarize")
 def news_summarize(req: Dict) -> Dict:
     """Summarize a news item using the LLM."""
@@ -2658,6 +3112,70 @@ async def serve_root():
     if os.path.exists(path):
         return FileResponse(path)
     return HTMLResponse("<h1>Aether Dashboard Not Found</h1><p>Run 'npm run build' in aether-dashboard first.</p>")
+
+# ── Kaggle ─────────────────────────────────────────────────────────
+# Research data provider: dataset search/download/snapshots + the
+# research feed that ingests a downloaded dataset into the knowledge
+# bank. Mirrors the integration copy (04_Integrations/integrations/
+# deterministic-brain). Defined BEFORE the SPA catch-all so /kaggle/*
+# is never swallowed by the index.html route.
+@app.get("/kaggle/status")
+def kaggle_status() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return get_kaggle().status()
+
+@app.get("/kaggle/whoami")
+def kaggle_whoami() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return get_kaggle().whoami()
+
+@app.get("/kaggle/datasets/search")
+def kaggle_datasets_search(q: str = "", per_page: int = 10, sort_by: str = "hottest") -> Dict:
+    from features.kaggle_manager import get_kaggle
+    kg = get_kaggle()
+    results = kg.search_datasets(q, per_page=per_page, sort_by=sort_by)
+    return {"datasets": results, "total": len(results), "query": q}
+
+@app.get("/kaggle/competitions")
+def kaggle_competitions() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return {"competitions": get_kaggle().list_competitions()}
+
+@app.get("/kaggle/datasets/files")
+def kaggle_dataset_files(ref: str = "") -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return {"files": get_kaggle().dataset_files(ref)}
+
+@app.post("/kaggle/datasets/download")
+def kaggle_dataset_download(dataset: str = "", force: bool = False, unzip: bool = True) -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return get_kaggle().download_dataset(dataset, force=force, unzip=unzip)
+
+@app.get("/kaggle/snapshots")
+def kaggle_snapshots() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    return {"snapshots": get_kaggle().list_snapshots()}
+
+@app.post("/kaggle/research/feed")
+def kaggle_research_feed(dataset: str = "", force: bool = False,
+                         tags: str = "", index_tfidf: bool = True) -> Dict:
+    from features.kaggle_research import get_kaggle_research
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
+    return get_kaggle_research().feed_dataset(dataset, tags=tag_list or None,
+                                              force=force, index_tfidf=index_tfidf)
+
+@app.get("/kaggle/research/feeds")
+def kaggle_research_feeds() -> Dict:
+    from features.kaggle_research import get_kaggle_research
+    return {"feeds": get_kaggle_research().list_feeds()}
+
+@app.get("/kaggle/research/status")
+def kaggle_research_status() -> Dict:
+    from features.kaggle_manager import get_kaggle
+    from features.kaggle_research import get_kaggle_research
+    base = get_kaggle().status()
+    base["feeds"] = len(get_kaggle_research().list_feeds())
+    return base
 
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):

@@ -25,6 +25,16 @@ from loguru import logger
 from config import settings
 
 
+class _LocalDecision:
+    """Stand-in decision object when routing through the unified local model.
+
+    Matches the attributes callers read off `router`'s decision object so the
+    rest of ULTRAPLAN keeps working unchanged.
+    """
+    estimated_cost = 0.0
+    provider = "local"
+
+
 class PlanStatus(str, Enum):
     """Status of a planning session"""
     INITIALIZING = "initializing"
@@ -225,6 +235,31 @@ class UltraPlanEngine:
         if self._router is None:
             self._router = _DeterministicRoutingAdapter()
         return self._router
+
+    async def _execute_with_routing(self, task: str, context: Optional[Dict[str, Any]] = None) -> tuple:
+        """Local-first LLM routing.
+
+        Tries the unified local model service first (zero cost, no keys),
+        then falls back to the `router` package's execute_with_routing.
+        Returns (decision, result_dict) where result_dict always carries
+        a 'content' key so all callers keep working unchanged.
+        """
+        try:
+            import asyncio
+            from tools.local_model import get_local_model
+            local = get_local_model()
+            if local.is_available():
+                content = await asyncio.to_thread(local.generate_text, task, None, 2048)
+                if content:
+                    return _LocalDecision(), {"content": content, "provider": "local"}
+        except Exception as e:
+            logger.warning(f"Local-first routing unavailable: {e}")
+
+        try:
+            return await self._get_router().execute_with_routing(task=task, context=context or {})
+        except Exception as e:
+            logger.warning(f"Router routing failed, using deterministic fallback: {e}")
+            return _LocalDecision(), {"content": ""}
 
     def _ensure_storage(self):
         """Ensure storage directory exists"""
@@ -457,7 +492,7 @@ Rate the complexity on this scale:
 Respond with ONLY one word: SIMPLE, MODERATE, COMPLEX, or EXTENSIVE"""
 
         try:
-            decision, result = await self._get_router().execute_with_routing(
+            decision, result = await self._execute_with_routing(
                 task=prompt,
                 context={"requires_reasoning": True}
             )
@@ -495,7 +530,7 @@ Goal: {goal}
 Respond with ONLY the title, no quotes or explanation."""
 
         try:
-            decision, result = await self._get_router().execute_with_routing(
+            decision, result = await self._execute_with_routing(
                 task=prompt,
                 context={"simple_task": True}
             )
@@ -536,7 +571,7 @@ Respond in JSON format:
     "dependencies": ["dependency 1", "dependency 2"]
 }}"""
 
-        decision, result = await self._get_router().execute_with_routing(
+        decision, result = await self._execute_with_routing(
             task=prompt,
             context={"requires_reasoning": True}
         )
@@ -608,7 +643,7 @@ Respond in JSON:
     ]
 }}"""
 
-        decision, result = await self._get_router().execute_with_routing(
+        decision, result = await self._execute_with_routing(
             task=prompt,
             context={"requires_reasoning": True}
         )
@@ -766,7 +801,7 @@ Provide refinement suggestions in JSON:
 }}"""
 
         try:
-            decision, result = await self._get_router().execute_with_routing(
+            decision, result = await self._execute_with_routing(
                 task=prompt,
                 context={"requires_reasoning": True}
             )

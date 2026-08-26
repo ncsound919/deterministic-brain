@@ -36,6 +36,7 @@ _DEFAULT_AGENTS: Dict[str, str] = {
     "deterministic-brain": "http://localhost:8000",
     "browser-harness":     "http://localhost:8001",
     "repoforge":           "http://localhost:8002",
+    "draymond":            os.environ.get("DRAYMOND_URL", "http://localhost:3444"),
 }
 
 try:

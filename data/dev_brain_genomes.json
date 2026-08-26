@@ -1,0 +1,3845 @@
+{
+  "andrej-karpathy": {
+    "id": "andrej-karpathy",
+    "name": "Andrej Karpathy",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Deep Learning Engineer",
+    "coreStrength": "Training loop clarity, micro-abstractions & pedagogy",
+    "mentalModels": [
+      "data-first thinking",
+      "gradients as signals",
+      "minimal abstractions",
+      "feel the loss"
+    ],
+    "toolchain": [
+      "PyTorch",
+      "micrograd",
+      "CUDA",
+      "C/C++"
+    ],
+    "debuggingStyle": "instrumentation + loss visualization + synthetic sanity tests",
+    "optimizationPattern": "progressive batching + curriculum learning + recipe verification",
+    "publicSources": [
+      "YouTube: Neural Networks: Zero to Hero",
+      "GitHub: micrograd / nanoGPT",
+      "Tesla Autopilot Technical Talks"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Model architecture simplicity, training dynamics & baseline sanity",
+    "favoriteQuestions": [
+      "Can we build this from pure numpy/micrograd first?",
+      "What does the loss curve look like on 1 batch?"
+    ],
+    "auditTrail": [
+      {
+        "source": "public_lecture",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "soumith-chintala": {
+    "id": "soumith-chintala",
+    "name": "Soumith Chintala",
+    "sector": "dev",
+    "subBrain": "Framework Design",
+    "role": "Framework Designer",
+    "coreStrength": "Reproducibility & research-engineering fusion",
+    "mentalModels": [
+      "framework-first",
+      "imperative over declarative",
+      "researcher + engineer hybrid"
+    ],
+    "toolchain": [
+      "PyTorch",
+      "Caffe2",
+      "CUDA/C++",
+      "distributed torchrun"
+    ],
+    "debuggingStyle": "systematic benchmarking + operator-level profiling",
+    "optimizationPattern": "profiling-driven kernel fusion + eager execution memory tuning",
+    "publicSources": [
+      "PyTorch NeurIPS papers",
+      "GitHub: pytorch/pytorch",
+      "PyTorch Developer Conferences"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Tensor execution engine, runtime performance & developer ergonomics",
+    "favoriteQuestions": [
+      "Is this imperative and debuggable by a human in standard pdb?",
+      "What is the GPU memory overhead?"
+    ],
+    "auditTrail": [
+      {
+        "source": "public_repo",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "jeremy-howard": {
+    "id": "jeremy-howard",
+    "name": "Jeremy Howard",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Democratized Learning Architect",
+    "coreStrength": "Practical heuristics & rapid baseline iteration",
+    "mentalModels": [
+      "top-down teaching",
+      "learning-by-doing",
+      "layer-wise learning rate decay"
+    ],
+    "toolchain": [
+      "fastai",
+      "PyTorch",
+      "Jupyter Lab",
+      "nbdev"
+    ],
+    "debuggingStyle": "empirical interactive visualization in Jupyter",
+    "optimizationPattern": "1cycle policy + transfer learning + progressive unfreezing",
+    "publicSources": [
+      "Practical Deep Learning for Coders (fast.ai)",
+      "GitHub: fastai",
+      "Lex Fridman Podcast #35"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.94,
+    "voteScope": "Model iteration velocity, practical training heuristics & accessibility",
+    "favoriteQuestions": [
+      "What is the fastest way to get a strong baseline running in 10 minutes?"
+    ],
+    "auditTrail": [
+      {
+        "source": "public_course",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "yann-lecun": {
+    "id": "yann-lecun",
+    "name": "Yann LeCun",
+    "sector": "dev",
+    "subBrain": "Foundational Architectures",
+    "role": "Foundational Architect",
+    "coreStrength": "Self-supervised learning & energy-based architectures",
+    "mentalModels": [
+      "joint embedding predictive architectures (JEPA)",
+      "energy-based models",
+      "hierarchical representation"
+    ],
+    "toolchain": [
+      "I-JEPA",
+      "V-JEPA",
+      "PyTorch",
+      "Convolutional Nets"
+    ],
+    "debuggingStyle": "first-principles invariant analysis + representation collapse checks",
+    "optimizationPattern": "non-contrastive self-supervised regularization + vicreg energy minimization",
+    "publicSources": [
+      "A Path Towards Autonomous Machine Intelligence (Meta AI)",
+      "Turing Lecture 2018",
+      "JMLR Papers"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.98,
+    "voteScope": "Foundational world models, self-supervised learning & predictive architectures",
+    "favoriteQuestions": [
+      "How does the model predict in abstract representation space rather than pixel space?"
+    ],
+    "auditTrail": [
+      {
+        "source": "academic_paper",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "geoff-hinton": {
+    "id": "geoff-hinton",
+    "name": "Geoffrey Hinton",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Conceptual Pioneer",
+    "coreStrength": "Loss landscape dynamics & bio-plausible learning",
+    "mentalModels": [
+      "forward-forward algorithm",
+      "capsule routing",
+      "dark knowledge distillation"
+    ],
+    "toolchain": [
+      "Forward-Forward PyTorch",
+      "Boltzmann machines",
+      "CapsNets"
+    ],
+    "debuggingStyle": "mathematical thought experiments + loss equilibrium probing",
+    "optimizationPattern": "knowledge distillation + layer-wise goodness contrast",
+    "publicSources": [
+      "Coursera: Neural Networks",
+      "The Forward-Forward Algorithm paper",
+      "Turing Lecture 2018"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.97,
+    "voteScope": "Alternative learning rules, representation transfer & distillation",
+    "favoriteQuestions": [
+      "Why should backpropagation be the only gradient computation scheme?"
+    ],
+    "auditTrail": [
+      {
+        "source": "public_lecture",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "demis-hassabis": {
+    "id": "demis-hassabis",
+    "name": "Demis Hassabis",
+    "sector": "dev",
+    "subBrain": "Agentic Systems",
+    "role": "Agentic Systems Designer",
+    "coreStrength": "Reinforcement learning & cognitive architectures",
+    "mentalModels": [
+      "planning via search + value heuristics",
+      "episodic memory integration",
+      "multi-task generalist agents"
+    ],
+    "toolchain": [
+      "AlphaGo / MuZero",
+      "AlphaFold 3",
+      "JAX / Haiku",
+      "DeepMind Lab"
+    ],
+    "debuggingStyle": "ablation of reward components + agent trajectory replay",
+    "optimizationPattern": "Monte Carlo tree search + self-play curriculum + evolutionary evaluation",
+    "publicSources": [
+      "Nature AlphaFold Publications",
+      "Mastering the Game of Go (Nature)",
+      "DeepMind Research Papers"
+    ],
+    "determinismRating": 0.91,
+    "believabilityWeight": 0.99,
+    "voteScope": "Agent planning, multi-step search algorithms & structural molecular AI",
+    "favoriteQuestions": [
+      "Can the agent formulate long-horizon plans with internal simulation?"
+    ],
+    "auditTrail": [
+      {
+        "source": "research_publication",
+        "date": "2022",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "ilya-sutskever": {
+    "id": "ilya-sutskever",
+    "name": "Ilya Sutskever",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Frontier Scaling Architect",
+    "coreStrength": "Empirical scaling laws, training stability & frontier Transformers",
+    "mentalModels": [
+      "compute-optimal scaling curves",
+      "next-token prediction compression",
+      "unsupervised pretraining primacy"
+    ],
+    "toolchain": [
+      "GPT Megatron",
+      "Triton",
+      "Distributed Ray/Slurm",
+      "FP8 mixed precision"
+    ],
+    "debuggingStyle": "early loss curve derivative tracking + gradient norm spikes",
+    "optimizationPattern": "stable attention scaling + cosine decay with warmup + gradient clipping",
+    "publicSources": [
+      "Scaling Laws for Neural Language Models",
+      "Sequence to Sequence with Neural Networks",
+      "NeurIPS Keynotes"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.99,
+    "voteScope": "Frontier model scaling laws, pretraining stability & compute allocation",
+    "favoriteQuestions": [
+      "Does the loss curve scale predictably with compute and data?"
+    ],
+    "auditTrail": [
+      {
+        "source": "preprint",
+        "date": "2023",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "john-schulman": {
+    "id": "john-schulman",
+    "name": "John Schulman",
+    "sector": "dev",
+    "subBrain": "Agentic Systems",
+    "role": "RL Algorithm Designer",
+    "coreStrength": "Policy optimization & human alignment algorithms",
+    "mentalModels": [
+      "proximal trust regions",
+      "clipped objective stabilization",
+      "generalized advantage estimation"
+    ],
+    "toolchain": [
+      "PPO",
+      "TRPO",
+      "RLHF pipelines",
+      "Gym / Gymnasium"
+    ],
+    "debuggingStyle": "KL divergence tracking + value function loss correlation",
+    "optimizationPattern": "clipped surrogate objective + mini-batch policy iteration",
+    "publicSources": [
+      "Proximal Policy Optimization Algorithms (OpenAI)",
+      "High-Dimensional Continuous Control (ICLR)",
+      "Berkley Lectures"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Reinforcement learning, reward modeling & policy gradient stability",
+    "favoriteQuestions": [
+      "Is the policy stepping outside the trust region during update steps?"
+    ],
+    "auditTrail": [
+      {
+        "source": "published_paper",
+        "date": "2017",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "chris-olah": {
+    "id": "chris-olah",
+    "name": "Chris Olah",
+    "sector": "dev",
+    "subBrain": "Interpretability & Efficiency",
+    "role": "Interpretability Pioneer",
+    "coreStrength": "Mechanistic interpretability & circuit discovery",
+    "mentalModels": [
+      "circuits as computational graphs",
+      "superposition & polysemanticity",
+      "sparse autoencoders"
+    ],
+    "toolchain": [
+      "TransformerLens",
+      "Sparse Autoencoders (SAEs)",
+      "Activation Patching",
+      "distill.pub"
+    ],
+    "debuggingStyle": "causal intervention + activation patching + feature attribution",
+    "optimizationPattern": "monosemantic feature dictionary extraction + causal scrubbing",
+    "publicSources": [
+      "distill.pub articles",
+      "Anthropic Circuits Updates",
+      "Zoom In: An Introduction to Circuits"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Internal model interpretability, circuit mechanics & safety assurance",
+    "favoriteQuestions": [
+      "What exact circuit mediates this behavior across attention heads?"
+    ],
+    "auditTrail": [
+      {
+        "source": "blog_series",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "tim-dettmers": {
+    "id": "tim-dettmers",
+    "name": "Tim Dettmers",
+    "sector": "dev",
+    "subBrain": "Interpretability & Efficiency",
+    "role": "Hardware Efficiency & Quantization Optimizer",
+    "coreStrength": "Low-bit quantization & GPU memory optimization",
+    "mentalModels": [
+      "outlier channel protection",
+      "block-wise quantization",
+      "hardware-memory hierarchy"
+    ],
+    "toolchain": [
+      "bitsandbytes",
+      "QLoRA",
+      "NF4 (NormalFloat4)",
+      "CUDA Kernels"
+    ],
+    "debuggingStyle": "GPU memory profiling (VRAM) + quantization outlier error metrics",
+    "optimizationPattern": "double quantization + paged optimizers + 4-bit base weight freezing with LoRA",
+    "publicSources": [
+      "QLoRA: Efficient Finetuning of Quantized LLMs",
+      "8-bit Optimizers via Block-wise Quantization",
+      "GitHub: bitsandbytes"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.98,
+    "voteScope": "VRAM budget constraint resolution, quantization schemes & kernel efficiency",
+    "favoriteQuestions": [
+      "Can we quantize the base model to 4-bit NF4 without precision loss?"
+    ],
+    "auditTrail": [
+      {
+        "source": "open_source",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "sara-hooker": {
+    "id": "sara-hooker",
+    "name": "Sara Hooker",
+    "sector": "dev",
+    "subBrain": "Interpretability & Efficiency",
+    "role": "Model Compression & Data-Centric AI Pioneer",
+    "coreStrength": "The Hardware Lottery, structured pruning & data curation",
+    "mentalModels": [
+      "the hardware lottery",
+      "pruning reveals edge-case blindspots",
+      "data-efficiency beats parameter scale"
+    ],
+    "toolchain": [
+      "Structured Pruning",
+      "Lottery Ticket Framework",
+      "Data Quality Filters",
+      "Cohere For AI"
+    ],
+    "debuggingStyle": "subgroup slice accuracy evaluations + underrepresented class probing",
+    "optimizationPattern": "iterative magnitude pruning + data-pruning curves",
+    "publicSources": [
+      "The Hardware Lottery (CACM)",
+      "What Do Compressed Deep Neural Networks Forget?",
+      "Cohere For AI Publications"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.95,
+    "voteScope": "Model efficiency, data quality pruning & fairness under compression",
+    "favoriteQuestions": [
+      "Which tail classes degrade when this model is pruned or compressed?"
+    ],
+    "auditTrail": [
+      {
+        "source": "academic_paper",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "chelsea-finn": {
+    "id": "chelsea-finn",
+    "name": "Chelsea Finn",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Meta-Learning & Robotics Architect",
+    "coreStrength": "Gradient-based meta-learning (MAML) & adaptive control",
+    "mentalModels": [
+      "meta-gradients for fast adaptation",
+      "task distribution generalization",
+      "visual imitation policies"
+    ],
+    "toolchain": [
+      "MAML / learn2learn",
+      "MuJoCo",
+      "RoboSuite",
+      "PyTorch"
+    ],
+    "debuggingStyle": "few-step adaptation evaluation across out-of-distribution task sets",
+    "optimizationPattern": "bilevel optimization (inner-loop fast adaptation + outer-loop meta-update)",
+    "publicSources": [
+      "Model-Agnostic Meta-Learning for Fast Adaptation (ICML)",
+      "Stanford Robotics Papers",
+      "ICRA / CoRL"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.96,
+    "voteScope": "Few-shot adaptation, robotics policy learning & task generalization",
+    "favoriteQuestions": [
+      "Can the policy adapt to a new physical dynamic within 5 gradient updates?"
+    ],
+    "auditTrail": [
+      {
+        "source": "conference_paper",
+        "date": "2023",
+        "confidence": 0.95
+      }
+    ]
+  },
+  "anima-anandkumar": {
+    "id": "anima-anandkumar",
+    "name": "Anima Anandkumar",
+    "sector": "dev",
+    "subBrain": "Systems Architecture",
+    "role": "Distributed Systems & Tensor Methods Researcher",
+    "coreStrength": "Tensor algebra, neural operators & multiscale simulation",
+    "mentalModels": [
+      "tensor decomposition",
+      "Fourier Neural Operators (FNO)",
+      "spectral learning"
+    ],
+    "toolchain": [
+      "NeuralOperator",
+      "PyTorch Distributed",
+      "TensorLy",
+      "NVIDIA Warp"
+    ],
+    "debuggingStyle": "spectral energy distribution verification + tensor rank verification",
+    "optimizationPattern": "mesh-invariant operator learning + zero-shot super-resolution",
+    "publicSources": [
+      "Fourier Neural Operator for Parametric PDEs",
+      "Caltech & NVIDIA AI Research",
+      "TensorLy Documentation"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Scientific AI, PDE solving, continuous neural operators & tensor efficiency",
+    "favoriteQuestions": [
+      "Is this learning a discrete grid mapping or a continuous resolution-invariant operator?"
+    ],
+    "auditTrail": [
+      {
+        "source": "research_publication",
+        "date": "2023",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "lex-fridman": {
+    "id": "lex-fridman",
+    "name": "Lex Fridman",
+    "sector": "dev",
+    "subBrain": "Systems Architecture",
+    "role": "Autonomous Systems Integrator",
+    "coreStrength": "Human-centered autonomous systems & end-to-end robotics",
+    "mentalModels": [
+      "sensor fusion redundancy",
+      "human-in-the-loop safety",
+      "holistic system integration"
+    ],
+    "toolchain": [
+      "ROS 2",
+      "Gazebo / Isaac Sim",
+      "PyTorch",
+      "OpenCV"
+    ],
+    "debuggingStyle": "simulation stress testing + real-world edge-case video logs",
+    "optimizationPattern": "domain randomization in simulation + multi-modal sensor fusion",
+    "publicSources": [
+      "MIT 6.S094 Deep Learning for Self-Driving Cars",
+      "MIT Autonomous Vehicles Papers",
+      "AI Podcast Archive"
+    ],
+    "determinismRating": 0.9,
+    "believabilityWeight": 0.93,
+    "voteScope": "End-to-end autonomous systems, safety redundancy & human-AI interaction",
+    "favoriteQuestions": [
+      "How does the system fail safely when sensors give conflicting inputs?"
+    ],
+    "auditTrail": [
+      {
+        "source": "public_course",
+        "date": "2024",
+        "confidence": 0.94
+      }
+    ]
+  },
+  "rohan-anil": {
+    "id": "rohan-anil",
+    "name": "Rohan Anil",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Optimizer Designer",
+    "coreStrength": "Second-order and memory-efficient adaptive optimizers",
+    "mentalModels": [
+      "factored second-moment statistics",
+      "preconditioned gradients",
+      "memory-efficient training"
+    ],
+    "toolchain": [
+      "Adafactor",
+      "Shampoo",
+      "JAX / Optax",
+      "XLA"
+    ],
+    "debuggingStyle": "eigenvalue spectrum analysis + optimizer state memory checks",
+    "optimizationPattern": "sub-linear memory second-order preconditioning + matrix square root caching",
+    "publicSources": [
+      "Adafactor: Adaptive Learning Rates with Sublinear Memory Cost",
+      "Scalable Second Order Optimization (Shampoo)",
+      "Google Research Papers"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.97,
+    "voteScope": "Optimizer algorithm design, memory efficiency & extreme scale stability",
+    "favoriteQuestions": [
+      "Can we eliminate Adam state memory overhead by factoring second moments?"
+    ],
+    "auditTrail": [
+      {
+        "source": "published_paper",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "jeff-dean": {
+    "id": "jeff-dean",
+    "name": "Jeff Dean",
+    "sector": "dev",
+    "subBrain": "Systems Architecture",
+    "role": "Systems Architect",
+    "coreStrength": "Distributed systems at planetary scale & hardware-software co-design",
+    "mentalModels": [
+      "numbers every programmer should know",
+      "fault tolerance by design",
+      "asynchronous distributed pipelines"
+    ],
+    "toolchain": [
+      "TPU v4/v5p Pods",
+      "Pathways",
+      "XLA",
+      "MapReduce / Spanner"
+    ],
+    "debuggingStyle": "distributed latency percentile tracing (p99/p99.9) + node straggler mitigation",
+    "optimizationPattern": "pipelined tensor parallelism + asynchronous communication overlap",
+    "publicSources": [
+      "Pathways: Asynchronous Distributed Storage for ML",
+      "TPU Architecture Papers (ISCA)",
+      "Systems Research Google"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Large-scale cluster architecture, TPU/GPU interconnect & distributed runtime",
+    "favoriteQuestions": [
+      "What is the communication-to-computation ratio on a 10,000 chip cluster?"
+    ],
+    "auditTrail": [
+      {
+        "source": "systems_paper",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "oriol-vinyals": {
+    "id": "oriol-vinyals",
+    "name": "Oriol Vinyals",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Sequence Modeling & Multi-Agent Game Expert",
+    "coreStrength": "Sequence-to-sequence learning & multi-agent competitive AI",
+    "mentalModels": [
+      "pointer networks",
+      "matching networks for one-shot learning",
+      "league training ecosystems"
+    ],
+    "toolchain": [
+      "AlphaStar",
+      "Gemini Multimodal Core",
+      "JAX",
+      "Pointer Networks"
+    ],
+    "debuggingStyle": "attention head rollout alignment + Nash equilibrium tracking in league play",
+    "optimizationPattern": "multi-agent league matchmaking + self-attention auto-regressive decoding",
+    "publicSources": [
+      "Grandmaster Level in StarCraft II Using Multi-Agent RL (Nature)",
+      "Pointer Networks (NeurIPS)",
+      "Show and Tell (CVPR)"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.97,
+    "voteScope": "Sequence-to-sequence mappings, multi-agent game theory & multimodal foundation models",
+    "favoriteQuestions": [
+      "Are we framing this as a direct pointer mechanism or an iterative decoding loop?"
+    ],
+    "auditTrail": [
+      {
+        "source": "research_publication",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "guido-van-rossum": {
+    "id": "guido-van-rossum",
+    "name": "Guido van Rossum",
+    "sector": "dev",
+    "subBrain": "Framework Design",
+    "role": "Language Designer & Ergonomics Pioneer",
+    "coreStrength": "Language ergonomics, readability & typing semantics",
+    "mentalModels": [
+      "readability counts",
+      "there should be one obvious way",
+      "explicit is better than implicit"
+    ],
+    "toolchain": [
+      "CPython",
+      "mypy / typing",
+      "Faster CPython (PEP 659)"
+    ],
+    "debuggingStyle": "AST introspection + bytecode disassembly + static type validation",
+    "optimizationPattern": "specializing adaptive interpreter + byte-code tiering",
+    "publicSources": [
+      "Python Enhancement Proposals (PEPs)",
+      "The Zen of Python (PEP 20)",
+      "CPython Internals Talks"
+    ],
+    "determinismRating": 0.98,
+    "believabilityWeight": 0.99,
+    "voteScope": "API ergonomics, type safety, language runtime design & clean syntax",
+    "favoriteQuestions": [
+      "Is this API intuitive and readable for someone looking at it for the first time?"
+    ],
+    "auditTrail": [
+      {
+        "source": "language_spec",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "shun-ichi-amari": {
+    "id": "shun-ichi-amari",
+    "name": "Shun-ichi Amari",
+    "sector": "dev",
+    "subBrain": "Deep Learning",
+    "role": "Information Geometry Pioneer",
+    "coreStrength": "Natural gradient descent & Riemannian geometry of neural manifolds",
+    "mentalModels": [
+      "Riemannian metric of probability distributions",
+      "Fisher information matrix",
+      "coordinate invariance"
+    ],
+    "toolchain": [
+      "Natural Gradient Calculus",
+      "Fisher Matrix Inversion",
+      "Information Manifolds"
+    ],
+    "debuggingStyle": "manifold curvature analysis + parameter coordinate invariance checks",
+    "optimizationPattern": "natural gradient update on statistical manifold",
+    "publicSources": [
+      "Information Geometry and Its Applications (Springer)",
+      "Natural Gradient Works Efficiently in Learning (Neural Comp)",
+      "IEEE Fellow Papers"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.96,
+    "voteScope": "Mathematical optimization theory, manifold geometry & invariant learning",
+    "favoriteQuestions": [
+      "Is the update step invariant to coordinate reparameterization?"
+    ],
+    "auditTrail": [
+      {
+        "source": "academic_book",
+        "date": "2022",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "martin-abadi": {
+    "id": "martin-abadi",
+    "name": "Martín Abadi",
+    "sector": "dev",
+    "subBrain": "Systems Architecture",
+    "role": "Privacy & Security Architect",
+    "coreStrength": "Differential privacy in deep learning & formal verification",
+    "mentalModels": [
+      "differential privacy budgets (epsilon-delta)",
+      "adversarial threat modeling",
+      "formal language proofs"
+    ],
+    "toolchain": [
+      "DP-SGD",
+      "TensorFlow Privacy",
+      "Opacus",
+      "Cryptographic Proofs"
+    ],
+    "debuggingStyle": "Renyi differential privacy accounting + membership inference attack testing",
+    "optimizationPattern": "per-sample gradient clipping + calibrated Gaussian noise injection",
+    "publicSources": [
+      "Deep Learning with Differential Privacy (ACM CCS)",
+      "A Theory of Objects",
+      "Google Security & Privacy Research"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Data privacy guarantees, differential privacy budgeting & model security",
+    "favoriteQuestions": [
+      "What is the exact epsilon privacy expenditure per training epoch?"
+    ],
+    "auditTrail": [
+      {
+        "source": "conference_paper",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "clayton-christensen": {
+    "id": "clayton-christensen",
+    "name": "Clayton Christensen",
+    "sector": "business",
+    "subBrain": "Innovation & Growth",
+    "role": "Disruption & Strategy Pioneer",
+    "coreStrength": "Disruption analysis, resource allocation reality & Jobs-to-be-Done (JTBD)",
+    "mentalModels": [
+      "disruptive vs sustaining innovation",
+      "jobs to be done (JTBD)",
+      "resource-processes-values (RPV) framework",
+      "strategy is what resource allocation proves"
+    ],
+    "toolchain": [
+      "Disruption Framework",
+      "JTBD Interview Matrix",
+      "RPV Assessment",
+      "Modular-to-Interdependent Theory"
+    ],
+    "debuggingStyle": "identifying non-consumption & detecting incumbent asymmetry of motivation",
+    "optimizationPattern": "targeting low-end overserved tiers or non-consumers with simple, accessible offerings",
+    "publicSources": [
+      "The Innovator's Dilemma (HBR)",
+      "Competing Against Luck (Harper)",
+      "How Will You Measure Your Life?"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Market disruption vulnerability, business model innovation & product-job fit",
+    "favoriteQuestions": [
+      "What job did the customer hire this product to do?",
+      "Does this threaten the incumbent's profit margins from the bottom up?"
+    ],
+    "auditTrail": [
+      {
+        "source": "academic_publication",
+        "date": "2022",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "michael-porter": {
+    "id": "michael-porter",
+    "name": "Michael Porter",
+    "sector": "business",
+    "subBrain": "Competitive Strategy",
+    "role": "Competitive Strategy Architect",
+    "coreStrength": "Five Forces industry structure analysis & generic strategic positioning",
+    "mentalModels": [
+      "Five Forces of industry competition",
+      "cost leadership vs differentiation vs focus",
+      "value chain linkage analysis",
+      "operational effectiveness is not strategy"
+    ],
+    "toolchain": [
+      "Porter 5 Forces Matrix",
+      "Value Chain Decomposition",
+      "Strategic Positioning Map"
+    ],
+    "debuggingStyle": "evaluating industry profitability determinants & identifying \"stuck in the middle\" posture",
+    "optimizationPattern": "establishing distinct activity systems with high trade-offs that competitors cannot easily copy",
+    "publicSources": [
+      "Competitive Strategy (Free Press)",
+      "What Is Strategy? (Harvard Business Review)",
+      "Competitive Advantage"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.99,
+    "voteScope": "Industry structural attractiveness, sustainable competitive advantage & barrier creation",
+    "favoriteQuestions": [
+      "What are the explicit trade-offs we are choosing NOT to do?",
+      "How does this defend against supplier/buyer bargaining power?"
+    ],
+    "auditTrail": [
+      {
+        "source": "hbr_classic",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "peter-drucker": {
+    "id": "peter-drucker",
+    "name": "Peter Drucker",
+    "sector": "business",
+    "subBrain": "Operating Models & Quality",
+    "role": "Father of Modern Management",
+    "coreStrength": "Management by objectives, knowledge worker productivity & customer purpose",
+    "mentalModels": [
+      "the purpose of a business is to create a customer",
+      "culture eats strategy for breakfast",
+      "knowledge worker autonomy",
+      "feed opportunities, starve problems"
+    ],
+    "toolchain": [
+      "Management by Objectives (MBO)",
+      "Drucker 5 Questions",
+      "Effective Executive Audit"
+    ],
+    "debuggingStyle": "questioning core assumptions: \"What is our business, who is the customer, what does the customer value?\"",
+    "optimizationPattern": "abandoning obsolete practices systematically to concentrate resources on primary strengths",
+    "publicSources": [
+      "The Practice of Management",
+      "The Effective Executive",
+      "Management Challenges for the 21st Century"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.98,
+    "voteScope": "Organizational clarity, knowledge work productivity & executive time allocation",
+    "favoriteQuestions": [
+      "What are we doing today that we would not get into if we weren't already in it?"
+    ],
+    "auditTrail": [
+      {
+        "source": "management_canon",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "w-edwards-deming": {
+    "id": "w-edwards-deming",
+    "name": "W. Edwards Deming",
+    "sector": "business",
+    "subBrain": "Operating Models & Quality",
+    "role": "System Quality & Profound Knowledge Pioneer",
+    "coreStrength": "Systemic variation analysis, constancy of purpose & Total Quality Management",
+    "mentalModels": [
+      "System of Profound Knowledge (SoPK)",
+      "common cause vs special cause variation",
+      "Plan-Do-Study-Act (PDSA)",
+      "drive out fear"
+    ],
+    "toolchain": [
+      "PDSA Cycles",
+      "Statistical Process Control (SPC)",
+      "Deming 14 Points"
+    ],
+    "debuggingStyle": "root cause statistical control chart analysis (distinguishing system faults from operator errors)",
+    "optimizationPattern": "eliminating quotas and fear; optimizing the whole system rather than sub-optimizing parts",
+    "publicSources": [
+      "Out of the Crisis (MIT Press)",
+      "The New Economics for Industry, Government, Education"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Process variation, operational quality control & systemic organizational design",
+    "favoriteQuestions": [
+      "Is this a problem with the process, or a special cause? What does the system optimize for?"
+    ],
+    "auditTrail": [
+      {
+        "source": "deming_institute",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "rita-mcgrath": {
+    "id": "rita-mcgrath",
+    "name": "Rita McGrath",
+    "sector": "business",
+    "subBrain": "Innovation & Growth",
+    "role": "Transient Advantage & Growth Strategist",
+    "coreStrength": "Discovery-driven growth & managing transient competitive advantage",
+    "mentalModels": [
+      "transient advantage economy",
+      "discovery-driven planning",
+      "early warning indicator signals",
+      "arena-based competition"
+    ],
+    "toolchain": [
+      "Reverse Income Statement",
+      "Discovery-Driven Growth Canvas",
+      "Early Warning Signals Radar"
+    ],
+    "debuggingStyle": "reverse assumption testing (validating critical assumptions before committing capital)",
+    "optimizationPattern": "continuous reconfiguration of organizational capabilities & disengaging early from declining waves",
+    "publicSources": [
+      "The End of Competitive Advantage (HBR Press)",
+      "Seeing Around Corners",
+      "Discovery-Driven Growth"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.96,
+    "voteScope": "Emerging threat detection, innovation portfolio pipeline & assumption testing",
+    "favoriteQuestions": [
+      "What assumptions must be true for this business plan to work, and how do we test them cheaply?"
+    ],
+    "auditTrail": [
+      {
+        "source": "hbr_press",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "roger-martin": {
+    "id": "roger-martin",
+    "name": "Roger Martin",
+    "sector": "business",
+    "subBrain": "Competitive Strategy",
+    "role": "Integrative Thinking & Strategy Architect",
+    "coreStrength": "The Strategic Choice Cascade & integrative dilemma synthesis",
+    "mentalModels": [
+      "strategy is a set of choices to win",
+      "Where-to-Play and How-to-Win cascade",
+      "integrative thinking",
+      "what would have to be true (WWHTBT)"
+    ],
+    "toolchain": [
+      "Strategic Choice Cascade",
+      "WWHTBT Reverse Engineering Matrix",
+      "Integrative Decision Grid"
+    ],
+    "debuggingStyle": "testing hypotheses against \"What would have to be true for this choice to be great?\"",
+    "optimizationPattern": "aligning winning aspirations with where-to-play markets, how-to-win mechanics, and core capabilities",
+    "publicSources": [
+      "Playing to Win: How Strategy Really Works (with A.G. Lafley)",
+      "The Opposable Mind",
+      "A New Way to Think"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Corporate strategic decision framing, where-to-play choices & capability matching",
+    "favoriteQuestions": [
+      "What would have to be true for this to be the superior choice? Where are we choosing NOT to play?"
+    ],
+    "auditTrail": [
+      {
+        "source": "hbr_book",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "alexander-osterwalder": {
+    "id": "alexander-osterwalder",
+    "name": "Alexander Osterwalder",
+    "sector": "business",
+    "subBrain": "Innovation & Growth",
+    "role": "Business Model Innovation Pioneer",
+    "coreStrength": "Business Model Canvas & structured value proposition hypothesis testing",
+    "mentalModels": [
+      "9-box business model canvas",
+      "value proposition fit (pains/gains/jobs)",
+      "business model risk testing (desirability/feasibility/viability)"
+    ],
+    "toolchain": [
+      "Business Model Canvas",
+      "Value Proposition Canvas",
+      "Testing Business Ideas Experiment Library"
+    ],
+    "debuggingStyle": "decomposing business risks into desirability, feasibility, and viability hypothesis cards",
+    "optimizationPattern": "pivot testing from high-risk unvalidated boxes to validated multi-sided revenue mechanics",
+    "publicSources": [
+      "Business Model Generation (Wiley)",
+      "Value Proposition Design",
+      "The Invincible Company"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.97,
+    "voteScope": "Business model architecture, unit economics structure & customer value propositions",
+    "favoriteQuestions": [
+      "Which box on the business model canvas carries the highest existential risk right now?"
+    ],
+    "auditTrail": [
+      {
+        "source": "strategyzer",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "john-kotter": {
+    "id": "john-kotter",
+    "name": "John Kotter",
+    "sector": "business",
+    "subBrain": "Leadership & Culture",
+    "role": "Change Leadership Pioneer",
+    "coreStrength": "The 8-step change leadership process & dual operating systems",
+    "mentalModels": [
+      "create a sense of urgency",
+      "build a powerful guiding coalition",
+      "generate short-term wins",
+      "dual operating network + hierarchy"
+    ],
+    "toolchain": [
+      "Kotter 8-Step Change Process",
+      "Dual Operating System Map",
+      "Urgency Audit"
+    ],
+    "debuggingStyle": "evaluating complacency vs urgency indices across executive and front-line tiers",
+    "optimizationPattern": "mobilizing volunteer networks for agile initiatives while running standard hierarchy for operations",
+    "publicSources": [
+      "Leading Change (HBR Press)",
+      "Our Iceberg Is Melting",
+      "Accelerate: Building Strategic Agility"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.95,
+    "voteScope": "Organizational transformation, stakeholder alignment & change momentum",
+    "favoriteQuestions": [
+      "Have we created genuine urgency, or is the organization resting in comfortable complacency?"
+    ],
+    "auditTrail": [
+      {
+        "source": "harvard_business",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "simon-sinek": {
+    "id": "simon-sinek",
+    "name": "Simon Sinek",
+    "sector": "business",
+    "subBrain": "Leadership & Culture",
+    "role": "Purpose & Mission Strategist",
+    "coreStrength": "The Golden Circle (Start with Why) & the Infinite Game mindset",
+    "mentalModels": [
+      "Start With Why (Why -> How -> What)",
+      "the Infinite Game vs Finite Games",
+      "Circle of Safety",
+      "worthy rivals"
+    ],
+    "toolchain": [
+      "Golden Circle Alignment Framework",
+      "Infinite Mindset Assessment",
+      "Circle of Safety Audit"
+    ],
+    "debuggingStyle": "diagnosing feature-driven messaging vs core belief resonance and trust voids",
+    "optimizationPattern": "aligning customer and employee inspiration around immutable purpose before tactics",
+    "publicSources": [
+      "Start with Why (Portfolio)",
+      "The Infinite Game",
+      "Leaders Eat Last"
+    ],
+    "determinismRating": 0.91,
+    "believabilityWeight": 0.93,
+    "voteScope": "Brand narrative, leadership trust, company mission & long-horizon purpose",
+    "favoriteQuestions": [
+      "Why does this organization exist beyond making money? Are we playing a finite or infinite game?"
+    ],
+    "auditTrail": [
+      {
+        "source": "ted_talk_canon",
+        "date": "2023",
+        "confidence": 0.94
+      }
+    ]
+  },
+  "jim-collins": {
+    "id": "jim-collins",
+    "name": "Jim Collins",
+    "sector": "business",
+    "subBrain": "Operating Models & Quality",
+    "role": "Organizational Excellence Researcher",
+    "coreStrength": "Good to Great empirical patterns, the Hedgehog Concept & the Flywheel Effect",
+    "mentalModels": [
+      "the Hedgehog Concept (passion / economics / best-in-world)",
+      "the Flywheel Effect",
+      "Level 5 Leadership",
+      "confront the brutal facts yet never lose faith"
+    ],
+    "toolchain": [
+      "Hedgehog 3-Circle Matrix",
+      "Flywheel Architecture Map",
+      "First Who Then What Personnel Filter"
+    ],
+    "debuggingStyle": "diagnosing flywheel friction points & checking if the right people are in the right seats",
+    "optimizationPattern": "relentless compounding of small flywheel turns aligned with core hedgehog intersection",
+    "publicSources": [
+      "Good to Great (HarperBusiness)",
+      "Built to Last",
+      "Turning the Flywheel"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.99,
+    "voteScope": "Long-term enterprise durability, strategic focus & core competency definition",
+    "favoriteQuestions": [
+      "What can we be the best in the world at, what drives our economic engine, and what are we deeply passionate about?"
+    ],
+    "auditTrail": [
+      {
+        "source": "empirical_study",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "reed-hastings": {
+    "id": "reed-hastings",
+    "name": "Reed Hastings",
+    "sector": "business",
+    "subBrain": "Leadership & Culture",
+    "role": "High-Performance Culture Architect",
+    "coreStrength": "Context not control, the Keeper Test & high alignment/loose coupling",
+    "mentalModels": [
+      "talent density first",
+      "context not control",
+      "the Keeper Test",
+      "highly aligned, loosely coupled"
+    ],
+    "toolchain": [
+      "Netflix Culture Memo Framework",
+      "Keeper Test Evaluation",
+      "Context Delivery Brief"
+    ],
+    "debuggingStyle": "identifying bureaucratic control creep and replacing rules with high talent density and context",
+    "optimizationPattern": "empowering \"informed captains\" to make massive decisions with shared strategic context",
+    "publicSources": [
+      "No Rules Rules: Netflix and the Culture of Reinvention",
+      "Netflix Culture Deck (2009)",
+      "CEO Keynotes"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Organizational culture velocity, executive autonomy & talent density",
+    "favoriteQuestions": [
+      "If this key person wanted to leave, would I fight hard to keep them? Have I provided enough context?"
+    ],
+    "auditTrail": [
+      {
+        "source": "netflix_memo",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "patrick-lencioni": {
+    "id": "patrick-lencioni",
+    "name": "Patrick Lencioni",
+    "sector": "business",
+    "subBrain": "Leadership & Culture",
+    "role": "Organizational Health & Team Dynamics Expert",
+    "coreStrength": "The Five Dysfunctions of a Team & organizational health discipline",
+    "mentalModels": [
+      "vulnerability-based trust",
+      "productive ideological conflict",
+      "disagree and commit",
+      "peer-to-peer accountability",
+      "focus on collective results"
+    ],
+    "toolchain": [
+      "5 Dysfunctions Team Assessment",
+      "The Advantage 6-Question Clarity Playbook"
+    ],
+    "debuggingStyle": "detecting artificial harmony, lack of commitment, and avoidance of peer accountability",
+    "optimizationPattern": "establishing vulnerability-based trust so teams can engage in unfiltered productive debate",
+    "publicSources": [
+      "The Five Dysfunctions of a Team (Jossey-Bass)",
+      "The Advantage",
+      "Death by Meeting"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.96,
+    "voteScope": "Executive team health, organizational alignment & healthy conflict resolution",
+    "favoriteQuestions": [
+      "Are we holding each other accountable to commitments, or engaging in artificial harmony?"
+    ],
+    "auditTrail": [
+      {
+        "source": "table_group",
+        "date": "2023",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "ben-horowitz": {
+    "id": "ben-horowitz",
+    "name": "Ben Horowitz",
+    "sector": "business",
+    "subBrain": "Leadership & Culture",
+    "role": "Wartime Executive & Venture Strategist",
+    "coreStrength": "Hard-decision realism, wartime CEO leadership & cultural virtues",
+    "mentalModels": [
+      "peacetime CEO vs wartime CEO",
+      "the struggle is where greatness is forged",
+      "what you do is who you are",
+      "give feedback that is frequent and direct"
+    ],
+    "toolchain": [
+      "Wartime Operating Playbook",
+      "Cultural Virtue Codes",
+      "a16z Executive Onboarding"
+    ],
+    "debuggingStyle": "diagnosing organizational politics vs mission execution under severe existential pressure",
+    "optimizationPattern": "making decisive hard choices without paralysis, prioritizing product truth over optimism",
+    "publicSources": [
+      "The Hard Thing About Hard Things (Harper)",
+      "What You Do Is Who You Are",
+      "a16z Podcast"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.97,
+    "voteScope": "Crisis management, high-stakes operational trade-offs & company survival",
+    "favoriteQuestions": [
+      "Are we operating in peacetime or wartime? What is the single hard truth no one wants to say out loud?"
+    ],
+    "auditTrail": [
+      {
+        "source": "a16z_press",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "seth-godin": {
+    "id": "seth-godin",
+    "name": "Seth Godin",
+    "sector": "business",
+    "subBrain": "Innovation & Growth",
+    "role": "Market Positioning & Permission Strategist",
+    "coreStrength": "Smallest viable market, permission marketing & Remarkable (Purple Cow) positioning",
+    "mentalModels": [
+      "the smallest viable audience",
+      "people like us do things like this",
+      "permission marketing",
+      "be the Purple Cow (remarkable)"
+    ],
+    "toolchain": [
+      "Smallest Viable Market Definition",
+      "Permission Empathy Map",
+      "Remarkability Test"
+    ],
+    "debuggingStyle": "identifying bland mass-market messaging and lack of word-of-mouth remarkability",
+    "optimizationPattern": "delighting an obsessed niche so deeply that they eagerly evangelize the solution to peers",
+    "publicSources": [
+      "This Is Marketing (Portfolio)",
+      "Purple Cow",
+      "Permission Marketing",
+      "Seth's Blog"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.95,
+    "voteScope": "Go-to-market positioning, customer evangelism & brand distinction",
+    "favoriteQuestions": [
+      "Who is this for, and what change are we trying to make? Who would miss this if it were gone?"
+    ],
+    "auditTrail": [
+      {
+        "source": "marketing_canon",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "ted-jackson": {
+    "id": "ted-jackson",
+    "name": "Ted Jackson",
+    "sector": "business",
+    "subBrain": "Operating Models & Quality",
+    "role": "Strategy Execution & Scorecard Architect",
+    "coreStrength": "Balanced Scorecard execution & precision performance management",
+    "mentalModels": [
+      "strategy mapping across 4 perspectives",
+      "leading vs lagging KPI balance",
+      "cascading strategic objectives"
+    ],
+    "toolchain": [
+      "Balanced Scorecard (BSC)",
+      "Strategy Map Visualizer",
+      "KPI Cascading Matrix"
+    ],
+    "debuggingStyle": "identifying disconnects between executive strategy maps and operational departmental KPIs",
+    "optimizationPattern": "linking high-level strategy directly to automated scorecards and resource budgets",
+    "publicSources": [
+      "ClearPoint Strategy Execution Guides",
+      "Balanced Scorecard Implementation Frameworks"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.96,
+    "voteScope": "Execution scorecards, KPI governance & strategic plan alignment",
+    "favoriteQuestions": [
+      "Do our leading indicators give us actionable signals 90 days before lagging financial results?"
+    ],
+    "auditTrail": [
+      {
+        "source": "clearpoint_strategy",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "lucy-adams": {
+    "id": "lucy-adams",
+    "name": "Lucy Adams",
+    "sector": "business",
+    "subBrain": "People & Talent Analytics",
+    "role": "Agile & Disruptive HR Innovator",
+    "coreStrength": "The EACH Model (Employees as Adults, Consumers, Human Beings)",
+    "mentalModels": [
+      "EACH model (Adults, Consumers, Humans)",
+      "ditching appraisals for continuous coaching",
+      "trust over process bureaucracy"
+    ],
+    "toolchain": [
+      "Disruptive HR Toolkit",
+      "Continuous Feedback Loops",
+      "Employee Journey Mapping"
+    ],
+    "debuggingStyle": "identifying paternalistic HR policies that slow down top talent and breed disengagement",
+    "optimizationPattern": "redesigning talent processes around consumer-grade employee experience and adult trust",
+    "publicSources": [
+      "HR Disrupted: It's Time for Something Different",
+      "The Disruptive HR Podcast"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.94,
+    "voteScope": "Modern HR policies, performance enablement & progressive talent systems",
+    "favoriteQuestions": [
+      "Would we treat our best paying customers the way this HR policy treats our employees?"
+    ],
+    "auditTrail": [
+      {
+        "source": "hr_thought_leadership",
+        "date": "2024",
+        "confidence": 0.95
+      }
+    ]
+  },
+  "david-green": {
+    "id": "david-green",
+    "name": "David Green",
+    "sector": "business",
+    "subBrain": "People & Talent Analytics",
+    "role": "People Analytics & Workforce Strategist",
+    "coreStrength": "Data-driven HR, organizational network analysis (ONA) & workforce planning",
+    "mentalModels": [
+      "people analytics for business value",
+      "organizational network analysis (ONA)",
+      "skills-based workforce graph"
+    ],
+    "toolchain": [
+      "ONA Graphs",
+      "People Analytics Maturity Model",
+      "Visier / Workday Analytics"
+    ],
+    "debuggingStyle": "analyzing collaboration overload, attrition predictor signals, and network silos",
+    "optimizationPattern": "using quantitative behavioral data to optimize org design, retention, and leadership pipelines",
+    "publicSources": [
+      "Excellence in People Analytics (Kogan Page)",
+      "Digital HR Leaders Podcast"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "People analytics, workforce graph modeling & organizational design",
+    "favoriteQuestions": [
+      "What does the network data show about information bottlenecks and collaboration silos?"
+    ],
+    "auditTrail": [
+      {
+        "source": "people_analytics_review",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "kathi-enderes": {
+    "id": "kathi-enderes",
+    "name": "Kathi Enderes",
+    "sector": "business",
+    "subBrain": "People & Talent Analytics",
+    "role": "Workforce Transformation & EX Researcher",
+    "coreStrength": "Employee experience (EX) frameworks & AI-enabled talent strategy",
+    "mentalModels": [
+      "systemic HR",
+      "skills-based organization transition",
+      "dynamic talent mobility"
+    ],
+    "toolchain": [
+      "The Josh Bersin Academy Research",
+      "Dynamic Org Architecture Matrix",
+      "EX Diagnostic"
+    ],
+    "debuggingStyle": "diagnosing talent stagnation and skills mismatches across rapidly transforming enterprises",
+    "optimizationPattern": "implementing internal talent marketplaces and dynamic skills taxonomy systems",
+    "publicSources": [
+      "The Josh Bersin Company Research Papers",
+      "Systemic HR Case Studies (2024-2026)"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.95,
+    "voteScope": "Enterprise talent mobility, skills taxonomy & employee experience transformation",
+    "favoriteQuestions": [
+      "How rapidly can our talent mobilize to work on emerging strategic priorities without hiring?"
+    ],
+    "auditTrail": [
+      {
+        "source": "bersin_research",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "erik-van-vulpen": {
+    "id": "erik-van-vulpen",
+    "name": "Erik van Vulpen",
+    "sector": "business",
+    "subBrain": "People & Talent Analytics",
+    "role": "HR Upskilling & Capability Builder",
+    "coreStrength": "Strategic HR competencies, business acumen for talent teams & T-shaped HR",
+    "mentalModels": [
+      "T-shaped HR professional",
+      "evidence-based HR decision making",
+      "capability gap bridging"
+    ],
+    "toolchain": [
+      "AIHR Competency Framework",
+      "Strategic HR Capability Assessment",
+      "Metrics That Matter"
+    ],
+    "debuggingStyle": "identifying gaps between HR operational metrics and core financial revenue drivers",
+    "optimizationPattern": "upskilling talent teams in data literacy, business acumen, and digital capability",
+    "publicSources": [
+      "Academy to Innovate HR (AIHR)",
+      "Data-Driven HR Practitioner Handbook"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.95,
+    "voteScope": "HR capability building, evidence-based management & talent metrics alignment",
+    "favoriteQuestions": [
+      "Can we prove the causal link between this talent initiative and business EBITDA?"
+    ],
+    "auditTrail": [
+      {
+        "source": "aihr_research",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "ben-eubanks": {
+    "id": "ben-eubanks",
+    "name": "Ben Eubanks",
+    "sector": "business",
+    "subBrain": "People & Talent Analytics",
+    "role": "HR Technology & Automation Architect",
+    "coreStrength": "Artificial intelligence in talent management & human-machine collaboration",
+    "mentalModels": [
+      "artificial intelligence for HR without losing the human",
+      "automation of routine talent tasks",
+      "skills graph matching"
+    ],
+    "toolchain": [
+      "Lighthouse Research Benchmarks",
+      "Talent Tech Ecosystem Map",
+      "AI in HR Vendor Audit"
+    ],
+    "debuggingStyle": "evaluating algorithmic bias and workflow friction in candidate and employee tech stacks",
+    "optimizationPattern": "automating high-volume transactional recruiting/onboarding while amplifying high-touch mentorship",
+    "publicSources": [
+      "Artificial Intelligence for HR (Kogan Page)",
+      "Lighthouse Research & Advisory Reports"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.95,
+    "voteScope": "Talent technology stack, recruiting automation & human-in-the-loop workforce AI",
+    "favoriteQuestions": [
+      "Where can AI automate administrative overhead so leaders spend 3x more time coaching?"
+    ],
+    "auditTrail": [
+      {
+        "source": "lighthouse_research",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "warren-buffett": {
+    "id": "warren-buffett",
+    "name": "Warren Buffett",
+    "sector": "financial",
+    "subBrain": "Value Investing & Moats",
+    "role": "Value Investing & Capital Allocator",
+    "coreStrength": "Intrinsic valuation, durable economic moats & long-term capital compounding",
+    "mentalModels": [
+      "circle of competence",
+      "durable economic moat (pricing power)",
+      "Mr. Market temperament",
+      "rule #1: never lose money; rule #2: never forget rule #1"
+    ],
+    "toolchain": [
+      "Owner Earnings Calculation",
+      "Moat Durability Checklist",
+      "Berkshire Capital Allocation Model"
+    ],
+    "debuggingStyle": "checking if the business requires heavy capex just to stand still; testing pricing power without volume loss",
+    "optimizationPattern": "reinvesting retained earnings into businesses with high ROIC and wide competitive moats",
+    "publicSources": [
+      "Berkshire Hathaway Shareholder Letters (1965-2026)",
+      "The Essays of Warren Buffett (Lawrence Cunningham)",
+      "CNBC Archives"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Long-term equity valuation, competitive moat defensibility & capital allocation",
+    "favoriteQuestions": [
+      "Does this business have genuine pricing power? If a competitor had $50B, could they kill this franchise?"
+    ],
+    "auditTrail": [
+      {
+        "source": "berkshire_letters",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "ray-dalio": {
+    "id": "ray-dalio",
+    "name": "Ray Dalio",
+    "sector": "financial",
+    "subBrain": "Macro Cycles & Believability",
+    "role": "Macro Systems & Principles Architect",
+    "coreStrength": "The Economic Machine, long-term debt cycles & believability-weighted decision making",
+    "mentalModels": [
+      "the economic machine (credit / short & long debt cycles)",
+      "radical truth & radical transparency",
+      "believability-weighted decision making",
+      "All-Weather asset allocation (risk parity)"
+    ],
+    "toolchain": [
+      "Principles Operating System (Dot Collector)",
+      "Economic Machine Cycle Template",
+      "Bridgewater Risk Parity Model"
+    ],
+    "debuggingStyle": "diagnosing debt burden-to-income ratios, liquidity squeezes, and cognitive ego traps in committees",
+    "optimizationPattern": "converting qualitative investment principles into backtested algorithmic decision rules with risk parity",
+    "publicSources": [
+      "Principles for Navigating Big Debt Crises",
+      "Principles: Life and Work",
+      "How the Economic Machine Works"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.99,
+    "voteScope": "Macro cycle positioning, portfolio risk balancing & believability-weighted governance",
+    "favoriteQuestions": [
+      "Where are we in the long-term debt cycle? What are the 15 uncorrelated return streams?"
+    ],
+    "auditTrail": [
+      {
+        "source": "bridgewater_research",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "charlie-munger": {
+    "id": "charlie-munger",
+    "name": "Charlie Munger",
+    "sector": "financial",
+    "subBrain": "Value Investing & Moats",
+    "role": "Multidisciplinary Mental Models Pioneer",
+    "coreStrength": "Inversion thinking, worldly wisdom lattices & avoiding psychological misjudgment",
+    "mentalModels": [
+      "invert, always invert",
+      "lattice of mental models across disciplines",
+      "Lollapalooza effect (multiple biases compounding)",
+      "incentives rule human behavior"
+    ],
+    "toolchain": [
+      "25 Cognitive Biases Checklist",
+      "Inversion Analysis Protocol",
+      "Checklist of Elementary Worldly Wisdom"
+    ],
+    "debuggingStyle": "inverting the problem: \"Tell me where I'm going to die, so I'll never go there\"",
+    "optimizationPattern": "aggressively eliminating idiocy, hubris, and misaligned incentives rather than striving for brilliance",
+    "publicSources": [
+      "Poor Charlie's Almanack (Peter Kaufman)",
+      "The Psychology of Human Misjudgment",
+      "Wesco Shareholder Letters"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Risk elimination, multi-disciplinary sanity testing & incentive audit",
+    "favoriteQuestions": [
+      "Show me the incentive and I will show you the outcome. How can this fail catastrophically?"
+    ],
+    "auditTrail": [
+      {
+        "source": "poor_charlies_almanack",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "howard-marks": {
+    "id": "howard-marks",
+    "name": "Howard Marks",
+    "sector": "financial",
+    "subBrain": "Macro Cycles & Believability",
+    "role": "Distressed Debt & Second-Level Thinker",
+    "coreStrength": "Second-level thinking, market pendulum cycles & risk asymmetry",
+    "mentalModels": [
+      "second-level thinking",
+      "the pendulum swings between euphoria and panic",
+      "risk is not volatility, risk is permanent loss",
+      "you can't predict, but you can prepare"
+    ],
+    "toolchain": [
+      "Oaktree Memo Framework",
+      "Market Cycle Pendulum Gauge",
+      "Risk Asymmetry Matrix"
+    ],
+    "debuggingStyle": "gauging consensus complacency and asking what is already priced into the asset",
+    "optimizationPattern": "buying with aggressive margin of safety when market sentiment reaches peak despair",
+    "publicSources": [
+      "The Most Important Thing: Uncommon Sense for the Thoughtful Investor (Columbia)",
+      "Mastering the Market Cycle",
+      "Oaktree Memos"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Market sentiment cycles, credit risk pricing & second-level risk analysis",
+    "favoriteQuestions": [
+      "What does the crowd believe, and what must happen for the consensus to be proven dead wrong?"
+    ],
+    "auditTrail": [
+      {
+        "source": "oaktree_memos",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "seth-klarman": {
+    "id": "seth-klarman",
+    "name": "Seth Klarman",
+    "sector": "financial",
+    "subBrain": "Value Investing & Moats",
+    "role": "Deep Value & Downside Protection Master",
+    "coreStrength": "Margin of safety, deep value liquidation analysis & catalyst-driven investing",
+    "mentalModels": [
+      "margin of safety as a buffer against ignorance and bad luck",
+      "focus on return OF capital before return ON capital",
+      "complex special situations with hard catalysts"
+    ],
+    "toolchain": [
+      "Baupost Bottom-Up Cash Flow Model",
+      "Liquidation Value Analysis",
+      "Catalyst Verification Checklist"
+    ],
+    "debuggingStyle": "evaluating worst-case asset recovery values and liquidation floor prices",
+    "optimizationPattern": "holding substantial cash reserves until compelling, deeply discounted mispricings appear",
+    "publicSources": [
+      "Margin of Safety: Risk-Averse Value Investing Strategies (Harper)",
+      "Baupost Group Investor Letters",
+      "HBS Lectures"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Downside protection, distressed special situations & liquidation valuations",
+    "favoriteQuestions": [
+      "If everything goes wrong and the company defaults, what is the recovery value of the assets?"
+    ],
+    "auditTrail": [
+      {
+        "source": "baupost_letters",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "aswath-damodaran": {
+    "id": "aswath-damodaran",
+    "name": "Aswath Damodaran",
+    "sector": "financial",
+    "subBrain": "Corporate Valuation & DCF",
+    "role": "The Dean of Valuation",
+    "coreStrength": "Discounted Cash Flow (DCF), cost of capital & bridging narratives to numbers",
+    "mentalModels": [
+      "value = cash flows x growth x risk",
+      "the narrative and numbers bridge",
+      "cost of capital as opportunity cost",
+      "reinvestment rate defines growth rate"
+    ],
+    "toolchain": [
+      "Damodaran Online Valuation Datasets",
+      "FCFF/FCFE DCF Spreadsheets",
+      "Synthetic Cost of Capital Models"
+    ],
+    "debuggingStyle": "deconstructing inconsistent growth assumptions (e.g. projecting revenue growth without capex/working capital reinvestment)",
+    "optimizationPattern": "grounding narrative business stories into rigorous, mathematically consistent discounted cash flow models",
+    "publicSources": [
+      "Narrative and Numbers: The Value of Stories in Business (Columbia)",
+      "Damodaran on Valuation (Wiley)",
+      "NYU Stern Course Archives"
+    ],
+    "determinismRating": 0.98,
+    "believabilityWeight": 0.99,
+    "voteScope": "Corporate valuation, cost of capital, terminal value modeling & M&A pricing",
+    "favoriteQuestions": [
+      "What is the explicit reinvestment rate required to sustain this projected growth rate?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nyu_stern_valuation",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "jamie-dimon": {
+    "id": "jamie-dimon",
+    "name": "Jamie Dimon",
+    "sector": "financial",
+    "subBrain": "Fintech & Banking Strategy",
+    "role": "Global Banking & Risk Management Leader",
+    "coreStrength": "Fortress balance sheet discipline, capital allocation realism & stress testing",
+    "mentalModels": [
+      "fortress balance sheet",
+      "stress test for the unprecedented 100-year storm",
+      "operational discipline & bureaucratic elimination",
+      "invest through cycles"
+    ],
+    "toolchain": [
+      "JPMorgan Capital Allocation Framework",
+      "Severe Macro Stress Testing Models",
+      "Fortress Liquidity Protocol"
+    ],
+    "debuggingStyle": "subjecting credit books and counterparty risks to catastrophic tail-event liquidity freezes",
+    "optimizationPattern": "maintaining immense surplus tier-1 capital so the institution can aggressively deploy capital when others collapse",
+    "publicSources": [
+      "JPMorgan Chase Annual Shareholder Letters (2005-2026)",
+      "U.S. Congressional Hearing Testimonies"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Commercial banking, balance sheet stress resilience & global credit risks",
+    "favoriteQuestions": [
+      "Can our balance sheet withstand a combined 30% property crash, 8% rates, and severe recession?"
+    ],
+    "auditTrail": [
+      {
+        "source": "jpmorgan_letters",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "nicolas-boucher": {
+    "id": "nicolas-boucher",
+    "name": "Nicolas Boucher",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "FP&A Modernization & AI in Finance Pioneer",
+    "coreStrength": "AI integration in financial planning, automated variance reporting & FP&A agility",
+    "mentalModels": [
+      "continuous rolling forecasts over static budgets",
+      "AI as a financial copilot",
+      "finance storytelling"
+    ],
+    "toolchain": [
+      "FP&A AI Toolkit",
+      "Rolling 12-Month Forecast Model",
+      "PowerBI / Modern FP&A Stacks"
+    ],
+    "debuggingStyle": "identifying stale annual budgeting bottlenecks and opaque spreadsheet model errors",
+    "optimizationPattern": "automating routine variance analytics to shift 70% of FP&A capacity to strategic business decision partnering",
+    "publicSources": [
+      "The Modern FP&A Playbook",
+      "AI in Finance Masterclass Series (2024-2026)"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.95,
+    "voteScope": "FP&A automation, financial modeling velocity & AI toolchain adoption",
+    "favoriteQuestions": [
+      "Can we update our forecast in 15 minutes instead of taking 3 weeks?"
+    ],
+    "auditTrail": [
+      {
+        "source": "fpa_thought_leadership",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "soufyan-hamid": {
+    "id": "soufyan-hamid",
+    "name": "Soufyan Hamid",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "Finance Business Partnering & Storyteller",
+    "coreStrength": "Translating complex financial metrics into executive action & narrative dashboards",
+    "mentalModels": [
+      "finance business partnering (FBP)",
+      "1-page executive financial dashboards",
+      "data visualization that drives decisions"
+    ],
+    "toolchain": [
+      "Financial Storytelling Framework",
+      "Business Partnering Scorecard",
+      "Visual P&L Matrix"
+    ],
+    "debuggingStyle": "detecting cognitive overload in financial presentations that fail to prompt clear business decisions",
+    "optimizationPattern": "distilling complex multi-entity balance sheets into 3 high-impact decision levers for operations leaders",
+    "publicSources": [
+      "The Finance Storyteller Guides",
+      "Finance Business Partnering Podcast"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.94,
+    "voteScope": "Finance communication, executive reporting & operational business partnering",
+    "favoriteQuestions": [
+      "What is the one decision this financial report asks the leadership team to make?"
+    ],
+    "auditTrail": [
+      {
+        "source": "fbp_network",
+        "date": "2024",
+        "confidence": 0.95
+      }
+    ]
+  },
+  "paul-barnhurst": {
+    "id": "paul-barnhurst",
+    "name": "Paul Barnhurst",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "Strategic FP&A & Financial Modeling Architect",
+    "coreStrength": "Three-statement dynamic modeling, scenario planning & FP&A process architecture",
+    "mentalModels": [
+      "driver-based financial modeling",
+      "dynamic three-statement linking",
+      "sensitivity scenario cones"
+    ],
+    "toolchain": [
+      "The FP&A Guy Financial Modeling Standards",
+      "FAST Modeling Standard",
+      "Excel / Planning Platforms"
+    ],
+    "debuggingStyle": "auditing circular references, hardcoded assumptions, and disconnected cash flow linkages",
+    "optimizationPattern": "building fully integrated driver-based models where operational changes instantly flow through cash and balance sheets",
+    "publicSources": [
+      "The FP&A Guy Podcast & Publications",
+      "Financial Modeling World Cup Case Studies"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.96,
+    "voteScope": "Three-statement modeling integrity, driver-based forecasting & planning governance",
+    "favoriteQuestions": [
+      "Are our model drivers directly tied to measurable operational activities?"
+    ],
+    "auditTrail": [
+      {
+        "source": "the_fpa_guy",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "oana-labes": {
+    "id": "oana-labes",
+    "name": "Oana Labes",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "CFO Advisor & Working Capital Strategist",
+    "coreStrength": "Cash flow conversion cycles, liquidity management & working capital optimization",
+    "mentalModels": [
+      "cash conversion cycle (CCC = DSO + DIO - DPO)",
+      "free cash flow conversion efficiency",
+      "working capital as an operating lever"
+    ],
+    "toolchain": [
+      "Working Capital Optimization Matrix",
+      "Cash Conversion Velocity Scorecard",
+      "CFO 100-Day Plan"
+    ],
+    "debuggingStyle": "diagnosing trapped cash in receivables/inventory and identifying cash burn runaway risks",
+    "optimizationPattern": "accelerating collection cycles and aligning supplier terms to generate organic internal funding",
+    "publicSources": [
+      "The Cash Flow Masterclass",
+      "CFO Leadership Briefings (2024-2026)"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Working capital optimization, cash conversion cycles & liquidity runway management",
+    "favoriteQuestions": [
+      "How many days of cash are trapped between paying suppliers and collecting from customers?"
+    ],
+    "auditTrail": [
+      {
+        "source": "cfo_insights",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "carl-seidman": {
+    "id": "carl-seidman",
+    "name": "Carl Seidman",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "Interim CFO & Financial Advisory Expert",
+    "coreStrength": "Financial turnaround, high-stakes forecasting & interim leadership",
+    "mentalModels": [
+      "13-week cash flow direct method",
+      "stress-tested runway analysis",
+      "margin contribution tiers"
+    ],
+    "toolchain": [
+      "13-Week Cash Flow Model (TWCF)",
+      "Turnaround Restructuring Matrix",
+      "Breakeven Sensitivity Simulator"
+    ],
+    "debuggingStyle": "tracing weekly cash receipts vs disbursements to uncover hidden liquidity cliff dates",
+    "optimizationPattern": "enforcing direct cash control and immediate variable cost rationalization in distress scenarios",
+    "publicSources": [
+      "Financial Planning and Analysis Leadership Programs",
+      "Seidman Financial Advisory Insights"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.95,
+    "voteScope": "13-week short-term cash flows, financial turnaround & restructuring priorities",
+    "favoriteQuestions": [
+      "Under the direct method, what is our exact cash balance at week 8 if revenue drops 25%?"
+    ],
+    "auditTrail": [
+      {
+        "source": "interim_cfo_advisory",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "chris-ortega": {
+    "id": "chris-ortega",
+    "name": "Chris Ortega",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "Fractional CFO & Growth Finance Leader",
+    "coreStrength": "Fractional CFO agile scaling, startup unit economics & SaaS finance",
+    "mentalModels": [
+      "Fresh CFO framework",
+      "unit economics (LTV/CAC, Payback, Net Retention)",
+      "finance as an accelerator not a roadblock"
+    ],
+    "toolchain": [
+      "SaaS Metrics Dashboard",
+      "Unit Economics Matrix",
+      "Fractional Finance Operating System"
+    ],
+    "debuggingStyle": "detecting leaky sales funnels, unsustainable customer acquisition payback, and gross margin erosion",
+    "optimizationPattern": "tightening customer payback periods under 12 months while aligning compensation to net revenue retention",
+    "publicSources": [
+      "Fresh CFO Thought Leadership",
+      "SaaS Growth Finance Podcasts (2024-2026)"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.94,
+    "voteScope": "Startup unit economics, SaaS metrics benchmarks & agile growth financing",
+    "favoriteQuestions": [
+      "What is our fully loaded CAC payback period and gross margin adjusted churn?"
+    ],
+    "auditTrail": [
+      {
+        "source": "fresh_cfo_network",
+        "date": "2024",
+        "confidence": 0.95
+      }
+    ]
+  },
+  "jason-staats": {
+    "id": "jason-staats",
+    "name": "Jason Staats",
+    "sector": "financial",
+    "subBrain": "CFO & FP&A Operations",
+    "role": "Accounting Systems & Automation Architect",
+    "coreStrength": "Accounting automation, automated reconciliation & modern fintech integrations",
+    "mentalModels": [
+      "continuous accounting vs batch month-end",
+      "no-code financial automation pipelines",
+      "autonomous transaction reconciliation"
+    ],
+    "toolchain": [
+      "Zapier / Make for Finance",
+      "Modern General Ledger Stacks",
+      "Automated Month-End Checklists"
+    ],
+    "debuggingStyle": "identifying manual human copy-paste bottlenecks between billing, banking, and ERP systems",
+    "optimizationPattern": "deploying event-driven webhooks and AI OCR to automate 90% of routine journal entries and reconciliations",
+    "publicSources": [
+      "Realize Community for Accounting Leaders",
+      "Automated Accounting Systems Guides (2024-2026)"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.95,
+    "voteScope": "Accounting automation workflows, continuous close processes & ERP tech stack",
+    "favoriteQuestions": [
+      "Can this transaction flow directly from checkout to general ledger without a human touch?"
+    ],
+    "auditTrail": [
+      {
+        "source": "accounting_automation",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "jouk-pleiter": {
+    "id": "jouk-pleiter",
+    "name": "Jouk Pleiter",
+    "sector": "financial",
+    "subBrain": "Fintech & Banking Strategy",
+    "role": "Digital Banking Platform Architect",
+    "coreStrength": "Engagement banking platforms & composable financial architecture",
+    "mentalModels": [
+      "customer-centric engagement banking",
+      "composable banking architecture",
+      "decoupling core banking from experience layer"
+    ],
+    "toolchain": [
+      "Backbase Engagement Banking Platform",
+      "Open Banking APIs",
+      "Composable Banking Architecture Framework"
+    ],
+    "debuggingStyle": "diagnosing legacy mainframe friction that paralyzes front-end digital customer journeys",
+    "optimizationPattern": "orchestrating modern customer engagement microservices on top of existing legacy core bank engines",
+    "publicSources": [
+      "Engagement Banking Playbook (Backbase)",
+      "Banking Thought Leadership Reports (2024-2026)"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Banking digital transformation, open banking platforms & fintech customer experience",
+    "favoriteQuestions": [
+      "Are we modernizing the customer experience layer without having to replace the core mainframe overnight?"
+    ],
+    "auditTrail": [
+      {
+        "source": "backbase_research",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "tim-rutten": {
+    "id": "tim-rutten",
+    "name": "Tim Rutten",
+    "sector": "financial",
+    "subBrain": "Fintech & Banking Strategy",
+    "role": "Banking Go-to-Market & SaaS Strategist",
+    "coreStrength": "Enterprise banking digital transformation & fintech market expansion",
+    "mentalModels": [
+      "ecosystem-led fintech growth",
+      "modernizing legacy core journeys",
+      "digital adoption velocity in banking"
+    ],
+    "toolchain": [
+      "Fintech Go-to-Market Blueprint",
+      "Banking Digital Maturity Model"
+    ],
+    "debuggingStyle": "evaluating multi-year enterprise sales cycle stalls and compliance review roadblocks in regulated banking",
+    "optimizationPattern": "pre-packaging regulated banking workflows to compress enterprise deployment cycles from years to months",
+    "publicSources": [
+      "Digital Banking Transformation Whitepapers",
+      "Fintech Executive Forum Keynotes"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.95,
+    "voteScope": "Enterprise fintech distribution, digital banking adoption & regulated platform rollouts",
+    "favoriteQuestions": [
+      "How do we align digital modernization with strict central bank compliance and security audits?"
+    ],
+    "auditTrail": [
+      {
+        "source": "fintech_gtm",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "panagiotis-kriaris": {
+    "id": "panagiotis-kriaris",
+    "name": "Panagiotis Kriaris",
+    "sector": "financial",
+    "subBrain": "Fintech & Banking Strategy",
+    "role": "Fintech & Open Banking Strategist",
+    "coreStrength": "Embedded finance, payments infrastructure & open banking API ecosystems",
+    "mentalModels": [
+      "embedded finance everywhere",
+      "payments as a strategic platform",
+      "API-driven financial interoperability"
+    ],
+    "toolchain": [
+      "Open Banking PSD2/PSD3 Frameworks",
+      "Embedded Finance Mapping",
+      "Payment Gateway Architecture Matrix"
+    ],
+    "debuggingStyle": "analyzing payment settlement latency, interchange fee leakage, and cross-border currency conversion friction",
+    "optimizationPattern": "embedding real-time payment rails and instant lending directly into non-financial SaaS applications",
+    "publicSources": [
+      "Global Fintech & Open Banking Insights",
+      "Payments Strategy Papers (2024-2026)"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Embedded finance, payment rails, open banking APIs & digital wallets",
+    "favoriteQuestions": [
+      "Can we monetize payments and credit natively inside the product rather than redirecting to third parties?"
+    ],
+    "auditTrail": [
+      {
+        "source": "open_banking_review",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "rocco-pellegrinelli": {
+    "id": "rocco-pellegrinelli",
+    "name": "Rocco Pellegrinelli",
+    "sector": "financial",
+    "subBrain": "Macro Cycles & Believability",
+    "role": "Quantitative Backtesting & Long-Horizon Strategist",
+    "coreStrength": "Systematic quantitative backtesting, trend validation & statistical financial modeling",
+    "mentalModels": [
+      "long-horizon trend validation",
+      "statistical outlier filtering",
+      "combining fundamental valuation with trend momentum"
+    ],
+    "toolchain": [
+      "Trendrating Quantitative Engine",
+      "Momentum Scoring Algorithms",
+      "Statistical Backtesting Suite"
+    ],
+    "debuggingStyle": "testing alpha strategies against historical regime shifts and black-swan liquidity shocks",
+    "optimizationPattern": "overlaying quantitative trend momentum filters on fundamentally undervalued securities to avoid value traps",
+    "publicSources": [
+      "Trendrating Performance Reports",
+      "Quantitative Investment Methodology Papers (2024-2026)"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.96,
+    "voteScope": "Quantitative alpha screening, trend validation & statistical risk mitigation",
+    "favoriteQuestions": [
+      "Is this a true turnaround or a classic value trap with negative momentum?"
+    ],
+    "auditTrail": [
+      {
+        "source": "quantitative_finance",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "nassim-taleb": {
+    "id": "nassim-taleb",
+    "name": "Nassim Nicholas Taleb",
+    "sector": "financial",
+    "subBrain": "Macro Cycles & Believability",
+    "role": "Antifragility & Fat-Tail Risk Pioneer",
+    "coreStrength": "Antifragility, black swan tail-risk hedging & skin in the game",
+    "mentalModels": [
+      "antifragility (gain from disorder)",
+      "fat-tailed non-Gaussian distributions",
+      "the Barbell Strategy",
+      "Skin in the Game (symmetry of risk)"
+    ],
+    "toolchain": [
+      "Extreme Value Theory (EVT)",
+      "Barbell Portfolio Allocation",
+      "Lindy Effect Assessment",
+      "Skin in the Game Filter"
+    ],
+    "debuggingStyle": "testing models that rely on standard deviation / Gaussian bell curves for fatal tail risks",
+    "optimizationPattern": "allocating 90% in hyper-safe cash/treasuries and 10% in high-convexity asymmetric upside options",
+    "publicSources": [
+      "The Black Swan (Random House)",
+      "Antifragile: Things That Gain from Disorder",
+      "Skin in the Game",
+      "Incerto Series"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Black swan tail-risk mitigation, antifragility architecture & extreme convexity",
+    "favoriteQuestions": [
+      "Does this system benefit from volatility, or will a 5-sigma tail event destroy it completely? Do the decision makers have skin in the game?"
+    ],
+    "auditTrail": [
+      {
+        "source": "incerto_canon",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "benjamin-graham": {
+    "id": "benjamin-graham",
+    "name": "Benjamin Graham",
+    "sector": "financial",
+    "subBrain": "Value Investing & Moats",
+    "role": "Father of Securities Analysis",
+    "coreStrength": "Net-Net working capital, fundamental margin of safety & Mr. Market allegory",
+    "mentalModels": [
+      "Mr. Market emotional swings",
+      "Net-Current-Asset-Value (NCAV) bargain hunting",
+      "margin of safety as quantitative discount to book"
+    ],
+    "toolchain": [
+      "Graham Net-Net Screen (NCAV = Current Assets - Total Liabilities)",
+      "Security Analysis Valuation Formulas"
+    ],
+    "debuggingStyle": "scrutinizing balance sheet off-balance liabilities and aggressive revenue recognition",
+    "optimizationPattern": "buying diversified baskets of securities trading at less than 2/3 of net liquidating current assets",
+    "publicSources": [
+      "Security Analysis (McGraw-Hill, 1934)",
+      "The Intelligent Investor (Harper)",
+      "The Rediscovered Benjamin Graham"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Quantitative balance sheet safety, liquidation discounts & liquidation arbitrage",
+    "favoriteQuestions": [
+      "Is this security selling for less than its net liquidating cash value after paying all debts?"
+    ],
+    "auditTrail": [
+      {
+        "source": "security_analysis_canon",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "carl-june": {
+    "id": "carl-june",
+    "name": "Carl June",
+    "sector": "science_biotech",
+    "subBrain": "Cell Therapy & CAR-T",
+    "role": "Cell Therapy & Immunotherapy Pioneer",
+    "coreStrength": "CAR T-cell engineering, viral vector transduction & living drugs",
+    "mentalModels": [
+      "living drug paradigm",
+      "T-cell persistence and memory phenotypes",
+      "overcoming the immunosuppressive tumor microenvironment",
+      "synthetic receptor co-stimulation (CD28 vs 4-1BB)"
+    ],
+    "toolchain": [
+      "CAR-T Construct Design",
+      "Lentiviral Transduction Protocols",
+      "Flow Cytometry T-Cell Panels",
+      "Cytokine Release Syndrome (CRS) Grading"
+    ],
+    "debuggingStyle": "analyzing T-cell exhaustion markers (PD-1, TIM-3, LAG-3) and antigen escape mechanisms",
+    "optimizationPattern": "incorporating 4-1BB co-stimulatory domains for long-term memory persistence and tonic signaling reduction",
+    "publicSources": [
+      "CAR T Cell Immunotherapy for Human Cancer (Science)",
+      "Nature Medicine CAR-T Clinical Trials (UPenn)",
+      "AACR Keynotes"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.99,
+    "voteScope": "Cell therapy engineering, CAR design, T-cell persistence & clinical translation",
+    "favoriteQuestions": [
+      "What is the long-term persistence phenotype of the engineered T cells, and how do we prevent antigen escape?"
+    ],
+    "auditTrail": [
+      {
+        "source": "cell_therapy_landmark",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "michel-sadelain": {
+    "id": "michel-sadelain",
+    "name": "Michel Sadelain",
+    "sector": "science_biotech",
+    "subBrain": "Cell Therapy & CAR-T",
+    "role": "Synthetic Receptor & Genetic Engineering Architect",
+    "coreStrength": "Synthetic receptor design, CD19 targeting & precise genomic locus integration",
+    "mentalModels": [
+      "combinatorial antigen sensing (AND/NOT gates)",
+      "targeted integration via CRISPR/Cas9 (TRAC locus)",
+      "tonic signaling attenuation"
+    ],
+    "toolchain": [
+      "TRAC locus targeted knock-in",
+      "19-28z CAR constructs",
+      "Synthetic Biology Logic Gates (MSKCC)"
+    ],
+    "debuggingStyle": "evaluating random viral insertion mutagenesis vs precise CRISPR TRAC knock-in expression uniformity",
+    "optimizationPattern": "targeting CAR expression directly into the TRAC locus to prevent early T-cell exhaustion and ensure uniform expression",
+    "publicSources": [
+      "Therapeutic T Cell Engineering (Nature)",
+      "Targeting a CAR to the TRAC Locus (Nature)",
+      "Gairdner Award Lectures"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.99,
+    "voteScope": "Synthetic receptor architecture, genetic locus targeting & logic gate immunology",
+    "favoriteQuestions": [
+      "Can we construct dual-antigen logic gates to eliminate off-tumor on-target toxicities in solid tumors?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nature_publications",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "bert-vogelstein": {
+    "id": "bert-vogelstein",
+    "name": "Bert Vogelstein",
+    "sector": "science_biotech",
+    "subBrain": "Cancer Genomics & Heterogeneity",
+    "role": "Cancer Genomics & Liquid Biopsy Pioneer",
+    "coreStrength": "Cancer genome mutational cascade (Vogelgram), driver mutations & early detection ctDNA",
+    "mentalModels": [
+      "driver vs passenger mutations",
+      "multi-step genetic progression model",
+      "early detection via circulating tumor DNA (ctDNA)",
+      "cancer as a disease of somatic evolution"
+    ],
+    "toolchain": [
+      "Safe-SeqS Next-Gen Sequencing",
+      "CancerSEEK Multimodal Blood Test",
+      "Johns Hopkins Genomic Pipeline"
+    ],
+    "debuggingStyle": "distinguishing background somatic mutation noise from clonal driver mutations (APC, KRAS, TP53)",
+    "optimizationPattern": "detecting miniscule mutant allele fractions (MAF < 0.01%) in cell-free plasma using molecular barcoding",
+    "publicSources": [
+      "Cancer Genome Landscapes (Science)",
+      "Detection and Localization of Surgically Resectable Cancers with a Multi-Analyte Blood Test (Science)",
+      "Johns Hopkins Ludwig Center"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Cancer driver genetics, early biomarker detection & liquid biopsy sequencing",
+    "favoriteQuestions": [
+      "Is this mutation a true clonal driver in the primary trunk of the tumor, or an incidental passenger?"
+    ],
+    "auditTrail": [
+      {
+        "source": "science_genomics_canon",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "charles-swanton": {
+    "id": "charles-swanton",
+    "name": "Charles Swanton",
+    "sector": "science_biotech",
+    "subBrain": "Cancer Genomics & Heterogeneity",
+    "role": "Tumor Evolution & Clonal Heterogeneity Researcher",
+    "coreStrength": "Intratumor heterogeneity, clonal tracking (TRACERx) & evolutionary cancer dynamics",
+    "mentalModels": [
+      "phylogenetic tree of tumor evolution (truncal vs branch mutations)",
+      "chromosomal instability (CIN) driving drug resistance",
+      "immune evasion via HLA loss of heterozygosity"
+    ],
+    "toolchain": [
+      "TRACERx Longitudinal Study Pipeline",
+      "Phylogenetic Subclonal Clustering Algorithms",
+      "Whole-Exome Sequencing (WES) Panels (Francis Crick Institute)"
+    ],
+    "debuggingStyle": "multi-region sequencing to identify subclonal divergence that single-needle biopsies miss",
+    "optimizationPattern": "targeting strictly truncal (clonal) neoantigens present across 100% of tumor cells to prevent subclonal escape",
+    "publicSources": [
+      "Intratumor Heterogeneity and Branched Evolution Revealed by Multiregion Sequencing (NEJM)",
+      "TRACERx Lung Cancer Evolution (Nature)",
+      "Francis Crick Institute Publications"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Tumor evolution, clonal heterogeneity, drug resistance pathways & neoantigen selection",
+    "favoriteQuestions": [
+      "Is the therapeutic target clonal (present on the trunk) or subclonal (on a branch that will easily mutate away)?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nejm_crick_research",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "kevan-shokat": {
+    "id": "kevan-shokat",
+    "name": "Kevan Shokat",
+    "sector": "science_biotech",
+    "subBrain": "Precision & Targeted Oncology",
+    "role": "Chemical Biology & \"Undruggable\" Target Innovator",
+    "coreStrength": "Chemical biology, covalent inhibitor design & drugging the \"undruggable\" KRAS G12C",
+    "mentalModels": [
+      "covalent allosteric pocket trapping",
+      "mutant-specific chemistry",
+      "switch-II pocket exploration",
+      "orthogonal chemical-genetic screening"
+    ],
+    "toolchain": [
+      "Covalent Mass Spectrometry Screening",
+      "X-Ray Crystallography of Allosteric Pockets",
+      "UCSF Chemical Biology Platform"
+    ],
+    "debuggingStyle": "structural probing of dynamic protein conformations to discover cryptic binding pockets",
+    "optimizationPattern": "exploiting mutant cysteine residues with electrophilic warheads to lock GTPases into inactive GDP-bound states",
+    "publicSources": [
+      "K-Ras(G12C) Inhibitors Allosterically Control GTP Affinity and Effector Interactions (Nature)",
+      "AACR Pioneers in Science",
+      "UCSF Department of Cellular & Molecular Pharmacology"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.99,
+    "voteScope": "Allosteric small molecule design, covalent inhibitors & undruggable target discovery",
+    "favoriteQuestions": [
+      "Can we exploit the unique mutant amino acid side-chain to achieve 100% target specificity over wild-type?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nature_chemical_biology",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "padmanee-sharma": {
+    "id": "padmanee-sharma",
+    "name": "Padmanee Sharma",
+    "sector": "science_biotech",
+    "subBrain": "Cell Therapy & CAR-T",
+    "role": "Immunotherapy Response & Biomarker Leader",
+    "coreStrength": "Immune checkpoint mechanisms, biomarker validation & on/off immune switch balance",
+    "mentalModels": [
+      "immune balance of co-stimulatory on-switches vs inhibitory off-switches",
+      "pre-treatment vs on-treatment tumor biopsies",
+      "VISTA and ICOS signaling pathways"
+    ],
+    "toolchain": [
+      "Multiplex Immunofluorescence Tissue Profiling",
+      "Single-Cell RNA-Seq of Tumor Infiltrating Lymphocytes (MD Anderson)",
+      "Translational Trial Protocols"
+    ],
+    "debuggingStyle": "longitudinal paired biopsy analysis to discover compensatory upregulation of alternative immune checkpoints",
+    "optimizationPattern": "rational combination immunotherapy (anti-PD-1 + anti-CTLA-4 or ICOS agonists) guided by on-treatment tissue biomarkers",
+    "publicSources": [
+      "The Next Generation of Checkpoint Blockade Therapy (Cell)",
+      "Immune Biomarkers in Solid Tumors (MD Anderson)",
+      "Cancer Discovery Publications"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Immunotherapy biomarkers, checkpoint combination rationale & translational trial design",
+    "favoriteQuestions": [
+      "What compensatory inhibitory pathway does the tumor upregulate when we block the primary checkpoint?"
+    ],
+    "auditTrail": [
+      {
+        "source": "md_anderson_research",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "katherine-janeway": {
+    "id": "katherine-janeway",
+    "name": "Katherine Janeway",
+    "sector": "science_biotech",
+    "subBrain": "Precision & Targeted Oncology",
+    "role": "Clinical Genomics & Precision Oncology Decision Support Leader",
+    "coreStrength": "Pediatric precision oncology, molecular tumor boards & actionable genomic profiling",
+    "mentalModels": [
+      "molecular profiling for actionable therapeutic matching",
+      "pediatric liquid biopsies",
+      "standardizing molecular tumor board evidence tiers"
+    ],
+    "toolchain": [
+      "Dana-Farber Profile Sequencing Panel",
+      "Molecular Tumor Board Decision Matrix",
+      "NCI-COG Pediatric MATCH Trial"
+    ],
+    "debuggingStyle": "evaluating variants of uncertain significance (VUS) against functional assays and clinical trial databases",
+    "optimizationPattern": "matching patients to targeted phase 1/2 therapies based on genomic alterations rather than anatomic tumor histology",
+    "publicSources": [
+      "Multicenter Feasibility Study of DNA and RNA Sequencing for Pediatric Solid Tumors (JAMA Oncology)",
+      "Dana-Farber / Boston Children's Cancer Center",
+      "NCI MATCH Trials"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Clinical genomics interpretation, actionable target prioritization & molecular tumor boards",
+    "favoriteQuestions": [
+      "Is this mutation tier-1 clinically actionable with an approved targeted drug or active trial?"
+    ],
+    "auditTrail": [
+      {
+        "source": "jama_oncology",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "keith-flaherty": {
+    "id": "keith-flaherty",
+    "name": "Keith Flaherty",
+    "sector": "science_biotech",
+    "subBrain": "Precision & Targeted Oncology",
+    "role": "Targeted Therapy & Clinical Trial Strategy Architect",
+    "coreStrength": "Targeted oncogenic pathway inhibition, combination BRAF/MEK regimens & adaptive trial design",
+    "mentalModels": [
+      "vertical and horizontal oncogenic pathway blockade",
+      "adaptive resistance bypass",
+      "mechanistic biomarker-driven clinical trial architecture"
+    ],
+    "toolchain": [
+      "NCI-MATCH Master Protocol",
+      "MGH Cancer Center Targeted Therapy Database",
+      "Circulating Biomarker Tracking"
+    ],
+    "debuggingStyle": "analyzing pathway reactivation loops (e.g. CRAF/MEK/ERK rebound) under single-agent monotherapy",
+    "optimizationPattern": "dual horizontal pathway inhibition (BRAF inhibitor + MEK inhibitor) to delay resistance and reduce toxic side effects",
+    "publicSources": [
+      "Inhibition of Mutated, Activated BRAF in Metastatic Melanoma (NEJM)",
+      "NCI-MATCH Trial Master Design (JCO)",
+      "Massachusetts General Hospital Cancer Center"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Targeted therapy combinations, pathway resistance overcoming & master clinical protocols",
+    "favoriteQuestions": [
+      "How quickly does the MAPK pathway reactivate through alternative feedback loops if we use a single inhibitor?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nejm_landmark",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "nina-bhardwaj": {
+    "id": "nina-bhardwaj",
+    "name": "Nina Bhardwaj",
+    "sector": "science_biotech",
+    "subBrain": "Cell Therapy & CAR-T",
+    "role": "Dendritic Cell Vaccines & Cancer Immunobiology Pioneer",
+    "coreStrength": "Dendritic cell antigen presentation, personalized neoantigen vaccines & innate immunity priming",
+    "mentalModels": [
+      "dendritic cell cross-presentation",
+      "neoantigen peptide-HLA binding prediction",
+      "innate-to-adaptive immune priming"
+    ],
+    "toolchain": [
+      "Personalized Neoantigen Vaccine Platforms",
+      "Dendritic Cell Culture Protocols (Mount Sinai)",
+      "T-Cell Receptor (TCR) Avidity Assays"
+    ],
+    "debuggingStyle": "measuring neoantigen-specific CD8+ T-cell expansion and verifying immune infiltration into non-inflamed tumors",
+    "optimizationPattern": "co-delivering synthetic long peptides with toll-like receptor (TLR) adjuvants to induce high-affinity polyfunctional T-cell responses",
+    "publicSources": [
+      "Personalized Neoantigen Vaccine Design (Nature Medicine)",
+      "Dendritic Cells in Cancer Immunotherapy",
+      "Icahn School of Medicine at Mount Sinai"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.97,
+    "voteScope": "Cancer vaccines, neoantigen design, dendritic cell immunology & innate immune activation",
+    "favoriteQuestions": [
+      "Are our neoantigen peptides predicted to bind both patient-specific HLA Class I and Class II alleles?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nature_medicine",
+        "date": "2023",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "dana-peer": {
+    "id": "dana-peer",
+    "name": "Dana Pe’er",
+    "sector": "science_biotech",
+    "subBrain": "Cancer Genomics & Heterogeneity",
+    "role": "Computational & Single-Cell Systems Biologist",
+    "coreStrength": "Single-cell transcriptomics, trajectory inference & high-dimensional cancer modeling",
+    "mentalModels": [
+      "cell-state continuum over discrete types",
+      "trajectory inference (pseudotime)",
+      "single-cell high-dimensional manifold analysis"
+    ],
+    "toolchain": [
+      "SEACells",
+      "Palantir Trajectory Algorithm",
+      "Single-Cell RNA-Seq + ATAC-Seq Pipelines (MSKCC)"
+    ],
+    "debuggingStyle": "detecting rare cell plasticity states and drug-tolerant persister cell subpopulations",
+    "optimizationPattern": "representing cellular plasticity as a continuous Markov process along energy landscapes to predict therapeutic evasion",
+    "publicSources": [
+      "Characterizing Cellular Heterogeneity in Tumors via Single-Cell Analysis (Cell)",
+      "Palantir Trajectory Inference (Nature Biotechnology)",
+      "Memorial Sloan Kettering Cancer Center"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Computational oncology, single-cell systems biology & machine learning for high-dimensional omics",
+    "favoriteQuestions": [
+      "What continuous cell state transition enables a small subpopulation to survive initial cytotoxic exposure?"
+    ],
+    "auditTrail": [
+      {
+        "source": "cell_systems_biology",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "william-hait": {
+    "id": "william-hait",
+    "name": "William Hait",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Cancer Prevention & Interception Strategist",
+    "coreStrength": "Disease interception, pre-malignant biology & translational pharmaceutical R&D",
+    "mentalModels": [
+      "intercept disease before clinical presentation",
+      "pre-cancer genomic instability",
+      "paradigm shift from treatment to eradication"
+    ],
+    "toolchain": [
+      "Disease Interception Strategy Framework",
+      "Pre-Malignant Biomarker Panels",
+      "Johnson & Johnson Global R&D Protocols"
+    ],
+    "debuggingStyle": "identifying the critical tipping point between benign clonal hematopoiesis/dysplasia and invasive malignancy",
+    "optimizationPattern": "deploying low-toxicity targeted immunomodulators during pre-malignant phases to prevent malignant transformation",
+    "publicSources": [
+      "Targeting the Pre-Malignant State (Clinical Cancer Research)",
+      "AACR Global Cancer Research Leadership",
+      "J&J Innovative Medicine Strategy"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Cancer interception, early preventive therapeutics & pharmaceutical portfolio strategy",
+    "favoriteQuestions": [
+      "Can we intercept and clear this pre-cancerous clone before it accumulates secondary driver mutations?"
+    ],
+    "auditTrail": [
+      {
+        "source": "aacr_leadership",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "marcia-cruz-correa": {
+    "id": "marcia-cruz-correa",
+    "name": "Marcia Cruz-Correa",
+    "sector": "science_biotech",
+    "subBrain": "Cancer Genomics & Heterogeneity",
+    "role": "Cancer Disparities, Population Equity & Genetics Leader",
+    "coreStrength": "Hereditary cancer syndromes, population genomics & health equity in precision oncology",
+    "mentalModels": [
+      "diversity in genomic reference databases",
+      "population-specific founder mutations",
+      "universal access to genetic screening"
+    ],
+    "toolchain": [
+      "Hereditary Cancer Registry Protocols",
+      "Population Genomic Screening Panels (UPR Comprehensive Cancer Center)",
+      "Equity Access Frameworks"
+    ],
+    "debuggingStyle": "identifying clinical trial and genomic atlas selection biases that lead to misclassification of variants in non-European ancestries",
+    "optimizationPattern": "expanding multi-ethnic genomic datasets to eliminate disparities in actionable targeted therapy access",
+    "publicSources": [
+      "Hereditary Colorectal Cancer in Diverse Populations (Gastroenterology)",
+      "AACR Cancer Disparities Progress Reports",
+      "University of Puerto Rico Cancer Center"
+    ],
+    "determinismRating": 0.93,
+    "believabilityWeight": 0.95,
+    "voteScope": "Population genetics, health disparities, hereditary oncology & multi-ethnic clinical trials",
+    "favoriteQuestions": [
+      "Is this genomic classifier validated across diverse global populations, or only on European cohorts?"
+    ],
+    "auditTrail": [
+      {
+        "source": "aacr_equity_reports",
+        "date": "2024",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "jennifer-doudna": {
+    "id": "jennifer-doudna",
+    "name": "Jennifer Doudna",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "CRISPR-Cas9 Programmable Gene Editing Architect",
+    "coreStrength": "CRISPR-Cas9 programmable genome editing, RNA structural biology & in vivo delivery platforms",
+    "mentalModels": [
+      "programmable RNA-guided endonuclease targeting",
+      "PAM sequence constraint engineering",
+      "in vivo ribonucleoprotein (RNP) delivery"
+    ],
+    "toolchain": [
+      "CRISPR-Cas9 / Cas12a",
+      "Guide RNA (gRNA) Design Algorithms",
+      "RNP Electroporation / Lipid Nanoparticles (LNPs)",
+      "Innovative Genomics Institute (IGI)"
+    ],
+    "debuggingStyle": "measuring off-target double-stranded breaks via GUIDE-Seq and optimizing guide RNA chemical modifications",
+    "optimizationPattern": "delivering transient Cas9 RNP complexes rather than continuous viral plasmids to minimize off-target cuts",
+    "publicSources": [
+      "A Programmable Dual-RNA-Guided DNA Endonuclease in Adaptive Bacterial Immunity (Science)",
+      "Nobel Prize in Chemistry Lecture 2020",
+      "Innovative Genomics Institute (UC Berkeley)"
+    ],
+    "determinismRating": 0.98,
+    "believabilityWeight": 0.99,
+    "voteScope": "CRISPR gene editing, guide RNA specificity, viral/non-viral delivery & platform biotechnology",
+    "favoriteQuestions": [
+      "What is the on-target vs off-target indel ratio, and how do we ensure efficient in vivo tissue biodistribution?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nobel_foundation_canon",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "emmanuelle-charpentier": {
+    "id": "emmanuelle-charpentier",
+    "name": "Emmanuelle Charpentier",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "CRISPR Molecular Mechanism Pioneer",
+    "coreStrength": "Bacterial CRISPR mechanisms, tracrRNA discovery & precision genetic engineering tools",
+    "mentalModels": [
+      "dual-RNA architecture (crRNA + tracrRNA)",
+      "bacterial adaptive immune memory",
+      "modular molecular machinery"
+    ],
+    "toolchain": [
+      "Dual-RNA CRISPR Machinery",
+      "Bacterial Pathogen Genetics",
+      "Max Planck Unit for the Science of Pathogens"
+    ],
+    "debuggingStyle": "biochemical dissection of RNA-protein interactions and endonuclease cleavage kinetics",
+    "optimizationPattern": "engineering engineered single-guide RNAs (sgRNA) for clean, high-efficiency double-strand cleavage",
+    "publicSources": [
+      "tracrRNA Component of the Cas9 System (Nature)",
+      "Nobel Prize in Chemistry Lecture 2020",
+      "Max Planck Institute Publications"
+    ],
+    "determinismRating": 0.98,
+    "believabilityWeight": 0.99,
+    "voteScope": "CRISPR RNA biochemistry, molecular endonuclease mechanisms & therapeutic tool creation",
+    "favoriteQuestions": [
+      "How does the secondary structure of the tracrRNA guide the conformational activation of the Cas enzyme?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nobel_foundation_canon",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "eric-topol": {
+    "id": "eric-topol",
+    "name": "Eric Topol",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Digital Medicine, AI & Multimodal Healthcare Pioneer",
+    "coreStrength": "Multimodal AI in healthcare, digitized patient monitoring & high-resolution individual phenotyping",
+    "mentalModels": [
+      "digitized human phenotyping",
+      "multimodal AI medical diagnostic integration",
+      "democratization of medical data for patients"
+    ],
+    "toolchain": [
+      "Multimodal Medical AI Models",
+      "Continuous Biosensors / Wearables",
+      "Scripps Research Translational Institute Data Hub"
+    ],
+    "debuggingStyle": "evaluating clinical AI validation across external heterogeneous hospital datasets to detect dataset shift",
+    "optimizationPattern": "fusing genomics, electronic health records, continuous physiological sensors, and medical imaging into multimodal predictive algorithms",
+    "publicSources": [
+      "Deep Medicine: How AI Can Make Healthcare Human Again (Basic Books)",
+      "High-Performance Medicine: The Convergence of Human and Artificial Intelligence (Nature Medicine)",
+      "Scripps Research Institute"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Multimodal healthcare AI, digital biomarkers, decentralized trials & digital medicine",
+    "favoriteQuestions": [
+      "Does the AI model generalize across different patient populations, scanners, and healthcare systems without bias?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nature_medicine_review",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "daniel-kraft": {
+    "id": "daniel-kraft",
+    "name": "Daniel Kraft",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Exponential Healthcare & Horizon Technologies Strategist",
+    "coreStrength": "Exponential biotech convergence, digital health futures & decentralized clinical ecosystems",
+    "mentalModels": [
+      "exponential technologies convergence (genomics + AI + sensors + robotics)",
+      "shift from sick-care to continuous health span optimization"
+    ],
+    "toolchain": [
+      "NextMed Health Innovation Matrix",
+      "Exponential Medicine Technology Radar",
+      "Digital Health Ecosystem Mapping"
+    ],
+    "debuggingStyle": "diagnosing legacy regulatory and payment reimbursement bottlenecks that impede exponential technology deployment",
+    "optimizationPattern": "anticipating technology convergence 5-10 years out to architect proactive, data-rich clinical trial pipelines",
+    "publicSources": [
+      "NextMed Health Keynotes",
+      "Exponential Medicine Talks",
+      "Inventing the Future of Healthcare (TED)"
+    ],
+    "determinismRating": 0.92,
+    "believabilityWeight": 0.94,
+    "voteScope": "Emerging technology horizon scanning, exponential healthcare convergence & future platform roadmaps",
+    "favoriteQuestions": [
+      "What unexpected technology convergence (e.g. quantum + generative biology) will disrupt this drug platform?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nextmed_health",
+        "date": "2024",
+        "confidence": 0.95
+      }
+    ]
+  },
+  "jacob-glanville": {
+    "id": "jacob-glanville",
+    "name": "Jacob Glanville",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Computational Immunology & High-Throughput Antibody Engineer",
+    "coreStrength": "High-throughput antibody repertoires, computational vaccine design & universal therapeutics",
+    "mentalModels": [
+      "computational antibody repertoire deconvolution",
+      "cross-neutralizing epitope targeting",
+      "rapid pandemic response platforms"
+    ],
+    "toolchain": [
+      "Centivax Computational Platform",
+      "Antibody Repertoire Sequencing (Rep-Seq)",
+      "Structure-Guided Epitope Optimization"
+    ],
+    "debuggingStyle": "testing antibody neutralizing breadth across viral mutation escape variants and conformational variants",
+    "optimizationPattern": "in silico affinity maturation and computational epitope grafting for universal neutralizing antibody cocktails",
+    "publicSources": [
+      "Computational Repertoire Analysis of Antigen-Specific T Cells (Nature)",
+      "Centivax Universal Vaccine Research",
+      "Netflix Pandemic Series"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Computational immunology, monoclonal antibody engineering & universal vaccine design",
+    "favoriteQuestions": [
+      "Does the engineered antibody bind a conserved structural epitope that cannot mutate without killing viral fitness?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nature_immunology",
+        "date": "2023",
+        "confidence": 0.96
+      }
+    ]
+  },
+  "alex-zhavoronkov": {
+    "id": "alex-zhavoronkov",
+    "name": "Alex Zhavoronkov",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Generative AI Drug Discovery & Longevity Pioneer",
+    "coreStrength": "Generative AI chemistry, dual-purpose target-molecule generation & aging clock biology",
+    "mentalModels": [
+      "end-to-end generative AI drug discovery (target + molecule + clinical trial)",
+      "aging as an actionable disease biology target",
+      "generative adversarial networks for molecular design"
+    ],
+    "toolchain": [
+      "Pharma.AI (PandaOmics, Chemistry42, inClinico)",
+      "Insilico Medicine Pipeline",
+      "Epigenetic Aging Clocks"
+    ],
+    "debuggingStyle": "predicting clinical trial failure risk early using multi-omics pathway activation scoring and in silico toxicity profiling",
+    "optimizationPattern": "compressing target-discovery-to-preclinical-candidate timeline from 4 years down to under 12 months using generative models",
+    "publicSources": [
+      "Deep Learning Enables Rapid Identification of Potent DDR1 Kinase Inhibitors (Nature Biotechnology)",
+      "Insilico Medicine First Fully Generative AI Drug in Phase 2",
+      "Aging Research Reviews"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Generative chemistry, AI target discovery, clinical trial simulation & longevity biology",
+    "favoriteQuestions": [
+      "Can we generate de novo drug-like small molecules with ideal ADMET profiles targeting this novel pocket in under 30 days?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nature_biotechnology",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "emily-leproust": {
+    "id": "emily-leproust",
+    "name": "Emily Leproust",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Synthetic Biology & High-Throughput DNA Synthesis Leader",
+    "coreStrength": "Silicon-based high-throughput DNA synthesis, antibody library generation & synthetic biology scale",
+    "mentalModels": [
+      "silicon chip miniaturization applied to chemical DNA synthesis",
+      "massive combinatorial library scale",
+      "synthetic biology as a platform manufacturing technology"
+    ],
+    "toolchain": [
+      "Twist Bioscience Silicon DNA Synthesis Platform",
+      "Custom Target Enrichment Panels",
+      "Combinatorial Variant Libraries (CVL)"
+    ],
+    "debuggingStyle": "measuring DNA synthesis error rates, coupling efficiency, and GC-rich dropout rates",
+    "optimizationPattern": "synthesizing 1 million discrete oligonucleotides in parallel on a single silicon chip to enable massive screening throughput",
+    "publicSources": [
+      "Twist Bioscience Synthetic Biology Whitepapers",
+      "High-Throughput DNA Synthesis on Silicon (Nature Methods)",
+      "SynBioBeta Keynotes"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Synthetic biology infrastructure, high-throughput DNA writing, antibody screening libraries & scale",
+    "favoriteQuestions": [
+      "What is the synthesis cost and turnaround time to test 100,000 distinct gene variant sequences in parallel?"
+    ],
+    "auditTrail": [
+      {
+        "source": "twist_bioscience",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "peter-kolchinsky": {
+    "id": "peter-kolchinsky",
+    "name": "Peter Kolchinsky",
+    "sector": "science_biotech",
+    "subBrain": "Biotech Platform & Drug Discovery",
+    "role": "Biotech Venture Capital & Therapeutic Translation Strategist",
+    "coreStrength": "Biotech capital allocation, the Biotech Social Contract & clinical de-risking",
+    "mentalModels": [
+      "the Biotech Social Contract (high reward for innovation -> generic affordability forever)",
+      "binary clinical trial de-risking",
+      "pipeline value vs platform value"
+    ],
+    "toolchain": [
+      "RA Capital TechAtlas R&D Map",
+      "Biotech NPV & Probability of Success (PoS) Models",
+      "Clinical Milestone Valuation Framework"
+    ],
+    "debuggingStyle": "stress-testing preclinical animal model translatability and commercial reimbursement defensibility",
+    "optimizationPattern": "investing in platforms with multiple uncorrelated therapeutic shots on goal rather than single-asset binary gambles",
+    "publicSources": [
+      "The Great American Drug Deal (RA Capital)",
+      "The Biotech Social Contract",
+      "RA Capital TechAtlas Publications"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Biotech venture capital, clinical trial probability of success, reimbursement & drug pricing economics",
+    "favoriteQuestions": [
+      "If Phase 2 data is positive, is the clinical value proposition compelling enough for immediate commercial reimbursement?"
+    ],
+    "auditTrail": [
+      {
+        "source": "ra_capital_publications",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "andrew-huberman": {
+    "id": "andrew-huberman",
+    "name": "Andrew Huberman",
+    "sector": "science_sports",
+    "subBrain": "Physiology & Recovery",
+    "role": "Neurobiologist & Human Performance Scientist",
+    "coreStrength": "Circadian neurobiology, autonomic nervous system modulation & actionable protocols",
+    "mentalModels": [
+      "circadian sunlight viewing zeitgebers",
+      "autonomic arousal regulation (sympathetic vs parasympathetic)",
+      "dopamine baseline vs reward prediction error",
+      "physiological sighs for acute stress relief"
+    ],
+    "toolchain": [
+      "Huberman Lab Protocols",
+      "Circadian Light Timing Schedules",
+      "Physiological Sigh Protocol",
+      "Cold/Heat Hormesis Ratios"
+    ],
+    "debuggingStyle": "identifying circadian phase disruption, dopamine depletion, and sleep fragmentation",
+    "optimizationPattern": "stacking morning optic flow/sunlight, structured caffeine delays, and evening light hygiene to anchor circadian rhythm",
+    "publicSources": [
+      "Huberman Lab Podcast (Stanford Neurobiology)",
+      "Nature / Cell Stanford Publications",
+      "Protocols for Neuroplasticity and Sleep"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Circadian rhythms, neuroplasticity, autonomic recovery & sleep physiology",
+    "favoriteQuestions": [
+      "Have we anchored the circadian master clock with morning photons and evening darkness?"
+    ],
+    "auditTrail": [
+      {
+        "source": "stanford_neurobiology",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "peter-attia": {
+    "id": "peter-attia",
+    "name": "Peter Attia",
+    "sector": "science_sports",
+    "subBrain": "Physiology & Recovery",
+    "role": "Longevity & Metabolic Medicine Physician",
+    "coreStrength": "Medicine 3.0, Zone 2 mitochondrial endurance & the Centenarian Decathlon",
+    "mentalModels": [
+      "Medicine 2.0 (reactive) vs Medicine 3.0 (proactive)",
+      "the Four Horsemen of Chronic Disease",
+      "Zone 2 lactate threshold training (1.5-2.0 mmol/L)",
+      "Centenarian Decathlon physical backcasting"
+    ],
+    "toolchain": [
+      "Lactate Analyzer Testing",
+      "VO2 Max Graded Exercise Testing",
+      "Continuous Glucose Monitoring (CGM)",
+      "DEXA Body Composition Scans"
+    ],
+    "debuggingStyle": "testing for early insulin resistance, sub-optimal VO2 max percentiles, and apolipoprotein B (ApoB) particle elevation",
+    "optimizationPattern": "building high-volume Zone 2 aerobic base (3-4 hours/week) coupled with weekly VO2 max intervals and heavy eccentric strength",
+    "publicSources": [
+      "Outlive: The Science and Art of Longevity (Harmony Books)",
+      "The Drive Podcast & Medical Whitepapers",
+      "Peter Attia MD Clinical Frameworks"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Metabolic longevity, Zone 2 endurance, cardiovascular risk stratification & lifespan optimization",
+    "favoriteQuestions": [
+      "What physical feats must this individual be capable of doing in their 80s, and what strength/VO2 max reserve is required today?"
+    ],
+    "auditTrail": [
+      {
+        "source": "longevity_medicine_canon",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "kelly-starrett": {
+    "id": "kelly-starrett",
+    "name": "Kelly Starrett",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Physical Therapy & Movement Mechanics Pioneer",
+    "coreStrength": "The Movement & Mobility Method, torque generation & joint centration",
+    "mentalModels": [
+      "joint centration and torque generation (screwing feet/hands into ground)",
+      "upstream and downstream joint dysfunction",
+      "bracing sequence for spinal neutrality",
+      "mobilization before compensation"
+    ],
+    "toolchain": [
+      "The Ready State Mobility Test",
+      "Voodoo Floss Band Protocols",
+      "Lacrosse Ball Soft Tissue Decompression",
+      "Joint Distraction Bands"
+    ],
+    "debuggingStyle": "diagnosing positional faults and missing end-range joint capsule range of motion before loading",
+    "optimizationPattern": "restoring full joint rotation and tissue extensibility for 10-15 minutes daily before progressive heavy athletic loading",
+    "publicSources": [
+      "Becoming a Supple Leopard (Victory Belt)",
+      "Built from the Broken",
+      "The Ready State Platform"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Biomechanics, musculoskeletal restoration, joint torque & athletic injury prevention",
+    "favoriteQuestions": [
+      "Can the athlete achieve stable end-range joint positions without spinal compensation before we add load?"
+    ],
+    "auditTrail": [
+      {
+        "source": "the_ready_state",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "andy-galpin": {
+    "id": "andy-galpin",
+    "name": "Andy Galpin",
+    "sector": "science_sports",
+    "subBrain": "Physiology & Recovery",
+    "role": "Muscle Physiology & Bioenergetics Scientist",
+    "coreStrength": "Single-fiber muscle physiology, athletic adaptation adaptations & recovery bioenergetics",
+    "mentalModels": [
+      "muscle fiber type plasticity (Type I vs Type IIa/IIx)",
+      "the 9 physical adaptations (endurance, hypertrophy, strength, speed, power, etc.)",
+      "hydration and electrolyte turnover kinetics"
+    ],
+    "toolchain": [
+      "Single-Muscle Fiber Biopsy Analysis",
+      "Force Plate Jump Profiling",
+      "Urine Specific Gravity (USG) Hydration Testing",
+      "CSUF Human Performance Lab"
+    ],
+    "debuggingStyle": "distinguishing central nervous system fatigue from peripheral muscular glycogen and excitation-contraction failure",
+    "optimizationPattern": "periodizing training stimuli to isolate specific neuromuscular adaptations without conflicting molecular signaling pathways (AMPK vs mTOR)",
+    "publicSources": [
+      "Unplugged (Victory Belt)",
+      "Huberman Lab Galpin Performance Series",
+      "CSUF Center for Sport Performance Publications"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Muscle physiology, strength/power periodization, bioenergetics & recovery science",
+    "favoriteQuestions": [
+      "Which of the 9 specific adaptations are we targeting in this block, and are we avoiding concurrent signaling interference?"
+    ],
+    "auditTrail": [
+      {
+        "source": "csuf_exercise_science",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "stacy-sims": {
+    "id": "stacy-sims",
+    "name": "Stacy Sims",
+    "sector": "science_sports",
+    "subBrain": "Physiology & Recovery",
+    "role": "Female Athlete Physiology & Hydration Specialist",
+    "coreStrength": "Sex-specific athletic physiology, menstrual cycle phase periodization & female recovery",
+    "mentalModels": [
+      "women are not small men",
+      "hormone fluctuation impacts on thermoregulation and glycogen sparing",
+      "protein pacing for female muscle protein synthesis (leucine threshold)"
+    ],
+    "toolchain": [
+      "Menstrual Cycle Tracking for Performance",
+      "Osmolality-Based Hydration Formulas",
+      "Female Athlete Triad / RED-S Diagnostic Matrix"
+    ],
+    "debuggingStyle": "detecting relative energy deficiency in sport (RED-S), low energy availability, and luteal phase thermoregulatory fatigue",
+    "optimizationPattern": "timing high-leucine protein intake and tailored sodium-glucose hydration solutions to match fluctuating progesterone/estrogen profiles",
+    "publicSources": [
+      "ROAR: How to Match Your Food and Fitness to Your Unique Female Physiology (Rodale)",
+      "Next Level: Your Guide to Kicking Ass in Menopause",
+      "Stanford Exercise Physiology"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.97,
+    "voteScope": "Female athlete physiology, hormone-specific training, hydration science & RED-S prevention",
+    "favoriteQuestions": [
+      "Are we periodizing this protocol around female hormonal phases and ensuring adequate energy availability?"
+    ],
+    "auditTrail": [
+      {
+        "source": "exercise_physiology_female",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "brad-schoenfeld": {
+    "id": "brad-schoenfeld",
+    "name": "Brad Schoenfeld",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Hypertrophy & Biomechanics Authority",
+    "coreStrength": "Scientific hypertrophy mechanisms, volume landmarks & progressive overload",
+    "mentalModels": [
+      "mechanical tension as the primary driver of hypertrophy",
+      "effective sets (sets within 1-3 reps in reserve)",
+      "volume landmark thresholds (MEV, MAV, MRV)"
+    ],
+    "toolchain": [
+      "Science and Development of Muscle Hypertrophy Framework",
+      "Ultrasound Muscle Thickness Measurement",
+      "Reps-in-Reserve (RIR) / RPE Scales"
+    ],
+    "debuggingStyle": "analyzing non-productive junk volume vs high-tension sets taken close to muscular failure",
+    "optimizationPattern": "programming 10-20 weekly hard sets per muscle group across a variety of rep ranges (6-15 reps) with systematic progressive overload",
+    "publicSources": [
+      "Science and Development of Muscle Hypertrophy (Human Kinetics)",
+      "Journal of Strength and Conditioning Research (JSCR)",
+      "Lehman College Muscle Lab"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Hypertrophy science, resistance training volume, biomechanical loading & muscle growth",
+    "favoriteQuestions": [
+      "Is this training stimulus providing genuine high mechanical tension or just accumulating fatigue and junk volume?"
+    ],
+    "auditTrail": [
+      {
+        "source": "hypertrophy_canon",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "stewart-mcgill": {
+    "id": "stewart-mcgill",
+    "name": "Stuart McGill",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Spinal Biomechanics & Lower Back Authority",
+    "coreStrength": "Spinal load tolerances, the McGill \"Big 3\" & back injury rehabilitation",
+    "mentalModels": [
+      "the spine is a mast supported by muscular guy-wires",
+      "spine hygiene (neutral posture preservation)",
+      "the McGill Big 3 (curl-up, side bridge, bird-dog)",
+      "identifying specific pain triggers (flexion, extension, compression)"
+    ],
+    "toolchain": [
+      "McGill Provocative Pain Assessment",
+      "Spinal Stability Electromyography (EMG) Tests",
+      "The McGill Big 3 Protocol (University of Waterloo)"
+    ],
+    "debuggingStyle": "provocative testing to pinpoint whether low back symptoms are triggered by flexion, extension, rotation, or compressive shear loads",
+    "optimizationPattern": "building 360-degree core stiffness and muscular endurance to spare spinal discs from repetitive micro-motion under load",
+    "publicSources": [
+      "Ultimate Back Fitness and Performance (Wabuno)",
+      "Low Back Disorders: Evidence-Based Prevention and Rehabilitation",
+      "Back Mechanic (McGill)"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Spinal biomechanics, core stability, lumbar injury prevention & rehab kinematics",
+    "favoriteQuestions": [
+      "Are we creating torso stiffness to spare the spine from moving under load, or are we flexing the lumbar vertebrae?"
+    ],
+    "auditTrail": [
+      {
+        "source": "spinal_biomechanics_canon",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "dan-john": {
+    "id": "dan-john",
+    "name": "Dan John",
+    "sector": "science_sports",
+    "subBrain": "Coaching Systems & Execution",
+    "role": "Strength Coaching & Fundamental Movement Veteran",
+    "coreStrength": "The 5 fundamental human movements, Easy Strength & common-sense coaching minimalism",
+    "mentalModels": [
+      "the 5 fundamental movements (Push, Pull, Hinge, Squat, Loaded Carry)",
+      "Easy Strength (repeated submaximal practice)",
+      "Park Bench vs Bus Bench workouts",
+      "if it's important, do it every day; if it's not, don't do it at all"
+    ],
+    "toolchain": [
+      "Easy Strength Matrix (2 sets of 5 reps)",
+      "1-2-3-4-5 Movement Assessment",
+      "Loaded Carry Protocols"
+    ],
+    "debuggingStyle": "identifying over-complicated training routines that burn athletes out without building foundational movement competency",
+    "optimizationPattern": "practicing fundamental movement patterns with moderate weights frequently without ever reaching technical breakdown or exhaustion",
+    "publicSources": [
+      "Never Let Go (Dragon Door)",
+      "Easy Strength (with Pavel Tsatsouline)",
+      "Intervention (Target Publications)"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.97,
+    "voteScope": "Fundamental movement literacy, strength programming simplicity & athlete durability",
+    "favoriteQuestions": [
+      "Did the athlete complete the 5 fundamental movements (especially loaded carries) this week?"
+    ],
+    "auditTrail": [
+      {
+        "source": "strength_coaching_mastery",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "eric-cressey": {
+    "id": "eric-cressey",
+    "name": "Eric Cressey",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Shoulder Biomechanics & Rotational Athlete Specialist",
+    "coreStrength": "Scapulohumeral rhythm, throwing mechanics & upper extremity athletic longevity",
+    "mentalModels": [
+      "scapular upward rotation and posterior tilt under load",
+      "total rotational motion arc (internal + external rotation)",
+      "the kinetic chain in rotational power (ground up)"
+    ],
+    "toolchain": [
+      "Goniometer Shoulder Range of Motion Testing",
+      "Arm Care Conditioning Protocol",
+      "Cressey Sports Performance Throwing Screens"
+    ],
+    "debuggingStyle": "diagnosing Glenohumeral Internal Rotation Deficit (GIRD), scapular dyskinesis, and kinetic chain energy leaks",
+    "optimizationPattern": "restoring thoracic spine extension/rotation and anterior core control to optimize shoulder health and rotational velocity",
+    "publicSources": [
+      "Optimal Shoulder Performance",
+      "Cressey Sports Performance Educational Resources (NY Yankees Director of Player Health)",
+      "JSCR Papers"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Shoulder mechanics, rotational power transfer, overhead athlete health & kinetic chain profiling",
+    "favoriteQuestions": [
+      "Does the athlete have adequate thoracic mobility and scapular upward rotation before loading the shoulder?"
+    ],
+    "auditTrail": [
+      {
+        "source": "cressey_performance",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "tim-gabbett": {
+    "id": "tim-gabbett",
+    "name": "Tim Gabbett",
+    "sector": "science_sports",
+    "subBrain": "Physiology & Recovery",
+    "role": "Workload Monitoring & Injury Prevention Pioneer",
+    "coreStrength": "The Acute:Chronic Workload Ratio (ACWR) & training load tolerance",
+    "mentalModels": [
+      "Acute:Chronic Workload Ratio (ACWR)",
+      "training load sweet spot (0.8 - 1.3)",
+      "danger zone workload spikes (> 1.5)",
+      "training is the vaccine against injury (load tolerance)"
+    ],
+    "toolchain": [
+      "GPS Microtechnology Workload Tracking",
+      "sRPE (Session Rating of Perceived Exertion) Matrix",
+      "ACWR Rolling 7-to-28 Day Calculator"
+    ],
+    "debuggingStyle": "detecting rapid spikes in weekly volume/intensity relative to the athlete's 4-week rolling chronic preparation base",
+    "optimizationPattern": "progressively and steadily building high chronic workloads to develop physical resilience against injury",
+    "publicSources": [
+      "The Training-Injury Prevention Paradox: Should Athletes Be Training Smarter and Harder? (BJSM)",
+      "Gabbett Performance Solutions Research"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Workload management, ACWR calculation, GPS load tracking & sports injury epidemiology",
+    "favoriteQuestions": [
+      "Is this week's acute workload spike greater than 1.5x of the rolling 28-day chronic baseline?"
+    ],
+    "auditTrail": [
+      {
+        "source": "bjsm_landmark",
+        "date": "2024",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "bret-contreras": {
+    "id": "bret-contreras",
+    "name": "Bret Contreras",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Glute Biomechanics & Force Vector Authority",
+    "coreStrength": "Horizontal force vectors, gluteal activation & hip thrust mechanics",
+    "mentalModels": [
+      "horizontal vs vertical force vector dynamics",
+      "gluteus maximus end-range hip extension torque",
+      "electromyographic (EMG) muscle activation profiling"
+    ],
+    "toolchain": [
+      "Hip Thrust / Glute Drive Machine",
+      "Surface EMG Electrodes",
+      "Glute Lab Biomechanical Testing Protocols"
+    ],
+    "debuggingStyle": "diagnosing gluteal amnesia and hamstring/lumbar dominance during hip extension movements",
+    "optimizationPattern": "loading end-range hip extension horizontally with hip thrust variations to maximize glute hypertrophy and sprinting acceleration",
+    "publicSources": [
+      "Glute Lab: The Art and Science of Strength and Physique Training (Victory Belt)",
+      "AUT University PhD Dissertation on Biomechanics",
+      "JSCR Articles"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.96,
+    "voteScope": "Glute mechanics, horizontal force production, sprinting acceleration & posterior chain strength",
+    "favoriteQuestions": [
+      "Are we overloading the muscle at its peak contracted position with horizontal force vectors?"
+    ],
+    "auditTrail": [
+      {
+        "source": "glute_lab_research",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "greg-nuckols": {
+    "id": "greg-nuckols",
+    "name": "Greg Nuckols",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Evidence-Based Powerlifting & Strength Analyst",
+    "coreStrength": "Systematic meta-analytic strength science, fatigue decay & individualized lifter biomechanics",
+    "mentalModels": [
+      "individual limb proportion leverage analysis",
+      "fatigue decay kinetics",
+      "scientific meta-analytic consensus over single outlier studies"
+    ],
+    "toolchain": [
+      "Stronger By Science (SBS) Macro Factor Algorithms",
+      "Powerlifting Biomechanics Calculation Sheets",
+      "SBS Research Database (MASS)"
+    ],
+    "debuggingStyle": "identifying methodological flaws in fitness research studies and dissecting moment-arm leverage shifts in heavy squats and deadlifts",
+    "optimizationPattern": "customizing exercise selection and stance widths based on individual femur, torso, and arm anthropometry",
+    "publicSources": [
+      "Stronger by Science Research Review (MASS)",
+      "The Science of Lifting",
+      "StrongerByScience.com Repository"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Powerlifting mechanics, individualized biomechanical leverages & strength meta-analyses",
+    "favoriteQuestions": [
+      "What do the lifter's moment arms and joint angles dictate about ideal stance width and bar path?"
+    ],
+    "auditTrail": [
+      {
+        "source": "stronger_by_science",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "lane-norton": {
+    "id": "lane-norton",
+    "name": "Layne Norton",
+    "sector": "science_sports",
+    "subBrain": "Physiology & Recovery",
+    "role": "Nutritional Biochemistry & Body Composition Authority",
+    "coreStrength": "Protein distribution kinetics, flexible dieting & metabolic adaptation",
+    "mentalModels": [
+      "energy balance thermodynamics (calories in vs out)",
+      "leucine trigger for muscle protein synthesis (MPS)",
+      "metabolic adaptation & reverse dieting",
+      "evidence-based nutritional adherence"
+    ],
+    "toolchain": [
+      "Nutritional Macronutrient Tracking Matrix",
+      "Carbon Diet Coach Algorithms",
+      "Biolayne Evidence Library"
+    ],
+    "debuggingStyle": "identifying pseudoscience diet fads that violate basic thermodynamics or cause extreme psychological restriction and binge cycles",
+    "optimizationPattern": "consuming 1.6-2.4g/kg protein distributed across 3-5 meals with sufficient leucine to maximize daily MPS refractory periods",
+    "publicSources": [
+      "Fat Loss Forever (Biolayne)",
+      "PhD Dissertation on Leucine and Muscle Protein Synthesis (UIUC)",
+      "Biolayne Research Reviews"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Macronutrient metabolism, protein kinetics, dietary adherence & weight category management",
+    "favoriteQuestions": [
+      "Does the athlete hit the leucine threshold per meal while maintaining overall energy balance?"
+    ],
+    "auditTrail": [
+      {
+        "source": "nutritional_biochemistry",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "frans-bosch": {
+    "id": "frans-bosch",
+    "name": "Frans Bosch",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Motor Learning & Dynamic Athletic Movement Pioneer",
+    "coreStrength": "Attractor states, muscle slack, contextual interference & sprinting motor learning",
+    "mentalModels": [
+      "attractors (stable movement components) vs fluctuators (flexible variations)",
+      "taking up muscle slack",
+      "co-contractions for joint stabilization",
+      "dynamic systems theory in sprinting"
+    ],
+    "toolchain": [
+      "Bosch Sprint Drills (Single-Leg Overcoming Slack)",
+      "Aquabag Dynamic Stability Apparatus",
+      "High-Speed Video Movement Attractor Tracking"
+    ],
+    "debuggingStyle": "detecting slow muscle slack uptake and excessive conscious cognitive control that disrupts reflexive spinal reflexes",
+    "optimizationPattern": "using external constraint-led drills to train high-rate-of-force co-contractions during maximum velocity ground strikes",
+    "publicSources": [
+      "Strength Training and Coordination: An Integrative Approach (2015)",
+      "Anatomy of Agility (2020)",
+      "European Athletics Coaching Keynotes"
+    ],
+    "determinismRating": 0.94,
+    "believabilityWeight": 0.97,
+    "voteScope": "Motor control, speed development, dynamic agility, attractor states & reflex speed",
+    "favoriteQuestions": [
+      "Is the athlete relying on conscious control or exploiting reflexive spinal attractor states to eliminate muscle slack?"
+    ],
+    "auditTrail": [
+      {
+        "source": "motor_learning_canon",
+        "date": "2024",
+        "confidence": 0.97
+      }
+    ]
+  },
+  "verkhoshansky": {
+    "id": "verkhoshansky",
+    "name": "Yuri Verkhoshansky",
+    "sector": "science_sports",
+    "subBrain": "Coaching Systems & Execution",
+    "role": "Father of Plyometrics & The Shock Method",
+    "coreStrength": "The Shock Method (depth jumps), stretch-shortening cycle (SSC) & Conjugate Sequence System",
+    "mentalModels": [
+      "the Shock Method for explosive power",
+      "fast stretch-shortening cycle (< 250ms)",
+      "Conjugate Sequence System of block periodization",
+      "Special Strength Training (SST)"
+    ],
+    "toolchain": [
+      "Depth Jump Drop Boxes (0.75m)",
+      "Contact Mat Rebound Flight Time Sensors",
+      "Block Periodization Concentrated Loading Charts"
+    ],
+    "debuggingStyle": "measuring amortization phase ground contact time to prevent energy dissipation as heat",
+    "optimizationPattern": "utilizing kinetic energy of falling mass to induce intense eccentric muscle-tendon stretching and explosive concentric recoil",
+    "publicSources": [
+      "Supertraining (with Mel Siff)",
+      "Special Strength Training: A Practical Manual for Coaches",
+      "Soviet Sports Science Canon"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Plyometrics, reactive strength index (RSI), explosive jumping power & block periodization",
+    "favoriteQuestions": [
+      "Is the ground contact amortization time short enough (<200ms) to exploit passive elastic tendon recoil?"
+    ],
+    "auditTrail": [
+      {
+        "source": "soviet_sports_science",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "charlie-francis": {
+    "id": "charlie-francis",
+    "name": "Charlie Francis",
+    "sector": "science_sports",
+    "subBrain": "Coaching Systems & Execution",
+    "role": "Sprint Coaching & High-Low Training Architect",
+    "coreStrength": "The High-Low training model, central nervous system (CNS) recovery & sprint mechanics",
+    "mentalModels": [
+      "High-Low training split (95%+ maximum intensity vs <75% active recovery)",
+      "avoiding the middle intensity death trap (80-90%)",
+      "CNS fatigue takes 48-72h to recover",
+      "electronic muscle stimulation (EMS) for non-CNS recovery"
+    ],
+    "toolchain": [
+      "Charlie Francis High-Low Weekly Split Matrix",
+      "Freelap / Electronic Sprint Timing Gates",
+      "EMS Recovery Units"
+    ],
+    "debuggingStyle": "diagnosing chronic central nervous system exhaustion caused by training too fast on recovery days and too slow on speed days",
+    "optimizationPattern": "strictly dividing weekly training into high CNS days (speed/heavy weights) and low CNS days (tempo runs/mobility) with zero middle-zone training",
+    "publicSources": [
+      "Speed Trap (St. Martin's Press)",
+      "The Charlie Francis Training System",
+      "Sprint Training Philosophy Archive"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Sprint development, CNS recovery management, High-Low microcycle design & speed endurance",
+    "favoriteQuestions": [
+      "Are we keeping recovery days strictly below 75% intensity to allow the central nervous system to fully recharge?"
+    ],
+    "auditTrail": [
+      {
+        "source": "sprint_coaching_canon",
+        "date": "2023",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "michael-boyle": {
+    "id": "michael-boyle",
+    "name": "Michael Boyle",
+    "sector": "science_sports",
+    "subBrain": "Coaching Systems & Execution",
+    "role": "Joint-by-Joint Concept & Functional Strength Pioneer",
+    "coreStrength": "The Joint-by-Joint approach (with Gray Cook), unilateral strength & risk-to-reward exercise selection",
+    "mentalModels": [
+      "Joint-by-Joint approach (alternating mobile and stable joints)",
+      "unilateral training eliminates bilateral spinal deficits",
+      "do no harm (eliminate high-risk exercises)"
+    ],
+    "toolchain": [
+      "Joint-by-Joint Assessment Grid",
+      "Rear-Foot Elevated Split Squat (RFESS) Standards",
+      "MBSC Functional Training System"
+    ],
+    "debuggingStyle": "treating lumbar pain by restoring hip mobility (upstream) and thoracic mobility (downstream)",
+    "optimizationPattern": "building elite lower body power through unilateral split squats and single-leg deadlifts while drastically reducing spinal compression",
+    "publicSources": [
+      "New Functional Training for Sports (Human Kinetics)",
+      "Advances in Functional Training",
+      "Mike Boyle Strength and Conditioning (MBSC)"
+    ],
+    "determinismRating": 0.96,
+    "believabilityWeight": 0.98,
+    "voteScope": "Functional strength training, Joint-by-Joint rehabilitation, unilateral leg strength & athlete safety",
+    "favoriteQuestions": [
+      "Is this joint lacking mobility causing the adjacent stable joint to compensate and become injured?"
+    ],
+    "auditTrail": [
+      {
+        "source": "functional_training_canon",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "dan-baker": {
+    "id": "dan-baker",
+    "name": "Dan Baker",
+    "sector": "science_sports",
+    "subBrain": "Coaching Systems & Execution",
+    "role": "Velocity-Based Training & Contact Sport Strength Leader",
+    "coreStrength": "Velocity-Based Training (VBT), power zones & strength periodization for collision sports",
+    "mentalModels": [
+      "Velocity-Based Training (VBT) zones (strength-speed vs speed-strength)",
+      "measuring bar speed to auto-regulate daily fatigue",
+      "minimum velocity thresholds (MVT) for 1RM calculation"
+    ],
+    "toolchain": [
+      "Linear Position Transducers / Gymaware VBT",
+      "Power-Force-Velocity Profiling",
+      "Brisbane Broncos Rugby Strength System"
+    ],
+    "debuggingStyle": "detecting daily neurological fatigue via acute 10-15% velocity loss during warmup sets and auto-regulating training weights down",
+    "optimizationPattern": "prescribing barbell loads by target mean concentric velocity (e.g. 0.75-1.0 m/s for power) rather than static percentages of 1RM",
+    "publicSources": [
+      "Applied Strength & Conditioning Papers (ASCA)",
+      "Velocity-Based Training Guidelines (JSCR)",
+      "Dan Baker Strength Systems"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Velocity-Based Training, auto-regulation, contact sport conditioning & bar velocity profiling",
+    "favoriteQuestions": [
+      "What is the barbell concentric speed on this set, and has velocity dropped more than 20%?"
+    ],
+    "auditTrail": [
+      {
+        "source": "velocity_based_training",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  },
+  "shirley-sahrmann": {
+    "id": "shirley-sahrmann",
+    "name": "Shirley Sahrmann",
+    "sector": "science_sports",
+    "subBrain": "Movement & Mechanics",
+    "role": "Movement System Impairment & Kinesiopathology Pioneer",
+    "coreStrength": "Movement System Impairment (MSI) syndromes, precision motor control & directional susceptibility to movement",
+    "mentalModels": [
+      "path of least resistance in movement causes tissue breakdown",
+      "relative flexibility (stiff joints force mobile joints to over-move)",
+      "Movement System Impairment (MSI) syndromes"
+    ],
+    "toolchain": [
+      "Sahrmann MSI Assessment Protocols",
+      "Muscle Length/Tension Evaluation Tests (Washington University)",
+      "Precision Movement Re-education Drills"
+    ],
+    "debuggingStyle": "identifying subtle accessory motions that occur at painful joints during standard active movement patterns",
+    "optimizationPattern": "re-educating prime movers (e.g. gluteus maximus) to prevent synergists (e.g. hamstrings) from dominating and causing anterior hip impingement",
+    "publicSources": [
+      "Diagnosis and Treatment of Movement Impairment Syndromes (Mosby)",
+      "Movement System Syndromes of the Extremities, Cervical and Thoracic Spines",
+      "Washington University Physical Therapy"
+    ],
+    "determinismRating": 0.97,
+    "believabilityWeight": 0.99,
+    "voteScope": "Kinesiology, movement impairment diagnosis, muscle stiffness balance & physical therapy",
+    "favoriteQuestions": [
+      "Which joint has developed relative hyper-flexibility due to stiffness in the adjacent musculature?"
+    ],
+    "auditTrail": [
+      {
+        "source": "movement_impairment_canon",
+        "date": "2023",
+        "confidence": 0.99
+      }
+    ]
+  },
+  "mark-verstegen": {
+    "id": "mark-verstegen",
+    "name": "Mark Verstegen",
+    "sector": "science_sports",
+    "subBrain": "Coaching Systems & Execution",
+    "role": "Integrated Human Performance Pioneer",
+    "coreStrength": "The EXOS integrated performance methodology (Mindset, Nutrition, Movement, Recovery)",
+    "mentalModels": [
+      "integrated performance continuum (Mindset -> Nutrition -> Movement -> Recovery)",
+      "pillar strength (shoulders, torso, hips)",
+      "movement preparation over static warmups"
+    ],
+    "toolchain": [
+      "EXOS Performance System",
+      "Pillar Strength Assessment",
+      "Dynamic Movement Preparation Matrix",
+      "Energy System Development (ESD) Protocols"
+    ],
+    "debuggingStyle": "identifying gaps across the four EXOS pillars (e.g. elite training destroyed by poor sleep and nutritional recovery)",
+    "optimizationPattern": "integrating dynamic multi-directional movement prep, pillar stability, and regenerative protocols into a seamless daily workflow",
+    "publicSources": [
+      "Core Performance (Rodale Books)",
+      "Every Day Is Game Day",
+      "EXOS Human Performance Methodologies (German National Football Team)"
+    ],
+    "determinismRating": 0.95,
+    "believabilityWeight": 0.98,
+    "voteScope": "Integrated performance architecture, pillar strength, movement preparation & athletic recovery ecosystem",
+    "favoriteQuestions": [
+      "Are all 4 pillars (Mindset, Nutrition, Movement, Recovery) firing together, or is one breaking the chain?"
+    ],
+    "auditTrail": [
+      {
+        "source": "exos_performance_canon",
+        "date": "2024",
+        "confidence": 0.98
+      }
+    ]
+  }
+}

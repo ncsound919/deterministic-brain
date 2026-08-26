@@ -8,7 +8,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "http://127.0.0.1:11434"
-DEFAULT_MODEL = "hf.co/unsloth/gemma-4-E2B-it-GGUF:UD-IQ2_M"
+DEFAULT_MODEL = "qwen3.5:4b"
 DEFAULT_TIMEOUT = 120
 
 

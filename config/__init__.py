@@ -1,12 +1,12 @@
 """Config layer — BrainConfig + credential vault.
 
-All values are read from environment variables with sensible defaults.
-Import `cfg` anywhere to access configuration.
+All values are read from environment variables (and .env via
+pydantic-settings) with sensible defaults. Import `cfg` anywhere to access
+configuration.
 """
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field, MISSING
 from pathlib import Path
 
 try:
@@ -14,6 +14,9 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
+from pydantic import AliasChoices, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 try:
     from config.credentials import CredentialVault, get_credential_vault
@@ -32,90 +35,126 @@ __all__ = [
     "get_credential_vault",
 ]
 
+_ENV_FILE = os.environ.get("DOTENV_PATH", ".env")
 
-@dataclass
-class BrainConfig:
+
+class BrainConfig(BaseSettings):
+    """Fleet brain settings, loaded from environment / .env by pydantic-settings."""
+
+    model_config = SettingsConfigDict(
+        env_file=_ENV_FILE,
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
     # --- Qdrant ---
-    qdrant_url:       str  = field(default_factory=lambda: os.getenv('QDRANT_URL', ''))
-    qdrant_api_key:   str  = field(default_factory=lambda: os.getenv('QDRANT_API_KEY', ''))
-    qdrant_collection: str  = field(default_factory=lambda: os.getenv('QDRANT_COLLECTION', 'brain_vectors'))
-    retrieval_top_k:  int  = field(default_factory=lambda: int(os.getenv('RETRIEVAL_TOP_K', '5')))
+    qdrant_url: str = ""
+    qdrant_api_key: str = ""
+    qdrant_collection: str = "brain_vectors"
+    retrieval_top_k: int = 5
 
     # --- Gemma (local GGUF) ---
-    gemma_base_url:   str  = field(default_factory=lambda: os.getenv('GEMMA_BASE_URL', 'http://localhost:11434'))
+    gemma_base_url: str = "http://localhost:11434"
+
+    # --- Unified local model service ---
+    ollama_base_url: str = Field(
+        "http://localhost:11434",
+        validation_alias=AliasChoices("OLLAMA_BASE_URL", "GEMMA_BASE_URL"),
+    )
+    ollama_model: str = "qwen3:4b"
+    local_model_fast: str = "qwen3:0.6b"
+    llama_server_url: str = Field(
+        "http://127.0.0.1:8082",
+        validation_alias=AliasChoices("LLAMA_SERVER_URL", "LOCAL_MODEL_URL"),
+    )
+    local_model_name: str = ""
 
     # --- Neo4j ---
-    neo4j_uri:        str  = field(default_factory=lambda: os.getenv('NEO4J_URI', ''))
-    neo4j_user:       str  = field(default_factory=lambda: os.getenv('NEO4J_USER', 'neo4j'))
-    neo4j_password:   str  = field(default_factory=lambda: os.getenv('NEO4J_PASSWORD', ''))
-    neo4j_depth:      int  = field(default_factory=lambda: int(os.getenv('NEO4J_DEPTH', '1')))
+    neo4j_uri: str = ""
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = ""
+    neo4j_depth: int = 1
 
     # --- Tavily ---
-    tavily_api_key:      str = field(default_factory=lambda: os.getenv('TAVILY_API_KEY', ''))
-    tavily_max_results:  int = field(default_factory=lambda: int(os.getenv('TAVILY_MAX_RESULTS', '3')))
+    tavily_api_key: str = ""
+    tavily_max_results: int = 3
 
     # --- OpenRouter ---
-    openrouter_api_key:  str = field(default_factory=lambda: os.getenv('OPENROUTER_API_KEY', ''))
-    openrouter_site_url: str = field(default_factory=lambda: os.getenv('OPENROUTER_SITE_URL', 'https://github.com/ncsound919/deterministic-brain'))
-    openrouter_site_name:str = field(default_factory=lambda: os.getenv('OPENROUTER_SITE_NAME', 'deterministic-brain'))
+    openrouter_api_key: str = ""
+    openrouter_site_url: str = "https://github.com/ncsound919/deterministic-brain"
+    openrouter_site_name: str = "deterministic-brain"
+
+    # --- opencode Go tier (funded LLM budget — LiteLLM gateway :4100) ---
+    litellm_gateway_url: str = Field(
+        "http://localhost:4100",
+        validation_alias=AliasChoices("LITELLM_GATEWAY_URL", "LITELLM_URL"),
+    )
+    litellm_model: str = "opencode"
+    opencode_go_url: str = "https://opencode.ai/zen/go/v1/chat/completions"
+    opencode_go_model: str = "deepseek-v4-flash"
 
     # --- Research & Scientific ---
-    alpha_genome_api_key: str = field(default_factory=lambda: os.getenv('ALPHA_GENOME_API_KEY', ''))
-    ncbi_api_key:         str = field(default_factory=lambda: os.getenv('NCBI_API_KEY', ''))
-    xai_api_key:          str = field(default_factory=lambda: os.getenv('XAI_API_KEY', ''))
-    perplexity_api_key:   str = field(default_factory=lambda: os.getenv('PERPLEXITY_API_KEY', ''))
+    alpha_genome_api_key: str = ""
+    ncbi_api_key: str = ""
+    xai_api_key: str = ""
+    perplexity_api_key: str = ""
 
     # --- News ---
-    newsapi_key:          str = field(default_factory=lambda: os.getenv('NEWSAPI_KEY', ''))
-    gnews_api_key:        str = field(default_factory=lambda: os.getenv('GNEWS_API_KEY', ''))
-    worldnews_api_key:    str = field(default_factory=lambda: os.getenv('WORLDNEWS_API_KEY', ''))
+    newsapi_key: str = ""
+    gnews_api_key: str = ""
+    worldnews_api_key: str = ""
 
     # --- Content Creation ---
-    elevenlabs_api_key:   str = field(default_factory=lambda: os.getenv('ELEVENLABS_API_KEY', ''))
-    kling_api_key:        str = field(default_factory=lambda: os.getenv('KLING_API_KEY', ''))
-    whisper_api_key:      str = field(default_factory=lambda: os.getenv('WHISPER_API_KEY', ''))
+    elevenlabs_api_key: str = ""
+    kling_api_key: str = ""
+    whisper_api_key: str = ""
 
-    # --- Per-lane model selection (all via OpenRouter) ---
-    model_coding:         str = field(default_factory=lambda: os.getenv('MODEL_CODING',         'openai/o3'))
-    model_business_logic: str = field(default_factory=lambda: os.getenv('MODEL_BUSINESS_LOGIC', 'anthropic/claude-opus-4'))
-    model_agent_brain:    str = field(default_factory=lambda: os.getenv('MODEL_AGENT_BRAIN',    'anthropic/claude-sonnet-4-5'))
-    model_tool_calling:   str = field(default_factory=lambda: os.getenv('MODEL_TOOL_CALLING',   'meta-llama/llama-3.3-70b-instruct'))
-    model_cross_domain:   str = field(default_factory=lambda: os.getenv('MODEL_CROSS_DOMAIN',   'google/gemini-2.5-pro'))
-    model_default:        str = field(default_factory=lambda: os.getenv('MODEL_DEFAULT',        'openai/gpt-4o'))
-    model_opencode:       str = field(default_factory=lambda: os.getenv('MODEL_OPENCODE',       'openai/o3'))
+    # --- Per-lane model selection (OpenRouter fallback only — the brain's
+    #     primary remote is the funded opencode Go tier, not these) ---
+    model_coding: str = "openrouter/deepseek/deepseek-chat"
+    model_business_logic: str = "openrouter/deepseek/deepseek-chat"
+    model_agent_brain: str = "openrouter/deepseek/deepseek-chat"
+    model_tool_calling: str = "openrouter/meta-llama/llama-3.3-70b-instruct"
+    model_cross_domain: str = "openrouter/deepseek/deepseek-chat"
+    model_default: str = "openrouter/deepseek/deepseek-chat"
+    model_opencode: str = "openrouter/deepseek/deepseek-chat"
 
     # --- LLM general (llama.cpp fallback) ---
-    qwen_model_path: str = field(default_factory=lambda: os.getenv('QWEN_MODEL_PATH', ''))
-    llm_ctx_size:    int = field(default_factory=lambda: int(os.getenv('LLM_CTX_SIZE', '4096')))
-    llm_max_tokens:  int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '2048')))
-    llm_seed:        int = field(default_factory=lambda: int(os.getenv('LLM_SEED', '42')))
+    qwen_model_path: str = ""
+    llm_ctx_size: int = 4096
+    llm_max_tokens: int = 2048
+    llm_seed: int = 42
 
     # --- Code executor ---
-    executor_timeout:   int = field(default_factory=lambda: int(os.getenv('EXECUTOR_TIMEOUT', '5')))
-    executor_recursion: int = field(default_factory=lambda: int(os.getenv('EXECUTOR_RECURSION', '100')))
+    executor_timeout: int = 5
+    executor_recursion: int = 100
 
     # --- Tracing ---
-    tracing_enabled: bool = field(default_factory=lambda: os.getenv('TRACING_ENABLED', 'true').lower() != 'false')
-    checkpoint_dir:  Path = field(default_factory=lambda: Path(os.getenv('CHECKPOINT_DIR', '.checkpoints')))
+    tracing_enabled: bool = True
+    checkpoint_dir: Path = Path(".checkpoints")
 
     # --- API ---
-    api_host: str = field(default_factory=lambda: os.getenv('API_HOST', '0.0.0.0'))
-    api_port: int = field(default_factory=lambda: int(os.getenv('API_PORT', '8000')))
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
 
     # --- MCTS ---
-    mcts_simulations:   int = field(default_factory=lambda: int(os.getenv('MCTS_SIMULATIONS', '20')))
-    mcts_branch_factor: int = field(default_factory=lambda: int(os.getenv('MCTS_BRANCH_FACTOR', '3')))
-    mcts_max_depth:     int = field(default_factory=lambda: int(os.getenv('MCTS_MAX_DEPTH', '4')))
+    mcts_simulations: int = 20
+    mcts_branch_factor: int = 3
+    mcts_max_depth: int = 4
 
     # --- autoDream ---
-    autodream_enabled:      bool = field(default_factory=lambda: os.getenv('AUTODREAM_ENABLED', 'true').lower() != 'false')
-    autodream_schedule:     str  = field(default_factory=lambda: os.getenv('AUTODREAM_SCHEDULE', '0 3 * * *'))
-    trace_retention_days:    int  = field(default_factory=lambda: int(os.getenv('TRACE_RETENTION_DAYS', '30')))
+    autodream_enabled: bool = True
+    autodream_schedule: str = "0 3 * * *"
+    trace_retention_days: int = 30
 
     # --- KAIROS ---
-    kairos_enabled:            bool = field(default_factory=lambda: os.getenv('KAIROS_ENABLED', 'true').lower() != 'false')
-    kairos_idle_threshold_minutes: int = field(default_factory=lambda: int(os.getenv('KAIROS_IDLE_THRESHOLD', '5')))
-    kairos_dir:               Path = field(default_factory=lambda: Path(os.getenv('KAIROS_DIR', '.kairos')))
+    kairos_enabled: bool = True
+    kairos_idle_threshold_minutes: int = Field(
+        5,
+        validation_alias=AliasChoices("KAIROS_IDLE_THRESHOLD", "KAIROS_IDLE_THRESHOLD_MINUTES"),
+    )
+    kairos_dir: Path = Path(".kairos")
 
     def summary(self) -> dict:
         return {
@@ -123,6 +162,13 @@ class BrainConfig:
             'neo4j_uri':           self.neo4j_uri or '(not set)',
             'tavily_enabled':      bool(self.tavily_api_key),
             'openrouter_enabled':  bool(self.openrouter_api_key),
+            'gotier': {
+                'gateway': self.litellm_gateway_url,
+                'model': self.litellm_model,
+                'direct_url': self.opencode_go_url,
+                'direct_model': self.opencode_go_model,
+                'enabled': bool(self.openrouter_api_key) or bool(self.litellm_gateway_url),
+            },
             'models': {
                 'coding':         self.model_coding,
                 'business_logic': self.model_business_logic,
@@ -131,6 +177,13 @@ class BrainConfig:
                 'cross_domain':   self.model_cross_domain,
                 'default':        self.model_default,
                 'opencode':       self.model_opencode,
+            },
+            'local': {
+                'ollama':  self.ollama_base_url,
+                'ollama_model': self.ollama_model,
+                'llama_server': self.llama_server_url,
+                'preferred': self.local_model_name or '(auto)',
+                'fast': self.local_model_fast,
             },
             'llm_fallback':        self.qwen_model_path or '(stub mode)',
             'tracing':             self.tracing_enabled,
@@ -156,13 +209,9 @@ class BrainConfig:
             _reload(override=True)
         except ImportError:
             pass
-        for field_name in self.__dataclass_fields__:
-            f = self.__dataclass_fields__[field_name]
-            if f.default_factory is not MISSING:
-                try:
-                    setattr(self, field_name, f.default_factory())
-                except Exception:
-                    pass
+        fresh = BrainConfig()
+        for name in type(self).model_fields:
+            setattr(self, name, getattr(fresh, name))
 
 
 def reload_config() -> BrainConfig:
@@ -191,20 +240,29 @@ def get_setting_schema() -> dict:
             {"key": "NEO4J_DEPTH", "type": "int", "default": "1", "label": "Neo4j Depth", "min": 1, "max": 5},
         ],
         "Models": [
-            {"key": "MODEL_CODING", "type": "select", "default": "openai/o3", "label": "Coding Model",
-             "options": ["openai/o3", "openai/gpt-4o", "anthropic/claude-opus-4", "meta-llama/llama-3.3-70b-instruct"]},
-            {"key": "MODEL_BUSINESS_LOGIC", "type": "select", "default": "anthropic/claude-opus-4", "label": "Business Logic Model",
-             "options": ["anthropic/claude-opus-4", "openai/o3", "openai/gpt-4o", "google/gemini-2.5-pro"]},
-            {"key": "MODEL_AGENT_BRAIN", "type": "select", "default": "anthropic/claude-sonnet-4-5", "label": "Agent Brain Model",
-             "options": ["anthropic/claude-sonnet-4-5", "openai/o3", "openai/gpt-4o", "meta-llama/llama-3.3-70b-instruct"]},
-        {"key": "MODEL_TOOL_CALLING", "type": "select", "default": "meta-llama/llama-3.3-70b-instruct", "label": "Tool Calling Model",
-         "options": ["meta-llama/llama-3.3-70b-instruct", "openai/gpt-4o", "anthropic/claude-sonnet-4-5", "openai/o3"]},
-        {"key": "MODEL_CROSS_DOMAIN", "type": "select", "default": "google/gemini-2.5-pro", "label": "Cross-Domain Model",
-         "options": ["google/gemini-2.5-pro", "anthropic/claude-opus-4", "openai/o3", "openai/gpt-4o"]},
-        {"key": "MODEL_DEFAULT", "type": "select", "default": "openai/gpt-4o", "label": "Default Model",
-         "options": ["openai/gpt-4o", "openai/o3", "anthropic/claude-sonnet-4-5", "google/gemini-2.5-pro"]},
-        {"key": "MODEL_OPENCODE", "type": "select", "default": "openai/o3", "label": "OpenCode Model",
-         "options": ["openai/o3", "openai/gpt-4o", "anthropic/claude-opus-4", "anthropic/claude-sonnet-4-5"]},
+            {"key": "LOCAL_MODEL_NAME", "type": "string", "default": "", "label": "Preferred Local Model (leave blank for auto)"},
+            {"key": "LOCAL_MODEL_FAST", "type": "string", "default": "qwen3:0.6b", "label": "Fast-tier Local Model (interactive calls)"},
+            {"key": "OLLAMA_BASE_URL", "type": "string", "default": "http://localhost:11434", "label": "Ollama Base URL"},
+            {"key": "OLLAMA_MODEL", "type": "string", "default": "qwen3:4b", "label": "Ollama Model"},
+            {"key": "LLAMA_SERVER_URL", "type": "string", "default": "http://127.0.0.1:8082", "label": "llama-server URL"},
+            {"key": "MODEL_CODING", "type": "select", "default": "openrouter/deepseek/deepseek-chat", "label": "Coding Model",
+             "options": ["openrouter/deepseek/deepseek-chat", "openrouter/meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_BUSINESS_LOGIC", "type": "select", "default": "openrouter/deepseek/deepseek-chat", "label": "Business Logic Model",
+             "options": ["openrouter/deepseek/deepseek-chat", "openrouter/meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_AGENT_BRAIN", "type": "select", "default": "openrouter/deepseek/deepseek-chat", "label": "Agent Brain Model",
+             "options": ["openrouter/deepseek/deepseek-chat", "openrouter/meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_TOOL_CALLING", "type": "select", "default": "openrouter/meta-llama/llama-3.3-70b-instruct", "label": "Tool Calling Model",
+             "options": ["openrouter/meta-llama/llama-3.3-70b-instruct", "openrouter/deepseek/deepseek-chat"]},
+            {"key": "MODEL_CROSS_DOMAIN", "type": "select", "default": "openrouter/deepseek/deepseek-chat", "label": "Cross-Domain Model",
+             "options": ["openrouter/deepseek/deepseek-chat", "openrouter/meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_DEFAULT", "type": "select", "default": "openrouter/deepseek/deepseek-chat", "label": "Default Model",
+             "options": ["openrouter/deepseek/deepseek-chat", "openrouter/meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "MODEL_OPENCODE", "type": "select", "default": "openrouter/deepseek/deepseek-chat", "label": "OpenCode Model",
+             "options": ["openrouter/deepseek/deepseek-chat", "openrouter/meta-llama/llama-3.3-70b-instruct"]},
+            {"key": "LITELLM_GATEWAY_URL", "type": "string", "default": "http://localhost:4100", "label": "LiteLLM Gateway URL (funded Go tier)"},
+            {"key": "LITELLM_MODEL", "type": "string", "default": "opencode", "label": "LiteLLM Gateway Model"},
+            {"key": "OPENCODE_GO_URL", "type": "string", "default": "https://opencode.ai/zen/go/v1/chat/completions", "label": "Direct opencode Go tier URL"},
+            {"key": "OPENCODE_GO_MODEL", "type": "string", "default": "deepseek-v4-flash", "label": "Direct opencode Go tier Model"},
             {"key": "LLM_CTX_SIZE", "type": "int", "default": "4096", "label": "LLM Context Size", "min": 1024, "max": 32768},
             {"key": "LLM_MAX_TOKENS", "type": "int", "default": "2048", "label": "LLM Max Tokens", "min": 256, "max": 16384},
             {"key": "LLM_SEED", "type": "int", "default": "42", "label": "LLM Seed", "min": 0, "max": 9999},
