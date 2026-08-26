@@ -5,6 +5,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
@@ -148,6 +150,12 @@ class TestGoTierClient:
 
 class TestRouterGoTierPriority:
     """Router should use Go tier after local, before gemma/OpenRouter."""
+
+    @pytest.fixture(autouse=True)
+    def _allow_routing(self, monkeypatch):
+        # These tests exercise routing order with faked backends — lift the
+        # suite-wide BRAIN_DISABLE_LLM default from conftest.
+        monkeypatch.delenv("BRAIN_DISABLE_LLM", raising=False)
 
     def test_generate_text_uses_gotier_when_local_down(self, monkeypatch):
         from tools.llm import router as llm_router

@@ -138,6 +138,12 @@ class TestLocalModelService:
 class TestRouterLocalFirst:
     """Router should prefer the unified local model before remote/stub."""
 
+    @pytest.fixture(autouse=True)
+    def _allow_routing(self, monkeypatch):
+        # These tests exercise routing logic with faked backends — lift the
+        # suite-wide BRAIN_DISABLE_LLM default from conftest.
+        monkeypatch.delenv("BRAIN_DISABLE_LLM", raising=False)
+
     def test_generate_text_uses_local_when_available(self, monkeypatch):
         from tools.llm import router as llm_router
         captured = {}
@@ -360,8 +366,13 @@ def _require_local():
         pytest.skip("No local model backend running (ollama/llama-server)")
 
 
+@pytest.mark.live
 class TestLocalModelLive:
-    """Live inference against whatever local backend is up."""
+    """Live inference against whatever local backend is up.
+
+    Marked `live` and deselected by default (see pyproject addopts) so the
+    standard suite never depends on inference speed. Run with `-m live`.
+    """
 
     def test_generate_text(self):
         _require_local()

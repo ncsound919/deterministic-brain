@@ -1,7 +1,11 @@
 """Integration tests for Gemma across all brain subsystems."""
-
 import pytest
+
 from tools.local_gemma import get_gemma
+
+# Entire module requires a live llama-server at :8088 — deselected by
+# default via the `live` marker (pyproject addopts); run with -m live.
+pytestmark = pytest.mark.live
 
 
 def _require_gemma():

@@ -8,4 +8,6 @@ log_cli = true
 log_cli_level = "WARNING"
 markers = [
   "mutation: marks mutation/evolution tests",
+  "live: requires a running local model backend; real inference, slow (deselected by default — run with -m live)",
 ]
+addopts = "-m 'not live'"
