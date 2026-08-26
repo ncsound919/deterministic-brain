@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 CORRECTIONS_FILE = Path(".autodream_corrections.jsonl")
 
+# Status vocabulary produced by dca_engine (state["status"]) mapped to
+# correction classes. Kept in sync with orchestration/dca_engine.py.
+_ERROR_STATUSES = {"error", "failed", "timeout"}
+_PARTIAL_STATUSES = {"partial", "low_confidence", "blocked"}
+
 
 def detect_corrections(session_trace: List[Dict]) -> List[Dict]:
     """Analyze session traces and detect correction-worthy anomalies.
@@ -35,11 +40,11 @@ def detect_corrections(session_trace: List[Dict]) -> List[Dict]:
         skill = entry.get("skill", "unknown")
         status = entry.get("status", "unknown")
 
-        if status == "error":
+        if status in _ERROR_STATUSES:
             if skill not in error_skills:
                 error_skills[skill] = []
             error_skills[skill].append(entry)
-        elif status == "partial":
+        elif status in _PARTIAL_STATUSES:
             if skill not in partial_skills:
                 partial_skills[skill] = []
             partial_skills[skill].append(entry)

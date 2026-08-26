@@ -4,6 +4,11 @@ from knowledge.fragment import KnowledgeFragment, chunk_text
 
 
 def ingest_web_url(url: str, tags: List[str] = None) -> List[KnowledgeFragment]:
+    from tools.urlguard import validate_url, UrlBlockedError
+    try:
+        url = validate_url(url)
+    except UrlBlockedError:
+        return []
     tags = tags or []
     try:
         from tools.web_fetcher import WebFetcher

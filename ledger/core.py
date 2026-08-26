@@ -35,7 +35,10 @@ def _to_jsonable(obj: Any) -> Any:
 def write_event(event: Dict[str, Any], day: Optional[date] = None) -> None:
     _ensure_dirs()
     if day is None:
-        day = datetime.utcnow().date()
+        # Bucket by LOCAL date — matches all readers, which call
+        # read_events(date.today()). Using utcnow().date() here caused
+        # writes to land in tomorrow's file whenever local/UTC dates differ.
+        day = date.today()
     events_file = EVENTS_DIR / f"{day.isoformat()}-events.jsonl"
     jsonable = {k: _to_jsonable(v) for k, v in event.items()}
     with events_file.open("a", encoding="utf-8") as f:

@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from loguru import logger
 
+from api.auth import APIKeyMiddleware
+
 # We lazily import the engine so the module can be used standalone
 _engine = None
 _results_bank: List[Dict[str, Any]] = []
@@ -19,12 +21,14 @@ _event_log: List[Dict[str, Any]] = []
 _lock = threading.Lock()
 
 app = FastAPI(title="Aether Engine API", version="1.0.0")
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:8000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins if _cors_origins[0] != "*" else ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(APIKeyMiddleware)
 
 def get_engine():
     global _engine
@@ -154,4 +158,4 @@ def get_results():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8100)
+    uvicorn.run(app, host=os.getenv("BRAIN_HOST", "127.0.0.1"), port=int(os.getenv("ENGINE_API_PORT", "8100")))

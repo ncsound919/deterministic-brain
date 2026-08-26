@@ -194,12 +194,21 @@ class StateManager:
         """
         with self._lock:
             session_id = self._current_session
-            if _DISTRIBUTED and session_id:
+            if _DISTRIBUTED:
+                # Split-brain guard: in distributed mode the session lives in
+                # Postgres — never fall back to a local file write.
+                if not session_id:
+                    return False
+
                 def _do_update(data):
                     data["state"].update(updates)
                     data["updated_at"] = datetime.utcnow().isoformat()
-                if self._update_in_pg(session_id, _do_update):
-                    return True
+                updated = self._update_in_pg(session_id, _do_update)
+                if not updated:
+                    logger.error(
+                        "PG update failed for session %s — refusing local fallback", session_id
+                    )
+                return updated
             if not session_id:
                 return False
             session = self.load_session(session_id)
@@ -221,12 +230,21 @@ class StateManager:
         """
         with self._lock:
             session_id = self._current_session
-            if _DISTRIBUTED and session_id:
+            if _DISTRIBUTED:
+                # Split-brain guard: never fall back to a local file write.
+                if not session_id:
+                    return False
+
                 def _do_update(data):
                     entry["timestamp"] = datetime.utcnow().isoformat()
                     data["history"].append(entry)
-                if self._update_in_pg(session_id, _do_update):
-                    return True
+                updated = self._update_in_pg(session_id, _do_update)
+                if not updated:
+                    logger.error(
+                        "PG history append failed for session %s — refusing local fallback",
+                        session_id,
+                    )
+                return updated
             if not session_id:
                 return False
             session = self.load_session(session_id)
@@ -246,12 +264,22 @@ class StateManager:
         Returns:
             True if successful
         """
-        if _DISTRIBUTED and self._current_session:
+        if _DISTRIBUTED:
+            # Split-brain guard: never fall back to a local file write.
+            if not self._current_session:
+                return False
+            session_id = self._current_session
+
             def _do_update(data):
                 artifact["created_at"] = datetime.utcnow().isoformat()
                 data["artifacts"].append(artifact)
-            if self._update_in_pg(self._current_session, _do_update):
-                return True
+            added = self._update_in_pg(session_id, _do_update)
+            if not added:
+                logger.error(
+                    "PG artifact add failed for session %s — refusing local fallback",
+                    session_id,
+                )
+            return added
         with self._lock:
             if not self._current_session:
                 return False

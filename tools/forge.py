@@ -83,16 +83,28 @@ class Forge:
         ))
 
     def install_pack(self, src_dir: str, pack_name: str) -> Dict:
-        dest = os.path.join(self.SKILLS_ROOT, pack_name)
-        if not os.path.isdir(src_dir):
+        from tools.workspace import resolve_confined
+        if os.path.basename(pack_name) != pack_name or pack_name in (".", ".."):
+            return {"error": f"Invalid pack name: {pack_name}"}
+        try:
+            src_dir = str(resolve_confined(src_dir, must_exist=True))
+        except PermissionError as e:
+            return {"error": str(e)}
+        except FileNotFoundError:
             return {"error": f"Source not found: {src_dir}"}
+        dest = os.path.join(self.SKILLS_ROOT, pack_name)
         import shutil
         shutil.copytree(src_dir, dest, dirs_exist_ok=True)
         skills = self.list_skills()
         return {"installed": dest, "total_skills": len(skills)}
 
     def validate_skill(self, skill_path: str) -> Dict:
+        from tools.workspace import resolve_confined
         errors = []
+        try:
+            skill_path = str(resolve_confined(skill_path))
+        except PermissionError as e:
+            return {"valid": False, "errors": [str(e)], "path": skill_path}
         try:
             with open(skill_path) as f:
                 content = f.read()
@@ -110,8 +122,13 @@ class Forge:
         return {"valid": len(errors) == 0, "errors": errors, "path": skill_path}
 
     def preview_output(self, file_path: str) -> Dict:
-        if not os.path.exists(file_path):
-            return {"error": f"Not found: {file_path}"}
+        from tools.workspace import resolve_confined
+        try:
+            file_path = str(resolve_confined(file_path, must_exist=True))
+        except FileNotFoundError as e:
+            return {"error": str(e)}
+        except PermissionError as e:
+            return {"error": str(e)}
         with open(file_path) as f:
             return {"content": f.read(), "path": file_path}
 

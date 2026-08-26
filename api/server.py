@@ -295,6 +295,10 @@ app.add_middleware(CORSMiddleware,
     allow_methods=["*"], allow_headers=["*"], allow_credentials=True)
 app.add_middleware(RequestLoggingMiddleware)
 
+# API key auth — enforces X-API-Key on all routes when BRAIN_API_KEY is set
+from api.auth import APIKeyMiddleware
+app.add_middleware(APIKeyMiddleware)
+
 # Routers
 app.include_router(settings_router)
 app.include_router(voice_router)

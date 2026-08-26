@@ -14,6 +14,7 @@ ULTRAPLAN handles complex planning tasks that require:
 # ULTRAPLAN is effectively a **HYBRID MODE** component.
 
 import json
+import os
 import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
@@ -143,13 +144,13 @@ class UltraPlanConfig:
         self.enable_persistence: bool = getattr(
             settings, "ultraplan_enable_persistence", True
         )
-        self.storage_path: Path = Path(
-            getattr(
-                settings,
-                "ultraplan_storage_path",
-                Path(settings.data_dir) / "ultraplans",
-            )
-        )
+        default_storage = (
+            Path(getattr(settings, "checkpoint_dir", ".checkpoints"))
+            if getattr(settings, "checkpoint_dir", None)
+            else Path(".checkpoints")
+        ) / "ultraplans"
+        configured = getattr(settings, "ultraplan_storage_path", None)
+        self.storage_path: Path = Path(configured) if configured else default_storage
         self.max_parallel_phases: int = getattr(
             settings, "ultraplan_max_parallel_phases", 2
         )
@@ -159,6 +160,35 @@ class UltraPlanConfig:
         self.quality_threshold: float = getattr(
             settings, "ultraplan_quality_threshold", 0.8
         )
+
+
+@dataclass
+class RoutingDecision:
+    """Minimal decision object matching the execute_with_routing contract."""
+    expert: str = "deterministic"
+    lane: str = "planning"
+    estimated_cost: float = 0.0
+    provider: str = "deterministic"
+
+
+class _DeterministicRoutingAdapter:
+    """Deterministic stand-in for an LLM routing backend.
+
+    Honors the ``execute_with_routing(task=..., context=...)`` contract by
+    returning empty content so each planning step falls back to its built-in
+    deterministic defaults. Keeps ULTRAPLAN fully functional in LLM-free mode.
+    """
+
+    async def execute_with_routing(
+        self,
+        task: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> tuple[RoutingDecision, Dict[str, Any]]:
+        return RoutingDecision(), {
+            "content": "",
+            "provider": "deterministic",
+            "task": task,
+        }
 
 
 class UltraPlanEngine:
@@ -173,19 +203,27 @@ class UltraPlanEngine:
     5. Cloud offloading for intensive computation
     """
 
-    def __init__(self, config: Optional[UltraPlanConfig] = None):
+    def __init__(
+        self,
+        config: Optional[UltraPlanConfig] = None,
+        llm_router: Optional[Any] = None,
+    ):
         self.config = config or UltraPlanConfig()
         self.active_sessions: Dict[str, PlanningSession] = {}
-        self._router = None
+        self._router = llm_router
         self._ensure_storage()
 
         logger.info("ULTRAPLAN engine initialized")
 
     def _get_router(self):
-        """Lazy-load router"""
+        """Return the routing backend.
+
+        Uses an injected LLM router when provided (hybrid mode); otherwise
+        falls back to a deterministic zero-cost adapter so planning completes
+        without an LLM dependency.
+        """
         if self._router is None:
-            from router import router
-            self._router = router
+            self._router = _DeterministicRoutingAdapter()
         return self._router
 
     def _ensure_storage(self):
@@ -314,7 +352,7 @@ class UltraPlanEngine:
 
         # Reconstruct session state from checkpoint
         if plan.checkpoint_data:
-            session_id = plan.checkpoint_data.get("plan_state", str(uuid.uuid4()))
+            session_id = plan.checkpoint_data.get("session_id") or str(uuid.uuid4())
             session = PlanningSession(
                 session_id=session_id,
                 plan=plan,
@@ -324,10 +362,31 @@ class UltraPlanEngine:
             )
             self.active_sessions[session_id] = session
             logger.info(f"Session resumed from checkpoint at phase {session.current_phase}")
+
+            # Continue executing remaining phases from the checkpoint
+            await self._execute_remaining(session)
+
+            validation = await self._validate_plan(plan)
+            if validation.get("is_valid", False):
+                plan.status = PlanStatus.COMPLETED
+                plan.completed_at = datetime.now()
+                plan.actual_duration_seconds = int(
+                    (plan.completed_at - (plan.started_at or plan.created_at)).total_seconds()
+                )
+            plan.final_output = await self._generate_plan_output(plan)
+            if self.config.enable_persistence:
+                await self._save_plan(plan)
         else:
             logger.warning("No checkpoint data found - restarting from beginning")
 
         return plan
+
+    async def _execute_remaining(self, session: PlanningSession):
+        """Run detail-planning on phases not yet completed."""
+        for phase in session.plan.phases:
+            if phase.status == PlanStatus.COMPLETED:
+                continue
+            await self._plan_phase_details_for(phase, session.plan)
 
     async def pause_plan(self, session_id: str) -> bool:
         """Pause an active planning session"""
@@ -609,15 +668,21 @@ Respond in JSON:
     async def _plan_phase_details(self, plan: UltraPlan):
         """Add detailed planning to each phase"""
         for phase in plan.phases:
-            phase.status = PlanStatus.PLANNING
-            phase.started_at = datetime.now()
+            await self._plan_phase_details_for(phase, plan)
 
-            for milestone in phase.milestones:
-                milestone.status = MilestoneStatus.IN_PROGRESS
-                milestone.started_at = datetime.now()
+    async def _plan_phase_details_for(self, phase: PlanPhase, plan: UltraPlan):
+        """Plan details for a single phase."""
+        phase.status = PlanStatus.PLANNING
+        phase.started_at = datetime.now()
 
-                # Generate detailed plan for milestone
-                prompt = f"""Create a detailed action plan for this milestone.
+        for milestone in phase.milestones:
+            if milestone.status == MilestoneStatus.COMPLETED:
+                continue
+            milestone.status = MilestoneStatus.IN_PROGRESS
+            milestone.started_at = datetime.now()
+
+            # Generate detailed plan for milestone
+            prompt = f"""Create a detailed action plan for this milestone.
 
 Plan Context: {plan.goal}
 Phase: {phase.name}
@@ -636,33 +701,35 @@ Respond in JSON:
     "success_metrics": ["metric 1"]
 }}"""
 
-                try:
-                    decision, result = await self._get_router().execute_with_routing(
-                        task=prompt,
-                        context={"requires_reasoning": True}
-                    )
-
-                    content = result.get("content", "")
-                    start = content.find("{")
-                    end = content.rfind("}") + 1
-
-                    if start >= 0 and end > start:
-                        milestone.output = json.loads(content[start:end])
-
-                    plan.total_cost += decision.estimated_cost
-
-                except Exception as e:
-                    logger.warning(f"Milestone planning error: {e}")
-                    milestone.output = {"error": str(e)}
-
-                milestone.status = MilestoneStatus.COMPLETED
-                milestone.completed_at = datetime.now()
-                milestone.actual_duration_seconds = int(
-                    (milestone.completed_at - milestone.started_at).total_seconds()
+            try:
+                decision, result = await self._get_router().execute_with_routing(
+                    task=prompt,
+                    context={"requires_reasoning": True}
                 )
 
-            phase.status = PlanStatus.COMPLETED
-            phase.completed_at = datetime.now()
+                content = result.get("content", "")
+                start = content.find("{")
+                end = content.rfind("}") + 1
+
+                if start >= 0 and end > start:
+                    milestone.output = json.loads(content[start:end])
+
+                plan.total_cost += decision.estimated_cost
+                milestone.status = MilestoneStatus.COMPLETED
+
+            except Exception as e:
+                logger.warning(f"Milestone planning error: {e}")
+                milestone.output = {"error": str(e)}
+                milestone.status = MilestoneStatus.BLOCKED
+
+            milestone.completed_at = datetime.now()
+            milestone.actual_duration_seconds = int(
+                (milestone.completed_at - milestone.started_at).total_seconds()
+            )
+
+        blocked = [m for m in phase.milestones if m.status == MilestoneStatus.BLOCKED]
+        phase.status = PlanStatus.BLOCKED if blocked else PlanStatus.COMPLETED
+        phase.completed_at = datetime.now()
 
     async def _refine_plan(self, plan: UltraPlan):
         """Refine and optimize the plan"""
@@ -806,6 +873,7 @@ Provide refinement suggestions in JSON:
         """Create a checkpoint for session resumption"""
         return {
             "checkpoint_time": datetime.now().isoformat(),
+            "session_id": session.session_id,
             "current_phase": session.current_phase,
             "current_milestone": session.current_milestone,
             "completed_phases": [
@@ -815,8 +883,71 @@ Provide refinement suggestions in JSON:
             "plan_state": session.plan.status.value,
         }
 
+    @staticmethod
+    def _milestone_to_dict(m: PlanMilestone) -> Dict[str, Any]:
+        return {
+            "id": m.id,
+            "name": m.name,
+            "description": m.description,
+            "phase": m.phase,
+            "status": m.status.value,
+            "dependencies": m.dependencies,
+            "deliverables": m.deliverables,
+            "estimated_duration_seconds": m.estimated_duration_seconds,
+            "actual_duration_seconds": m.actual_duration_seconds,
+            "output": m.output,
+            "started_at": m.started_at.isoformat() if m.started_at else None,
+            "completed_at": m.completed_at.isoformat() if m.completed_at else None,
+        }
+
+    @staticmethod
+    def _phase_to_dict(p: PlanPhase) -> Dict[str, Any]:
+        return {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "phase_number": p.phase_number,
+            "status": p.status.value,
+            "output": p.output,
+            "milestones": [UltraPlanEngine._milestone_to_dict(m) for m in p.milestones],
+            "started_at": p.started_at.isoformat() if p.started_at else None,
+            "completed_at": p.completed_at.isoformat() if p.completed_at else None,
+        }
+
+    @staticmethod
+    def _milestone_from_dict(d: Dict[str, Any]) -> PlanMilestone:
+        return PlanMilestone(
+            id=d.get("id", "m_x"),
+            name=d.get("name", ""),
+            description=d.get("description", ""),
+            phase=d.get("phase", 0),
+            status=MilestoneStatus(d.get("status", "pending")),
+            dependencies=d.get("dependencies", []),
+            deliverables=d.get("deliverables", []),
+            estimated_duration_seconds=d.get("estimated_duration_seconds", 300),
+            actual_duration_seconds=d.get("actual_duration_seconds"),
+            output=d.get("output"),
+            started_at=datetime.fromisoformat(d["started_at"]) if d.get("started_at") else None,
+            completed_at=datetime.fromisoformat(d["completed_at"]) if d.get("completed_at") else None,
+        )
+
+    @staticmethod
+    def _phase_from_dict(d: Dict[str, Any]) -> PlanPhase:
+        return PlanPhase(
+            id=d.get("id", "phase_x"),
+            name=d.get("name", ""),
+            description=d.get("description", ""),
+            phase_number=d.get("phase_number", 0),
+            status=PlanStatus(d.get("status", "initializing")),
+            output=d.get("output"),
+            milestones=[UltraPlanEngine._milestone_from_dict(m) for m in d.get("milestones", [])],
+            started_at=datetime.fromisoformat(d["started_at"]) if d.get("started_at") else None,
+            completed_at=datetime.fromisoformat(d["completed_at"]) if d.get("completed_at") else None,
+        )
+
     async def _save_plan(self, plan: UltraPlan):
-        """Save plan to persistent storage"""
+        """Save plan to persistent storage (atomic tmp+rename)."""
+        self._ensure_storage()
         filepath = self.config.storage_path / f"{plan.id}.json"
 
         plan_data = {
@@ -829,11 +960,16 @@ Provide refinement suggestions in JSON:
             "total_cost": plan.total_cost,
             "created_at": plan.created_at.isoformat(),
             "completed_at": plan.completed_at.isoformat() if plan.completed_at else None,
+            "started_at": plan.started_at.isoformat() if plan.started_at else None,
             "checkpoint_data": plan.checkpoint_data,
             "metadata": plan.metadata,
+            "phases": [self._phase_to_dict(p) for p in plan.phases],
         }
 
-        filepath.write_text(json.dumps(plan_data, indent=2))
+        payload = json.dumps(plan_data, indent=2)
+        tmp_path = filepath.with_suffix(".json.tmp")
+        tmp_path.write_text(payload, encoding="utf-8")
+        os.replace(tmp_path, filepath)
         logger.info(f"Plan saved: {filepath}")
 
     async def _load_plan(self, plan_id: str) -> Optional[UltraPlan]:
@@ -844,9 +980,7 @@ Provide refinement suggestions in JSON:
             return None
 
         try:
-            data = json.loads(filepath.read_text())
-            # Reconstruct plan from saved data
-            # (simplified - full implementation would rebuild all objects)
+            data = json.loads(filepath.read_text(encoding="utf-8"))
             plan = UltraPlan(
                 id=data["id"],
                 title=data["title"],
@@ -858,7 +992,10 @@ Provide refinement suggestions in JSON:
                 total_cost=data.get("total_cost", 0),
                 checkpoint_data=data.get("checkpoint_data"),
                 metadata=data.get("metadata", {}),
+                phases=[self._phase_from_dict(p) for p in data.get("phases", [])],
             )
+            if data.get("started_at"):
+                plan.started_at = datetime.fromisoformat(data["started_at"])
             return plan
         except Exception as e:
             logger.error(f"Failed to load plan: {e}")

@@ -8,11 +8,16 @@ import logging
 import os
 import threading
 import time
+import uuid
 from typing import Any, Callable, Dict, List
 
 logger = logging.getLogger(__name__)
 
 _DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
+
+# Identifies this process so Redis subscribers can ignore their own echoes
+# (prevents double-delivery when a node both emits locally and via Redis).
+_NODE_ID = f"{os.getpid()}-{uuid.uuid4().hex[:8]}"
 
 
 class EventBus:
@@ -64,6 +69,11 @@ class EventBus:
                     def redis_callback(message: str) -> None:
                         try:
                             data = json.loads(message)
+                            # Skip events emitted by this process — already
+                            # delivered locally by emit().
+                            if data.pop("_origin", None) == _NODE_ID:
+                                return
+                            data.pop("ts", None)
                             callback(**data)
                         except Exception as exc:
                             logger.debug("EventBus: Redis subscriber %s failed: %s", callback, exc)
@@ -99,7 +109,8 @@ class EventBus:
                 r = get_redis()
                 if r.available:
                     import json
-                    r.publish(f"event:{event_type}", json.dumps({"ts": time.time(), **data}, default=str))
+                    r.publish(f"event:{event_type}", json.dumps(
+                        {"ts": time.time(), "_origin": _NODE_ID, **data}, default=str))
             except Exception as exc:
                 logger.debug("EventBus: Redis publish failed for %s: %s", event_type, exc)
 

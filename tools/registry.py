@@ -348,10 +348,16 @@ class ToolRegistry:
         
         try:
             import requests
+            from tools.urlguard import validate_url, UrlBlockedError
             def http_request(method: str, url: str, headers: Dict = None,
                            json: Dict = None, data: Any = None) -> Dict:
+                try:
+                    url = validate_url(url)
+                except UrlBlockedError as e:
+                    return {"status": 0, "error": f"URL blocked: {e}"}
                 resp = requests.request(method, url, headers=headers,
-                                       json=json, data=data, timeout=30)
+                                       json=json, data=data, timeout=30,
+                                       allow_redirects=False)
                 result = {"status": resp.status_code, "body": resp.text[:50000]}
                 content_type = resp.headers.get("content-type", "")
                 if "application/json" in content_type:

@@ -66,6 +66,10 @@ def main() -> None:
     if args.serve:
         import uvicorn
         import os
+        host = os.environ.get("BRAIN_HOST", "127.0.0.1")
+        if host not in ("127.0.0.1", "localhost") and not os.environ.get("BRAIN_API_KEY"):
+            print("WARNING: binding to a non-loopback host without BRAIN_API_KEY set "
+                  "exposes an unauthenticated control API. Set BRAIN_API_KEY.")
         port = int(os.environ.get("API_PORT", 8000))
         distributed = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "yes")
         workers = int(os.environ.get("UVICORN_WORKERS", "0"))
@@ -73,11 +77,11 @@ def main() -> None:
             import logging
             logging.warning("Multiple uvicorn workers require DISTRIBUTED_MODE=1. Falling back to 1 worker.")
             workers = 1
-        print(f"Starting Deterministic Brain API on http://0.0.0.0:{port}" +
+        print(f"Starting Deterministic Brain API on http://{host}:{port}" +
               (f" with {workers} workers" if workers > 1 else ""))
         uvicorn.run(
             "api.server:app",
-            host="0.0.0.0",
+            host=host,
             port=port,
             workers=workers or None,
             reload=False,

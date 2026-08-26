@@ -1,18 +1,26 @@
 version: "3.8"
 
+# Security notes:
+# - Datastore ports are bound to 127.0.0.1 only — never expose Postgres/Redis
+#   to the network. Other containers reach them over the compose network.
+# - Override credentials in a .env file next to this compose file:
+#     POSTGRES_PASSWORD=<strong password>
+#     BRAIN_API_KEY=<api key for the brain service>
+# - The brain API enforces X-API-Key on every route when BRAIN_API_KEY is set.
+
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: brain
-      POSTGRES_PASSWORD: brain
-      POSTGRES_DB: braindb
+      POSTGRES_USER: ${POSTGRES_USER:-brain}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-brain_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-braindb}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U brain"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brain}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -21,7 +29,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -33,10 +41,12 @@ services:
     build: .
     environment:
       DISTRIBUTED_MODE: "1"
-      PG_DSN: "postgresql://brain:brain@postgres:5432/braindb"
+      PG_DSN: "postgresql://${POSTGRES_USER:-brain}:${POSTGRES_PASSWORD:-brain_change_me}@postgres:5432/${POSTGRES_DB:-braindb}"
       REDIS_URL: "redis://redis:6379/0"
       UVICORN_WORKERS: "4"
       API_PORT: "8000"
+      BRAIN_HOST: "0.0.0.0"
+      BRAIN_API_KEY: "${BRAIN_API_KEY:-}"
     ports:
       - "8000:8000"
     depends_on:

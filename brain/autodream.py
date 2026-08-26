@@ -177,7 +177,8 @@ def optimize_neo4j(dry_run: bool = False) -> Dict:
                 "MATCH (n) WITH n.id AS nid, collect(n) AS nodes "
                 "WHERE size(nodes) > 1 RETURN nid, nodes"
             )
-            for record in result:
+            records = list(result)  # materialize before opening transactions
+            for record in records:
                 nodes = record["nodes"]
                 if len(nodes) > 1 and not dry_run:
                     keep = nodes[0]
@@ -196,10 +197,11 @@ def optimize_neo4j(dry_run: bool = False) -> Dict:
                         tx.rollback()
                         raise
 
-            result = session.run(
-                "MATCH (n) WHERE NOT (n)--() DELETE n RETURN count(n) AS cnt"
-            )
-            pruned_nodes = result.single()["cnt"] or 0
+            if not dry_run:
+                prune = session.run(
+                    "MATCH (n) WHERE NOT (n)--() DELETE n RETURN count(n) AS cnt"
+                )
+                pruned_nodes = prune.single()["cnt"] or 0
 
     except Exception as e:
         return {"status": "error", "reason": str(e)}
@@ -231,7 +233,7 @@ def vacuum_traces(db_path: str = "traces.db", retention_days: int = 30, dry_run:
         except Exception as e:
             logger.warning("[autodream] VACUUM failed (non-fatal): %s", e)
 
-    size_after = os.path.getsize(db_path)
+    size_after = os.path.getsize(db_path) if os.path.exists(db_path) else 0
 
     return {
         "status": "ok",

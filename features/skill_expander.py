@@ -91,16 +91,21 @@ class SkillExpander:
             import io
             with zipfile.ZipFile(io.BytesIO(data)) as zf:
                 os.makedirs(dest, exist_ok=True)
+                dest_resolved = os.path.realpath(dest)
                 for member in zf.namelist():
                     parts = member.split("/", 1)
-                    if len(parts) > 1:
-                        target = os.path.join(dest, parts[1])
-                        if member.endswith("/"):
-                            os.makedirs(target, exist_ok=True)
-                        else:
-                            os.makedirs(os.path.dirname(target), exist_ok=True)
-                            with zf.open(member) as src, open(target, "wb") as dst:
-                                shutil.copyfileobj(src, dst)
+                    if len(parts) < 2 or not parts[1] or ".." in parts[1].split("/") or parts[1].startswith(("/", "\\")):
+                        continue  # skip unsafe / top-level-only members (zip-slip guard)
+                    target = os.path.join(dest, parts[1])
+                    if os.path.realpath(target) != dest_resolved and \
+                       not os.path.realpath(target).startswith(dest_resolved + os.sep):
+                        continue  # resolved escape attempt
+                    if member.endswith("/"):
+                        os.makedirs(target, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(target), exist_ok=True)
+                        with zf.open(member) as src, open(target, "wb") as dst:
+                            shutil.copyfileobj(src, dst)
 
             self.expansion_log.append({
                 "action": "downloaded", "owner": owner, "repo": repo,

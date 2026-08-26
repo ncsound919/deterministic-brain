@@ -170,6 +170,11 @@ class TemplateBuilder:
         return t
 
     def upload_file(self, filepath: str) -> Optional[ProjectTemplate]:
+        from tools.workspace import resolve_confined
+        try:
+            filepath = str(resolve_confined(filepath, must_exist=True))
+        except (PermissionError, FileNotFoundError):
+            return None
         ext = os.path.splitext(filepath)[1].lower()
         try:
             with open(filepath, encoding="utf-8") as f:

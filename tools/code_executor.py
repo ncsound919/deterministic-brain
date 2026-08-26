@@ -5,18 +5,21 @@ Hardened sandboxed code executor.
 Runs untrusted generated code in a restricted Python execution environment:
   - Whitelisted builtins only (no open, __import__, eval, exec, etc.)
   - stdout captured via StringIO
-  - Wall-clock timeout enforced via threading.Timer
-  - Memory and recursion limits applied
+  - Wall-clock timeout enforced via daemon thread join
+  - Recursion limit capped during execution
+  - AST-based static analysis rejects dunder traversal (sandbox escapes),
+    import statements, dynamic getattr, and gadget strings before execution
   - Returns structured result dict
+
+NOTE: this is an in-process restricted environment, not an OS sandbox.
+For hostile inputs run behind a container/job isolation boundary.
 """
+import ast
 import contextlib
 import io
 import os
+import re
 import sys
-try:
-    import resource
-except ImportError:
-    resource = None
 import threading
 from typing import Any
 
@@ -153,7 +156,15 @@ def execute_code(code: str, tests: list[str]) -> dict:
 
 
 def static_analysis(code: str) -> dict:
-    """Lightweight static analysis: flag dangerous patterns."""
+    """Static analysis: flag dangerous patterns before execution.
+
+    Combines fast substring matching with an AST walk that rejects the known
+    sandbox-escape primitives: dunder attribute traversal (``__class__``,
+    ``__bases__``, ``__subclasses__``, ``__globals__``...), import statements,
+    ``getattr`` with dynamic/private names, frame/builtin introspection
+    (``globals``/``locals``/``vars``), and gadget substrings inside string
+    literals (defeats ``"...".format(...)``-style obfuscation).
+    """
     flags: list[str] = []
     danger_patterns = [
         ('eval(', 'eval_usage'),
@@ -161,16 +172,73 @@ def static_analysis(code: str) -> dict:
         ('__import__', 'dynamic_import'),
         ('open(', 'file_io'),
         ('os.system', 'os_system'),
+        ('os.popen', 'os_popen'),
         ('subprocess', 'subprocess_usage'),
         ('shell=True', 'shell_injection_risk'),
         ('socket', 'network_access'),
+        ('importlib', 'dynamic_import'),
+        ('breakpoint(', 'debugger_hook'),
     ]
     for pattern, label in danger_patterns:
         if pattern in code:
             flags.append(label)
+
+    dunder_re = re.compile(r'^__.*__$')
+    gadget_re = re.compile(
+        r'__(class|bases|subclasses|mro|dict|globals|builtins|import|code|'
+        r'closure|init|reduce|base)__'
+    )
+    forbidden_names = {
+        'globals': 'frame_introspection',
+        'locals': 'frame_introspection',
+        'vars': 'frame_introspection',
+        '__builtins__': 'builtins_access',
+    }
+
+    def _flag(label: str, node: ast.AST | None = None) -> None:
+        line = getattr(node, 'lineno', '?')
+        flags.append(f'{label}@line{line}' if node is not None else label)
+
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        # Let the runtime path surface the syntax error verbatim.
+        return {
+            'clean': len(flags) == 0,
+            'flags': list(dict.fromkeys(flags)),
+            'line_count': code.count('\n') + 1,
+            'char_count': len(code),
+        }
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            _flag('import_statement', node)
+        elif isinstance(node, ast.Attribute):
+            if dunder_re.match(node.attr) or node.attr == 'mro':
+                _flag(f'dunder_attr:{node.attr}', node)
+        elif isinstance(node, ast.Name) and node.id in forbidden_names:
+            _flag(forbidden_names[node.id], node)
+        elif isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id == 'getattr':
+                if len(node.args) < 2 or not isinstance(node.args[1], ast.Constant):
+                    _flag('dynamic_getattr', node)
+                elif isinstance(node.args[1].value, str) and (
+                    node.args[1].value.startswith('_') or dunder_re.match(node.args[1].value)
+                ):
+                    _flag('private_getattr', node)
+            elif isinstance(func, ast.Attribute) and func.attr == 'format':
+                for arg in node.args:
+                    if isinstance(arg, ast.Constant) and isinstance(arg.value, str) \
+                            and gadget_re.search(arg.value):
+                        _flag('gadget_string', node)
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if gadget_re.search(node.value):
+                _flag('gadget_string', node)
+
     return {
         'clean': len(flags) == 0,
-        'flags': flags,
+        'flags': list(dict.fromkeys(flags)),
         'line_count': code.count('\n') + 1,
         'char_count': len(code),
     }

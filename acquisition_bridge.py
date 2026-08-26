@@ -13,7 +13,7 @@ The brain already runs 24/7. This bridge teaches it to:
 Usage:
     from acquisition_bridge import AcquisitionBridge
     bridge = AcquisitionBridge()
-    bridge.log_autonomous_session()
+    bridge.log_autonomous_session({"summary": "session notes"})
     bridge.update_portfolio_status()
 """
 

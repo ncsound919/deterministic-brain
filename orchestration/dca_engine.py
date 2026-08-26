@@ -38,33 +38,36 @@ logger = logging.getLogger(__name__)
 
 
 # -------------------------------------------------------------------
-# Timeout wrapper for skill execution (cross-platform: Windows + Unix)
+# Timeout wrapper for skill execution (thread-based, works on any thread)
 # -------------------------------------------------------------------
 class TimeoutException(Exception):
     pass
 
 
-@contextmanager
-def timeout(seconds: int):
-    """Cross-platform timeout using threading.Timer + _thread.interrupt_main."""
-    import _thread
+def run_with_timeout(fn, seconds: int):
+    """Run ``fn()`` in a daemon worker thread and join with a deadline.
 
-    timer = None
+    Works on any caller thread (CLI main thread, FastAPI threadpool, swarm
+    worker). On expiry raises :class:`TimeoutException`; an abandoned worker
+    may still finish in the background but can no longer block the caller.
+    """
+    result: list = []
+    exc: list = []
 
-    def _raise_timeout():
-        _thread.interrupt_main()
+    def _target():
+        try:
+            result.append(fn())
+        except BaseException as e:  # noqa: BLE001
+            exc.append(e)
 
-    timer = threading.Timer(seconds, _raise_timeout)
-    timer.daemon = True
-    timer.start()
-    try:
-        yield
-    except KeyboardInterrupt:
-        timer.cancel()
+    worker = threading.Thread(target=_target, daemon=True, name="skill-exec")
+    worker.start()
+    worker.join(seconds)
+    if worker.is_alive():
         raise TimeoutException(f"Operation timed out after {seconds}s")
-    finally:
-        if timer:
-            timer.cancel()
+    if exc:
+        raise exc[0]
+    return result[0]
 
 
 class SkillExecutor:
@@ -87,10 +90,10 @@ class SkillExecutor:
             ctx.update(context)
         for step in self._parse_steps(md_body):
             self._execute_step(step, ctx)
-        log_event(
-            "step",
-            {"skill": skill_path, "actions": [a for a, _ in step], "session_id": ctx.get("session_id")},
-        )
+            log_event(
+                "step",
+                {"skill": skill_path, "actions": [a for a, _ in step], "session_id": ctx.get("session_id")},
+            )
         auditor = DeterministicAuditor()
         audit_ok = auditor.run_audit(meta.get("audit", []), ctx)
         return {"success": audit_ok, "output": ctx.get("output_file", ""), "ctx": ctx}
@@ -125,7 +128,13 @@ class SkillExecutor:
             if action == "render_template":
                 from jinja2 import Environment, FileSystemLoader
 
-                env = Environment(loader=FileSystemLoader("."), autoescape=True)
+                # Source-code templates must NOT be HTML-escaped — autoescape
+                # would corrupt generated artifacts with &quot;/&#39; entities.
+                env = Environment(
+                    loader=FileSystemLoader("."),
+                    autoescape=False,
+                    keep_trailing_newline=True,
+                )
                 tmpl = env.get_template(params["template"])
                 ctx["_rendered"] = tmpl.render(**ctx)
             elif action == "file_write":
@@ -143,6 +152,10 @@ class SkillExecutor:
                 cmd = params["cmd"]
                 for k, v in ctx.items():
                     cmd = cmd.replace(f"{{{{{k}}}}}", str(v))
+                # Security: refuse injection payloads before they reach the shell
+                from reasoning.math_engine import _check_injection
+                if _check_injection(cmd):
+                    raise ValueError(f"Injection pattern blocked in Run command: {cmd[:120]}")
                 self.tools.call("run_command", cmd=cmd)
 
 
@@ -285,7 +298,8 @@ class DeterministicCodingAgent:
         try:
             sid = state.get("session_id", "")
             if sid:
-                session_data = sm.load_session(sid)
+                from brain.state_manager import load_state
+                session_data = load_state(sid)
                 history = session_data.get("history", []) if session_data else []
                 if history:
                     successes = sum(1 for h in history if h.get("status") == "ok")
@@ -600,7 +614,7 @@ class DeterministicCodingAgent:
         if decision.confidence < effective_threshold:
             state["status"] = "low_confidence"
             state["final_output"] = {
-                "error": f"Confidence {decision.confidence:.2f} below threshold {self.CONFIDENCE_THRESHOLD}",
+                "error": f"Confidence {decision.confidence:.2f} below threshold {effective_threshold:.2f}",
                 "reasoning": decision.to_dict(),
             }
             return self._persist(state, user_input)
@@ -707,6 +721,7 @@ class DeterministicCodingAgent:
             logger.debug("Priority engine failed: %s", e)
 
         # ---- Monte Carlo scaffolded execution ------------------------
+        exec_started = time.monotonic()
         if skill_meta and skill_meta.monte_carlo and skill_meta.choices:
             mc_inputs = {**exec_inputs, "skill_path": skill_meta.skill_path}
             result = self.scaffolder.scaffold(skill_meta.to_dict(), mc_inputs)
@@ -719,10 +734,12 @@ class DeterministicCodingAgent:
                     state["final_output"] = {"error": "Resource allocation timeout"}
                     return self._persist(state, user_input)
 
-                # FIX: Wrap skill execution in timeout
+                # Wrap skill execution in a thread-based timeout
                 try:
-                    with timeout(self.SKILL_EXECUTION_TIMEOUT_SECONDS):
-                        result = self.skill_executor.execute(skill_id, exec_inputs, context)
+                    result = run_with_timeout(
+                        lambda: self.skill_executor.execute(skill_id, exec_inputs, context),
+                        self.SKILL_EXECUTION_TIMEOUT_SECONDS,
+                    )
                 except TimeoutException as te:
                     logger.error("Skill execution timeout: %s", te)
                     state["status"] = "timeout"
@@ -746,7 +763,7 @@ class DeterministicCodingAgent:
 
         # Emit skill execution events for EventBus learning loop
         try:
-            latency_ms = int((time.time() - getattr(self, "_exec_start", time.time())) * 1000)
+            latency_ms = int((time.monotonic() - exec_started) * 1000)
             if state["status"] == "ok":
                 event_bus.emit("skill_success", skill_id=skill_id, latency_ms=latency_ms, confidence=decision.confidence)
             else:

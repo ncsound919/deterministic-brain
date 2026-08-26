@@ -33,8 +33,18 @@ async def settings_schema():
 
 @router.post("/update")
 async def update_setting(update: SettingUpdate):
-    """Persist a single setting and reload configuration."""
+    """Persist a single setting and reload configuration.
+
+    Only keys declared in the settings schema may be updated; unknown or
+    secret-material keys are rejected to prevent arbitrary .env writes.
+    """
     key = update.key.upper()
+    allowed = _schema_keys()
+    if key not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown setting '{key}'. Allowed: {sorted(allowed)}",
+        )
     try:
         persist_setting(key, update.value)
     except Exception as e:
@@ -49,21 +59,40 @@ async def update_setting(update: SettingUpdate):
     }
 
 
-@router.get("/export")
-async def export_settings():
-    """Download current settings (API keys redacted for security)."""
-    import os
-    env_path = os.environ.get("DOTENV_PATH", ".env")
-    if not os.path.exists(env_path):
-        raise HTTPException(status_code=404, detail="No .env file found")
+def _schema_keys() -> set:
+    allowed: set = set()
+    for group in get_setting_schema():
+        for item in group.get("settings", group.get("keys", [])):
+            allowed.add(item["key"].upper())
+    return allowed
 
-    # Read and redact sensitive values
-    sensitive_keys = {
+
+# Keys that must never be returned in cleartext by /export — matched by
+# substring in addition to an explicit list so newly added credentials
+# are covered automatically.
+_SENSITIVE_SUBSTRINGS = ("PASSWORD", "SECRET", "TOKEN", "API_KEY", "CREDENTIAL", "PRIVATE_KEY")
+
+
+def _is_sensitive(key_upper: str) -> bool:
+    explicit = {
         "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY",
         "GEMINI_API_KEY", "QDRANT_API_KEY", "NEO4J_PASSWORD", "STRIPE_SECRET_KEY",
         "DISCORD_BOT_TOKEN", "GITHUB_TOKEN", "REDDIT_CLIENT_SECRET", "ODDS_API_KEY",
         "TAVILY_API_KEY", "ELEVENLABS_API_KEY", "KLING_API_KEY", "WHISPER_API_KEY",
+        "BRAIN_API_KEY", "RELAY_SECRET", "SMTP_PASS",
     }
+    if key_upper in explicit:
+        return True
+    return any(marker in key_upper for marker in _SENSITIVE_SUBSTRINGS)
+
+
+@router.get("/export")
+async def export_settings():
+    """Download current settings (sensitive values redacted)."""
+    import os
+    env_path = os.environ.get("DOTENV_PATH", ".env")
+    if not os.path.exists(env_path):
+        raise HTTPException(status_code=404, detail="No .env file found")
 
     lines = []
     with open(env_path) as f:
@@ -73,7 +102,7 @@ async def export_settings():
                 continue
             if "=" in line:
                 key, val = line.split("=", 1)
-                if key.upper() in sensitive_keys:
+                if _is_sensitive(key.upper()):
                     lines.append(f"{key}=***REDACTED***")
                 else:
                     lines.append(line)

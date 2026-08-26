@@ -4,16 +4,17 @@
 **Core strategic asset.** NVIDIA / Palantir exit path. Central intelligence of the DCA swarm — replaces LLM calls with deterministic skill files, MoE routing, Monte Carlo planning, and MCP tool layers. Autonomous scheduler, self-learning loop, executive kernel, acquisition bridge. In the acquisition trap: this is the glue that makes BB-Tech and AetherDesk operationally viable control planes. Acquirer of any other asset MUST also acquire this to complete the stack.
 
 ## Current Status
-- **Deploy Readiness:** 97.5%
-- **Remaining:** Production cron + systemd for autonomous brain loop
-- **Tests:** 229/229 passing (+35 tests added in last session), Playwright UX, API integration
+- **Deploy Readiness:** ~85% (post 2026-08-25 security/correctness audit)
+- **Remaining:** e2e/Playwright suite re-verification; production cron + systemd for autonomous brain loop
+- **Tests:** 492 unit tests passing (30 files); full collection is 927 incl. e2e/Playwright (not yet re-run post-audit). 4 ML-heavy test files hang on transitive model loads — exclude or mock.
+- **Security posture (2026-08-25):** API-key auth middleware (`BRAIN_API_KEY`), loopback-default binding, workspace path confinement, SSRF guard, fail-closed webhooks, hardened code executor. Set `BRAIN_API_KEY` before any non-loopback deployment.
 - **Key Features:** Acquisition bridge, Executive Kernel (AGI layer), SkillMarketplace (TypeScript + CSS Modules), autonomous scheduler, self-learning, swarm dispatcher
 
 ## Superpowers Integration (Priority Order)
 
 ### Must-Use (Every Session)
 1. **superpowers:using-superpowers** — Check applicable skills before any action
-2. **superpowers:verification-before-completion** — 229 tests must pass. No exceptions. Run full suite before claiming anything
+2. **superpowers:verification-before-completion** — unit suite must pass. No exceptions. Run full suite before claiming anything
 3. **superpowers:systematic-debugging** — Complex multi-agent system with acquisition bridge, self-learning, scheduler, executive kernel. Any bug could cascade across subsystems. Root cause before fixes
 
 ### Production Deployment
@@ -22,7 +23,7 @@
 6. **superpowers:subagent-driven-development** — Execute deployment plan with subagents: one for systemd service file, one for cron config, one for monitoring, one for backup scripts. Review between each
 
 ### Feature Work / Enhancement
-7. **superpowers:test-driven-development** — Any new feature or bugfix starts with a failing test. The 229-test baseline is the trust foundation
+7. **superpowers:test-driven-development** — Any new feature or bugfix starts with a failing test. The unit-test baseline is the trust foundation
 8. **superpowers:dispatching-parallel-agents** — Multiple independent subsystems (acquisition bridge, scheduler, self-learning, swarm, executive kernel) — parallel investigation when multiple things fail
 9. **superpowers:requesting-code-review** — Before merging to main. This is the core asset — quality is non-negotiable
 
@@ -37,7 +38,7 @@
 - **Storage:** SQLite (sovereign.db), JSON files, Qdrant (vector), Redis
 - **Frontend:** React (aether-dashboard), TypeScript, CSS Modules, Recharts
 - **Infra:** Docker, Docker Compose, systemd (target), cron, Nginx
-- **Tests:** pytest (229 tests), Playwright (UX tests), API integration tests
+- **Tests:** pytest (492 unit tests; 927 total incl. e2e/Playwright), Playwright (UX tests), API integration tests
 
 ## Key Commands
 ```bash

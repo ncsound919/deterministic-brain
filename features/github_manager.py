@@ -132,7 +132,16 @@ class GitHubManager:
         return repos
 
     def clone(self, owner: str, repo: str) -> Optional[str]:
-        path = os.path.join(self.work_dir, repo)
+        import re as _re
+        if not _re.fullmatch(r"[A-Za-z0-9_.-]+", owner or "") or \
+           not _re.fullmatch(r"[A-Za-z0-9_.-]+", repo or "") or \
+           repo in (".", ".."):
+            return None
+        from tools.workspace import resolve_confined
+        try:
+            path = str(resolve_confined(os.path.join(self.work_dir, repo)))
+        except PermissionError:
+            return None
         url = f"https://github.com/{owner}/{repo}.git"
         token = self.token_for(owner)
         if token:

@@ -261,7 +261,7 @@ def start_daemons() -> dict:
     try:
         import subprocess
         import os
-        script_path = os.path.join(os.getcwd(), "scripts", "start_satellite_servers.py")
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "start_satellite_servers.py")
         if os.path.exists(script_path):
             p = subprocess.Popen([sys.executable, script_path])
             _daemons.append(p)
@@ -278,15 +278,16 @@ def start_daemons() -> dict:
 # Step 6: FastAPI server (optional)
 # ═══════════════════════════════════════════════════════════════════════
 
-def start_server(host: str = "0.0.0.0", port: int = int(os.environ.get("API_PORT", 8000))) -> None:
+def start_server(host: str = None, port: int = None) -> None:
     print("\n  --- API Server ---")
     try:
         import uvicorn
-        api_port = int(os.environ.get("API_PORT", 8000))
-        print(f"  [OK] Starting FastAPI on http://{host}:{api_port}")
+        resolved_host = host or os.environ.get("BRAIN_HOST", "127.0.0.1")
+        api_port = int(port if port is not None else os.environ.get("API_PORT", 8000))
+        print(f"  [OK] Starting FastAPI on http://{resolved_host}:{api_port}")
         print(f"  [OK] Dashboard: http://localhost:{api_port}")
         print(f"  [OK] API Docs:  http://localhost:{api_port}/docs")
-        uvicorn.run("api.server:app", host=host, port=api_port, reload=False, log_level="warning")
+        uvicorn.run("api.server:app", host=resolved_host, port=api_port, reload=False, log_level="warning")
     except Exception as e:
         print(f"  [ERROR] Server failed: {e}")
 

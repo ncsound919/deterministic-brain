@@ -210,7 +210,7 @@ def get_setting_schema() -> dict:
             {"key": "LLM_SEED", "type": "int", "default": "42", "label": "LLM Seed", "min": 0, "max": 9999},
         ],
         "API": [
-            {"key": "API_HOST", "type": "string", "default": "0.0.0.0", "label": "API Host"},
+            {"key": "API_HOST", "type": "string", "default": "127.0.0.1", "label": "API Host"},
             {"key": "API_PORT", "type": "int", "default": "8000", "label": "API Port", "min": 1024, "max": 65535},
         ],
         "Voice": [

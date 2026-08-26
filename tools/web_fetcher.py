@@ -25,6 +25,11 @@ class WebFetcher:
     """
 
     def fetch(self, url: str, timeout: int = 15) -> str:
+        from tools.urlguard import validate_url, UrlBlockedError
+        try:
+            url = validate_url(url)
+        except UrlBlockedError as exc:
+            raise RuntimeError(f"WebFetcher: URL blocked — {exc}") from exc
         req = urllib.request.Request(url, headers=HEADERS)
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:

@@ -1,239 +1,163 @@
 {
-  "timestamp": "2026-08-06T13:53:53",
+  "timestamp": "2026-08-25T23:16:30",
   "version": "2.5.0",
   "skills_loaded": 0,
   "pages": {},
   "apis": {
     "/skills": {
-      "ms": 2223.7,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4103.3,
+      "status": 0,
+      "size_bytes": 0
     },
     "/health": {
-      "ms": 2089.4,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4078.0,
+      "status": 0,
+      "size_bytes": 0
     },
     "/bundles": {
-      "ms": 2085.4,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4076.3,
+      "status": 0,
+      "size_bytes": 0
     },
     "/settings": {
-      "ms": 2046.8,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4100.1,
+      "status": 0,
+      "size_bytes": 0
     },
     "/settings/schema": {
-      "ms": 2045.6,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4053.1,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/feed": {
-      "ms": 2118.7,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4092.5,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/stats": {
-      "ms": 2073.7,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4067.6,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/audit": {
-      "ms": 2034.6,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4104.7,
+      "status": 0,
+      "size_bytes": 0
     },
     "/dashboard/middleware-stats": {
-      "ms": 2042.8,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4097.2,
+      "status": 0,
+      "size_bytes": 0
     },
     "/relay/agents": {
-      "ms": 2090.6,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4074.6,
+      "status": 0,
+      "size_bytes": 0
     },
     "/health/monitor": {
-      "ms": 2049.3,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4060.0,
+      "status": 0,
+      "size_bytes": 0
     },
     "/health/skills": {
-      "ms": 2055.4,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4092.7,
+      "status": 0,
+      "size_bytes": 0
     },
     "/health/heals": {
-      "ms": 2061.0,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4087.2,
+      "status": 0,
+      "size_bytes": 0
     },
     "/autodream/status": {
-      "ms": 2027.9,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4068.1,
+      "status": 0,
+      "size_bytes": 0
     },
     "/evolution/report": {
-      "ms": 2058.3,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4045.4,
+      "status": 0,
+      "size_bytes": 0
     },
     "/kairos/status": {
-      "ms": 2057.7,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4031.5,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (react)": {
-      "ms": 2036.1,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4125.2,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (rest)": {
-      "ms": 2073.0,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4087.3,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (security)": {
-      "ms": 2042.2,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4068.5,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (docker)": {
-      "ms": 2041.2,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4115.1,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (auth)": {
-      "ms": 2026.2,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4069.6,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (deploy)": {
-      "ms": 2057.0,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4096.0,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (notebook)": {
-      "ms": 2072.2,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4088.3,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (canvas)": {
-      "ms": 2036.6,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4114.8,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (pdf)": {
-      "ms": 2058.9,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4089.3,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (cli)": {
-      "ms": 2061.0,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4106.2,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (notion)": {
-      "ms": 2081.7,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4075.4,
+      "status": 0,
+      "size_bytes": 0
     },
     "/reason (figma)": {
-      "ms": 2053.9,
-      "status": 404,
-      "size_bytes": 22
-    },
-    "POST /task": {
-      "ms": 2039.5,
-      "status": 404,
-      "size_bytes": 22
-    },
-    "POST /bundle": {
-      "ms": 2088.9,
-      "status": 404,
-      "size_bytes": 22
-    },
-    "POST /dialogue/process": {
-      "ms": 2060.3,
-      "status": 404,
-      "size_bytes": 22
+      "ms": 4101.0,
+      "status": 0,
+      "size_bytes": 0
     }
   },
-  "reasoning": {
-    "create a react component for a user profile": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2036.1
-    },
-    "build a REST API for orders": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2073.0
-    },
-    "analyze this code for security issues": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2042.2
-    },
-    "generate a dockerfile": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2041.2
-    },
-    "fix a bug in the authentication module": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2026.2
-    },
-    "how do I deploy to vercel?": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2057.0
-    },
-    "create a jupyter notebook": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2072.2
-    },
-    "design a canvas visualization": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2036.6
-    },
-    "write a pdf report": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2058.9
-    },
-    "scaffold a CLI tool": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2061.0
-    },
-    "build a notion integration": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2081.7
-    },
-    "create a figma design system": {
-      "chosen_skill": "?",
-      "confidence": 0.0,
-      "ms": 2053.9
-    }
-  },
+  "reasoning": {},
   "summary": {
-    "total_benchmark_ms": 70977.7,
+    "total_benchmark_ms": 134199.0,
     "skills_loaded": 0,
     "pages_tested": 0,
     "pages_ok": 0,
     "pages_failed": 0,
-    "apis_tested": 31,
+    "apis_tested": 28,
     "avg_page_load_ms": 0,
-    "avg_api_ms": 2064.2,
-    "p50_api_ms": 2057.7,
-    "p95_api_ms": 2118.7,
-    "reasoning_queries": 12,
+    "avg_api_ms": 4084.6,
+    "p50_api_ms": 4087.8,
+    "p95_api_ms": 4115.1,
+    "reasoning_queries": 0,
     "avg_confidence": 0.0
   }
 }

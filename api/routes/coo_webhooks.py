@@ -18,19 +18,25 @@ router = APIRouter(prefix="/coo", tags=["coo-brain"])
 
 
 def _verify_github_signature(body: bytes, signature: str) -> bool:
-    """Verify GitHub webhook HMAC-SHA256 signature."""
+    """Verify GitHub webhook HMAC-SHA256 signature. Fails closed."""
     secret = os.getenv("GITHUB_WEBHOOK_SECRET", "")
     if not secret:
-        return True  # Skip verification if no secret configured
+        logger.error("GITHUB_WEBHOOK_SECRET not configured — rejecting webhook")
+        return False
+    if not signature:
+        return False
     expected = f"sha256={hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()}"
     return hmac.compare_digest(signature, expected)
 
 
 def _verify_stripe_signature(payload: bytes, sig_header: str) -> bool:
-    """Verify Stripe webhook signature (simplified — no timestamp tolerance check)."""
+    """Verify Stripe webhook signature (simplified — no timestamp tolerance check). Fails closed."""
     secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     if not secret:
-        return True  # Skip verification if no secret configured
+        logger.error("STRIPE_WEBHOOK_SECRET not configured — rejecting webhook")
+        return False
+    if not sig_header:
+        return False
     try:
         parts = dict(item.split("=") for item in sig_header.split(","))
         timestamp = parts.get("t", "")
@@ -40,6 +46,15 @@ def _verify_stripe_signature(payload: bytes, sig_header: str) -> bool:
         return hmac.compare_digest(signature, expected)
     except Exception:
         return False
+
+
+def _verify_sentry_signature(request: Request) -> None:
+    """Require and validate the Sentry hook token when configured. Fails closed."""
+    sentry_token = os.getenv("SENTRY_WEBHOOK_TOKEN", "")
+    provided = request.headers.get("Sentry-Hook-Signature", "")
+    if not sentry_token or not provided or not hmac.compare_digest(provided, sentry_token):
+        logger.warning("Sentry webhook rejected — token missing or invalid")
+        raise HTTPException(status_code=401, detail="Missing or invalid signature")
 
 
 class WebhookResponse(BaseModel):
@@ -64,15 +79,9 @@ class DecisionCardResponse(BaseModel):
 
 @router.post("/webhook/sentry", response_model=WebhookResponse)
 async def sentry_webhook(request: Request):
-    """Ingest Sentry exception webhooks with security check."""
-    # Basic security: Check for Sentry-specific header if configured
-    sentry_token = os.getenv("SENTRY_WEBHOOK_TOKEN", "")
-    if sentry_token:
-        provided = request.headers.get("Sentry-Hook-Signature", "")
-        if not provided:
-            logger.warning("Sentry webhook missing signature")
-            raise HTTPException(status_code=401, detail="Missing signature")
-    
+    """Ingest Sentry exception webhooks with security check (fail-closed)."""
+    _verify_sentry_signature(request)
+
     try:
         body = await request.json()
     except Exception:
@@ -117,9 +126,9 @@ async def github_webhook(request: Request):
     """Ingest GitHub webhooks (CI failures, PR events, issue closures)."""
     body_bytes = await request.body()
     sig_header = request.headers.get("X-Hub-Signature-256", "")
-    if sig_header and not _verify_github_signature(body_bytes, sig_header):
+    if not _verify_github_signature(body_bytes, sig_header):
         logger.warning("GitHub webhook signature verification failed")
-        raise HTTPException(status_code=401, detail="Invalid signature")
+        raise HTTPException(status_code=401, detail="Invalid or missing signature")
 
     try:
         body = await request.json()
@@ -170,9 +179,9 @@ async def stripe_webhook(request: Request):
     """Ingest Stripe webhooks (subscription changes, payment failures)."""
     body_bytes = await request.body()
     sig_header = request.headers.get("Stripe-Signature", "")
-    if sig_header and not _verify_stripe_signature(body_bytes, sig_header):
+    if not _verify_stripe_signature(body_bytes, sig_header):
         logger.warning("Stripe webhook signature verification failed")
-        raise HTTPException(status_code=401, detail="Invalid signature")
+        raise HTTPException(status_code=401, detail="Invalid or missing signature")
 
     try:
         body = await request.json()
