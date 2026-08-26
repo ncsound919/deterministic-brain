@@ -819,6 +819,59 @@ chains:
     notify:
       summary: "Phase 1: Weaponize Brand — Manifesto Generated"
 
+  # ═══════════════════════════════════════════════════════════════════
+  # SECTION: BOOK-GROUNDED AUTONOMOUS RESEARCH (NEW -- library intelligence)
+  # ═══════════════════════════════════════════════════════════════════
+
+  book-library-scan:
+    description: "Scan the BookBridge library, report index health and new books"
+    trigger: "cron"
+    cron: "0 4 * * *"
+    steps:
+      - skill: "book-bridge"
+        inputs: { "action": "scan", "topic": "library" }
+    notify:
+      summary: "Book library scan complete"
+
+  book-grounded-research:
+    description: "Ground a research topic against the book library: reading plan -> passages -> synthesized brief"
+    trigger: "manual"
+    steps:
+      - skill: "book-bridge"
+        inputs: { "topic": "strategy, business frameworks, agent autonomy", "action": "reading_plan" }
+      - skill: "book-bridge"
+        inputs: { "topic": "strategy, business frameworks, agent autonomy", "action": "search" }
+        parallel: true
+      - skill: "book-synthesis-personal"
+        inputs: { "book": "auto", "reader_profile": "default" }
+    notify:
+      summary: "Book-grounded research brief ready"
+
+  book-library-distill:
+    description: "Distill the top books in the library into reusable agent skills"
+    trigger: "cron"
+    cron: "0 5 * * *"
+    steps:
+      - skill: "book-bridge"
+        inputs: { "action": "books", "topic": "" }
+      - skill: "book-to-skill-lane"
+        inputs: { "topic": "strategy, business frameworks, agent autonomy" }
+    notify:
+      summary: "Book library distillation cycle complete"
+
+  book-research-weekly:
+    description: "Weekly consolidated book-grounded research + library distill report"
+    trigger: "cron"
+    cron: "0 6 * * 1"
+    steps:
+      - skill: "book-grounded-research"
+        inputs: { "topic": "AI agent autonomy, business strategy" }
+        parallel: true
+      - skill: "book-library-distill"
+        inputs: { "max_books": 3 }
+        parallel: true
+    notify:
+      summary: "Weekly book research report ready"
 
 # ═══════════════════════════════════════════════════════════════════════
 # CRON MASTER SCHEDULE (EST timezone -- all times in America/New_York)
@@ -829,7 +882,9 @@ chains:
 # 02:00  -- repo-health (Sunday only)
 # 03:00  -- learning-consolidation (bandit evolve, autodream)
 # 04:00  -- swarm-inventory-refresh (discover repos, auto-queue)
+# 04:00  -- book-library-scan (BookBridge index health)  [NEW]
 # 05:00  -- swarm-repo-audit (clone, audit, fix, PR)
+# 05:00  -- book-library-distill (distill top books into skills)  [NEW]
 # 06:00  -- marketing-content-calendar (Monday)  [NEW]
 # 07:00  -- morning-kickstart (news, market, agent check)
 # 08:00  -- knowledge-scan (HN, Wikipedia)

@@ -14,6 +14,12 @@ from typing import Dict, Optional
 
 SKILLS_ROOT = Path(os.getenv('SKILLS_BASE_PATH', r'C:\Users\User\Documents\skills'))
 
+# Fallback roots the resolver searches when the configured SKILLS_ROOT has no
+# matching skill: the brain's own skill_packs (native skill.md) and lanes.
+def _fallback_roots() -> list[Path]:
+    base = Path(__file__).resolve().parent.parent
+    return [base / "skill_packs", base / "lanes"]
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,9 +34,24 @@ class SkillResolver:
 
         normalized = skill_name.lower().replace("-", "_").replace(" ", "_")
 
-        if SKILLS_ROOT.exists():
-            for skill_file in SKILLS_ROOT.rglob("*.md"):
-                if self._matches(skill_file.stem, normalized, skill_name):
+        roots = [SKILLS_ROOT, *_fallback_roots()]
+        for root in roots:
+            if not root.exists():
+                continue
+            for skill_file in root.rglob("*.md"):
+                # Match on the parent directory name primarily (skill.md files
+                # all share the generic "skill" stem, which would otherwise
+                # falsely match any skill whose name contains "skill").
+                parent = skill_file.parent.name
+                if self._matches(parent, normalized, skill_name):
+                    path = str(skill_file.resolve())
+                    self._cache[skill_name] = path
+                    logger.info("Resolved skill '%s' -> %s", skill_name, path)
+                    return path
+                # Fall back to a file stem match only when it is meaningful
+                # (not the generic skill.md / SKILL.md stem).
+                stem = skill_file.stem.lower()
+                if stem not in ("skill", "skills") and self._matches(stem, normalized, skill_name):
                     path = str(skill_file.resolve())
                     self._cache[skill_name] = path
                     logger.info("Resolved skill '%s' -> %s", skill_name, path)
@@ -83,7 +104,9 @@ class SkillResolver:
         try:
             from orchestration.skill_registry import get_skill_registry
             registry = get_skill_registry()
-            skill_id = Path(path).stem
+            # skill.md/SKILL.md files all have stem "skill" — use the parent
+            # directory name as the actual skill id.
+            skill_id = Path(path).parent.name if Path(path).stem in ("skill", "skills") else Path(path).stem
             task = {"raw": skill_name, "task": skill_name, **(inputs or {})}
             context = {}
             result = registry.execute(skill_id, task, context)

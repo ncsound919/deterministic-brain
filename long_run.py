@@ -80,6 +80,12 @@ CHAIN_CATEGORIES = {
         "system-expand-skills",
         "system-intelligence-report",
     ],
+    "research": [
+        "book-grounded-research",
+        "book-library-distill",
+        "book-library-scan",
+        "book-research-weekly",
+    ],
 }
 
 # ─────────────────────────────────────────────────────────────────────
