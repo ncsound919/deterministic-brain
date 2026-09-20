@@ -32,6 +32,14 @@ bundles:
     lanes:
       - lanes.audit_repo
 
+  hunt-distressed-properties:
+    description: "Autonomously hunt distressed properties via House Flip Studio's MCP endpoint"
+    agents:
+      - deterministic-brain
+      - house-flip-studio
+    lanes:
+      - lanes.real_estate_leads
+
 routes:
   # â”€â”€ Existing skills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   create-react-component:   skill_packs/react
@@ -44,6 +52,8 @@ routes:
   generate-dockerfile:      skill_packs/docker
   audit-repo:               lanes/audit_repo
   live-docs-to-skill:       lanes/live_docs_to_skill
+  hunt-distressed-properties: lanes/real_estate_leads
+  real-estate-leads:        lanes/real_estate_leads
   initialize-session:       skills/initialize-session
 
   # â”€â”€ Anthropic skills (17) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -191,6 +201,7 @@ aliases:
   agent-orchestrate:     ["orchestrate agent", "supervise agent", "openclaw", "hermes", "agent relay"]
   news-fetch:            ["news", "headlines", "rss", "fetch news", "whats happening"]
   market-data:           ["crypto price", "stock price", "market data", "BTC", "ETH", "market summary"]
+  hunt-distressed-properties: ["distressed properties", "house flip", "foreclosure leads", "real estate leads", "tax delinquent", "off-market deals", "motivated sellers", "wholesale leads"]
   betting-analysis:      ["bet", "odds", "betting", "sports bet", "prizepicks", "draftkings", "kelly"]
   github-manage:         ["github issue", "create issue", "PR", "pull request", "CI status"]
   deploy-web:            ["deploy to cloudflare", "ship website", "publish", "go live"]

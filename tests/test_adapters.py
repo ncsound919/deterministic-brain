@@ -373,3 +373,97 @@ async def test_launch_campaign_idempotent(adapter):
 
         assert result1.id == result2.id
         assert call_count == 0
+
+
+# ═════════════════════════════════════════════════════════════════════
+# RecourseAdapter tests (with mocked httpx)
+# ═════════════════════════════════════════════════════════════════════
+
+@pytest.fixture
+def recourse_adapter():
+    from adapters.recourse import RecourseAdapter
+    return RecourseAdapter(base_url="http://127.0.0.1:3050")
+
+
+@pytest.mark.asyncio
+async def test_recourse_status_ok(recourse_adapter):
+    mock_resp = MagicMock()
+    mock_resp.is_success = True
+    mock_resp.status_code = 200
+    mock_resp.content = b"{}"
+    mock_resp.json.return_value = {"status": {"registeredToolsCount": 9}, "chainIntegrity": {"valid": True, "length": 3, "lastHash": "ab"}}
+
+    with patch.object(recourse_adapter, "_client") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+        result = await recourse_adapter.get_status()
+        assert result.ok
+        assert result.data["status"]["registeredToolsCount"] == 9
+
+
+@pytest.mark.asyncio
+async def test_recourse_status_down(recourse_adapter):
+    with patch.object(recourse_adapter, "_client") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+            side_effect=ConnectionError("Recourse down")
+        )
+        result = await recourse_adapter.get_status()
+        assert not result.ok
+        assert "Recourse down" in result.error
+
+
+@pytest.mark.asyncio
+async def test_recourse_execute_verify_posts_payload(recourse_adapter):
+    mock_resp = MagicMock()
+    mock_resp.is_success = True
+    mock_resp.status_code = 200
+    mock_resp.content = b"{}"
+    mock_resp.json.return_value = {"result": {"passed": True, "summary": "PASS", "score": 1}}
+
+    captured = {}
+
+    async def patched_post(*args, **kwargs):
+        captured["json"] = kwargs.get("json")
+        return mock_resp
+
+    with patch.object(recourse_adapter, "_client") as mock_client:
+        mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=patched_post)
+        result = await recourse_adapter.execute("verify_code", {
+            "domain": "coding",
+            "sourceCode": "export function x(){}",
+            "testSuiteCode": "assert true;",
+        })
+        assert result.ok
+        assert captured["json"]["domain"] == "coding"
+        assert captured["json"]["sourceCode"].startswith("export")
+
+
+@pytest.mark.asyncio
+async def test_recourse_execute_repair_posts_payload(recourse_adapter):
+    mock_resp = MagicMock()
+    mock_resp.is_success = True
+    mock_resp.status_code = 200
+    mock_resp.content = b"{}"
+    mock_resp.json.return_value = {"healResult": {"success": True}}
+
+    captured = {}
+
+    async def patched_post(*args, **kwargs):
+        captured["json"] = kwargs.get("json")
+        return mock_resp
+
+    with patch.object(recourse_adapter, "_client") as mock_client:
+        mock_client.return_value.__aenter__.return_value.post = AsyncMock(side_effect=patched_post)
+        result = await recourse_adapter.execute("self_repair", {
+            "toolName": "fizzbuzz_solver",
+            "brokenCode": "broken()",
+        })
+        assert result.ok
+        assert captured["json"]["toolName"] == "fizzbuzz_solver"
+
+
+@pytest.mark.asyncio
+async def test_recourse_execute_unknown_action(recourse_adapter):
+    result = await recourse_adapter.execute("does_not_exist", {})
+    assert not result.ok
+    assert "does not support action" in result.error
+

@@ -1,0 +1,12 @@
+name: hermes-open3d
+version: 0.1.0
+description: "Bridge to Open3D: point-cloud/mesh ops via the pip package (not a C++ port)."
+author: "Draymond-Orchestrator fleet (standalone Hermes plugin; 3D lib by isl-org)"
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - open3d_process
+  - open3d_info

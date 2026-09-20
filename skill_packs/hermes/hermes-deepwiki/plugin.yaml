@@ -1,0 +1,12 @@
+name: hermes-deepwiki
+version: 0.1.0
+description: "Bridge to AsyncFuncAI DeepWiki-Open: generate repo wikis into knowledge_bank/wiki/."
+author: "Draymond-Orchestrator fleet (standalone Hermes plugin; upstream generator by AsyncFuncAI)"
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - deepwiki_generate
+  - deepwiki_status

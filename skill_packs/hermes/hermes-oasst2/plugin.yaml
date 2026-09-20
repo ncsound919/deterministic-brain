@@ -1,0 +1,12 @@
+name: hermes-oasst2
+version: 0.1.0
+description: "Sample OpenAssistant/oasst2 preference pairs and score model rankings (reward-model style)."
+author: "Draymond-Orchestrator fleet (standalone Hermes plugin; dataset by OpenAssistant)"
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - oasst2_eval
+  - oasst2_sample

@@ -472,6 +472,18 @@ class Scheduler:
             error_msg = str(e)
             logger.error(f"Task {name} failed: {e}")
         
+        # Truth gate: a task only "succeeded" if the executor reports success.
+        # Chains return {"status": "error"|"partial"|...} dicts instead of
+        # raising; missing executors return {"status": "no_executor"}. The old
+        # behavior recorded all of these as success — tasks completed without
+        # doing work. Non-success outputs are failures with the reason attached.
+        if status == "success" and isinstance(output, dict):
+            out_status = str(output.get("status", "")).lower()
+            if out_status and out_status not in ("ok", "success", "completed"):
+                status = "error"
+                error_msg = f"executor reported non-success status: {out_status} | detail: {str(output.get('error', ''))[:300]}"
+                logger.error(f"Task {name} marked failed by truth gate: {error_msg}")
+        
         finished = datetime.now(timezone.utc)
         
         result = TaskResult(

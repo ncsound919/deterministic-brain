@@ -169,16 +169,27 @@ class LocalSkillBackend(SkillBackend):
                         logs.append(f"Wrote {output_path} ({len(rendered)} chars)")
                     except Exception as e:
                         logs.append(f"Template error: {e}")
+                else:
+                    logs.append(f"Template file missing for skill '{skill_id}' — step produced nothing")
             elif step.get("command"):
-                logs.append(f"Would execute: {step['command']}")
+                # Truth gate: command steps are NOT executed by this backend.
+                # The old behavior logged "Would execute" and still returned
+                # success:true with zero artifacts — tasks completed without
+                # doing work. Report the skip honestly as a failure component.
+                logs.append(f"SKIPPED (command steps unsupported by LocalSkillBackend): {step['command']}")
 
+        success = len(artifacts) > 0
         return {
-            "success": True,
-            "output": f"Generated {len(artifacts)} files",
+            "success": success,
+            "output": (
+                f"Generated {len(artifacts)} files"
+                if success
+                else f"Skill '{skill_id}' produced no artifacts — nothing was executed or written. Task NOT completed."
+            ),
             "artifacts": artifacts,
             "logs": logs,
             "build_id": build_id,
-            "preview_url": f"/preview/{build_id}",
+            "preview_url": f"/preview/{build_id}" if success else None,
         }
 
     def _parse_skill_md(self, content: str) -> tuple[Dict, list[Dict]]:

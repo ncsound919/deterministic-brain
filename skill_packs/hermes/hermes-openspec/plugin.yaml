@@ -1,0 +1,13 @@
+name: hermes-openspec
+version: 0.1.0
+description: "Bridge to Fission-AI OpenSpec: propose/apply/archive/status change specs under openspec/changes/."
+author: "Draymond-Orchestrator fleet (standalone Hermes plugin; upstream spec workflow by Fission-AI)"
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - openspec_propose
+  - openspec_apply
+  - openspec_status

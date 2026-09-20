@@ -1,14 +1,14 @@
 # t — Knowledge Reference
 
-Auto-generated: 2026-08-24 20:51
+Auto-generated: 2026-09-19 19:36
 Fragments: 14
 
 ## probe
 
 - Source: manual://probe
 - Tags: t
-- Confidence: 1.00
-- Accessed: 0x
+- Confidence: 0.70
+- Accessed: 9x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. week
 
@@ -16,8 +16,8 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 
 - Source: manual://probe
 - Tags: t
-- Confidence: 1.00
-- Accessed: 0x
+- Confidence: 0.74
+- Accessed: 3x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubu
 
@@ -26,7 +26,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 10x
+- Accessed: 37x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lung cancer) remains the backbone of definitive therapy. The newer targeted radiose
 
@@ -35,7 +35,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 0x
+- Accessed: 44x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lung cancer) remains the backbone of definitive therapy. The newer targeted radiosensitizers
 
@@ -44,7 +44,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 1x
+- Accessed: 11x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lung cancer) remains the backbone of defini
 
@@ -52,8 +52,8 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 
 - Source: manual://probe
 - Tags: t
-- Confidence: 1.00
-- Accessed: 0x
+- Confidence: 0.74
+- Accessed: 18x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head
 
@@ -62,7 +62,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 9x
+- Accessed: 67x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lun
 
@@ -71,7 +71,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 0x
+- Accessed: 48x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lung cancer) remains the backbone of definitive therapy. The newer target
 
@@ -79,8 +79,8 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 
 - Source: manual://probe
 - Tags: t
-- Confidence: 1.00
-- Accessed: 0x
+- Confidence: 0.74
+- Accessed: 3x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemo
 
@@ -89,7 +89,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 7x
+- Accessed: 25x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervic
 
@@ -98,7 +98,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 0x
+- Accessed: 5x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lung cancer) remains the backbone of definitive therapy. The ne
 
@@ -107,7 +107,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 7x
+- Accessed: 37x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplat
 
@@ -116,7 +116,7 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://probe
 - Tags: t
 - Confidence: 1.00
-- Accessed: 0x
+- Accessed: 77x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, combined with radiation, increase DSB complexity and inhibit repair. Taxanes (paclitaxel, docetaxel) arrest cells in the radiosensitive G2/M phase, where radiation is most lethal, and stabilize microtubules. Nucleoside analogs (gemcitabine, 5-FU, capecitabine) are incorporated into DNA during S-phase, causing chain termination and replication catastrophe when combined with radiation. Concurrent chemoradiation (e.g. weekly cisplatin in head-and-neck and cervical cancer, carboplatin-paclitaxel in lung cancer) remains th
 
@@ -125,6 +125,6 @@ Established radiation-sensitizing drugs fall into classes that either enhance in
 - Source: manual://short-frag
 - Tags: t
 - Confidence: 1.00
-- Accessed: 7x
+- Accessed: 11x
 
 Established radiation-sensitizing drugs fall into classes that either enhance initial DNA damage or block its repair. Platinum agents (cisplatin, carboplatin) form intrastrand DNA crosslinks that, com

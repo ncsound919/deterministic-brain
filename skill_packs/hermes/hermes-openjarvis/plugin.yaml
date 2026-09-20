@@ -1,0 +1,13 @@
+name: hermes-openjarvis
+version: 0.1.0
+description: "Local-first OpenJarvis bridge: skill catalog sync plus honest eval gating."
+author: Draymond-Orchestrator fleet
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - jarvis_skills
+  - jarvis_bench
+  - jarvis_preset

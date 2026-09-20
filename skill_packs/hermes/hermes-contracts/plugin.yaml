@@ -1,0 +1,12 @@
+name: hermes-contracts
+version: 0.1.0
+description: "Bridge to OpenZeppelin Contracts: scaffold ERC20/721/1155 and audit via slither/solhint."
+author: "Draymond-Orchestrator fleet (standalone Hermes plugin; contracts by OpenZeppelin)"
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - contracts_scaffold
+  - contracts_audit

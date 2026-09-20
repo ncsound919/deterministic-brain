@@ -1,0 +1,12 @@
+name: hermes-montage
+version: 0.1.0
+description: "Bridge to OpenMontage: dry-run agentic video pipeline planner (no render)."
+author: "Draymond-Orchestrator fleet (standalone Hermes plugin; video agent by calesthio)"
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_tools:
+  - montage_plan
+  - montage_status

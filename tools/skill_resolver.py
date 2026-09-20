@@ -12,7 +12,14 @@ from pathlib import Path
 from typing import Dict, Optional
 
 
-SKILLS_ROOT = Path(os.getenv('SKILLS_BASE_PATH', r'C:\Users\User\Documents\skills'))
+# Resolve skills from the brain's OWN skill packs by default. The old default
+# pointed at a user-profile folder (C:\Users\User\Documents\skills) that is
+# outside the repo: every chain step resolved there first, found nothing, and
+# silently fell through — tasks "completed" without doing work.
+_BRAIN_ROOT = Path(__file__).resolve().parents[1]
+SKILLS_ROOT = Path(os.getenv('SKILLS_BASE_PATH') or (_BRAIN_ROOT / 'skill_packs'))
+# Optional extra search roots (env-separated), e.g. the legacy Documents dir.
+_EXTRA_ROOTS = [Path(p) for p in os.getenv('SKILLS_EXTRA_PATHS', '').split(os.pathsep) if p.strip()]
 
 # Fallback roots the resolver searches when the configured SKILLS_ROOT has no
 # matching skill: the brain's own skill_packs (native skill.md) and lanes.
@@ -59,15 +66,27 @@ class SkillResolver:
 
         return None
 
+    # Generic tokens carry zero discriminating signal — a file named
+    # "skill.md" must never match every query via substring logic.
+    _GENERIC_TOKENS = {"skill", "skills", "readme", "index", "main", "template"}
+
     def _matches(self, file_stem: str, normalized: str, original: str) -> bool:
-        """Check if file stem matches the skill name."""
+        """Check if file stem matches the skill name (token-aware)."""
+        def tokens(s: str) -> set:
+            parts = s.lower().replace("-", "_").replace(" ", "_").split("_")
+            return {p for p in parts if p and p not in self._GENERIC_TOKENS}
+
         stem = file_stem.lower()
         orig = original.lower()
-        return (stem == normalized or
-                stem == orig or
-                normalized in stem or
-                stem in normalized or
-                orig in stem)
+        if stem == normalized or stem == orig:
+            return True
+
+        stem_toks = tokens(file_stem)
+        query_toks = tokens(normalized) | tokens(original)
+        if not stem_toks or not query_toks:
+            return False
+        # Match when any meaningful token coincides exactly.
+        return bool(stem_toks & query_toks)
 
     def resolve_with_gemma(self, skill_name: str) -> Optional[str]:
         """Try direct resolution first, then Gemma fallback."""

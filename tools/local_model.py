@@ -47,7 +47,11 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
-DEFAULT_LLAMA_SERVER_URL = "http://127.0.0.1:8082"
+# llama.cpp OpenAI-compatible server (Spark-X2.5-4B). :11434 is the shared
+# local-model port, so this backend activates against the same host that the
+# OllamaBackend probes — the Ollama probe fails on llama.cpp (/api/tags 404)
+# and this backend takes over.
+DEFAULT_LLAMA_SERVER_URL = "http://127.0.0.1:11434"
 DEFAULT_TEMPERATURE = 0.1
 DEFAULT_SEED = 42
 DEFAULT_MAX_TOKENS = 2048
@@ -60,6 +64,7 @@ DEFAULT_TIMEOUT = 120
 DEFAULT_MODEL_PREFERENCE: List[str] = [
     os.getenv("LOCAL_MODEL_NAME", ""),
     os.getenv("OLLAMA_MODEL", ""),
+    "minicpm5",
     "qwen3.5",
     "phi4-mini",
     "medgemma",
@@ -517,14 +522,25 @@ class LlamaServerBackend(LocalModelBackend):
                     return m
         return installed[0] if installed else "qwen3.5:4b"
 
+    def fast_model_name(self) -> str:
+        """Lighter model for interactive calls if one is installed, else default."""
+        fast = _env("LOCAL_MODEL_FAST", "").strip()
+        installed = self.list_models()
+        if fast and installed:
+            for m in installed:
+                if m == fast or m.endswith(f":{fast}"):
+                    return m
+        return self.model_name()
+
     def chat(self, system: str, user: str, max_tokens: int = DEFAULT_MAX_TOKENS,
-             temperature: float = DEFAULT_TEMPERATURE, use_cot: bool = False) -> str:
+             temperature: float = DEFAULT_TEMPERATURE, use_cot: bool = False,
+             fast: bool = False, model: str = "") -> str:
         messages: List[Dict[str, str]] = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": user})
         payload = {
-            "model": self.model_name(),
+            "model": model or (self.fast_model_name() if fast else self.model_name()),
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
@@ -544,14 +560,39 @@ class LlamaServerBackend(LocalModelBackend):
         return self.chat("", prompt, max_tokens=max_tokens, temperature=temperature)
 
     def generate_json(self, prompt: str, max_tokens: int = DEFAULT_MAX_TOKENS,
-                      temperature: float = DEFAULT_TEMPERATURE) -> Dict[str, Any]:
+                      temperature: float = DEFAULT_TEMPERATURE,
+                      fast: bool = False) -> Dict[str, Any]:
         system = ("You are a deterministic JSON generator. Reply with ONLY valid JSON. "
                   "No prose, no markdown fences, no explanation.")
-        content = self.chat(system, prompt, max_tokens=max_tokens, temperature=temperature)
+        content = self.chat(system, prompt, max_tokens=max_tokens, temperature=temperature, fast=fast)
         parsed = _extract_dict(content)
         if parsed is not None:
             return parsed
         return {}
+
+    def call_tools(self, prompt: str, tools: List[Dict[str, Any]], max_tokens: int = 256,
+                   temperature: float = DEFAULT_TEMPERATURE, fast: bool = False) -> Dict[str, Any]:
+        """Tool calling via the OpenAI-compatible /v1 endpoint.
+
+        llama.cpp has no Ollama-native /api/chat, so unlike the Ollama backend
+        this cannot fall back to a native path — it speaks OpenAI tools directly.
+        """
+        payload = {
+            "model": self.fast_model_name() if fast else self.model_name(),
+            "messages": [{"role": "user", "content": prompt}],
+            "tools": tools,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stream": False,
+        }
+        data = self._post("/v1/chat/completions", payload)
+        if not data:
+            return {}
+        msg = (data.get("choices", [{}])[0].get("message", {}) or {})
+        return {
+            "content": (msg.get("content") or "").strip(),
+            "tool_calls": msg.get("tool_calls") or [],
+        }
 
     def ensure_model(self, name: str) -> Dict[str, Any]:
         return {"ok": False, "error": "llama-server cannot auto-pull models; use ollama pull", "model": name}

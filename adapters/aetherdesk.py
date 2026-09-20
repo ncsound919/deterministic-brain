@@ -66,7 +66,9 @@ class AetherDeskAdapter(BaseAdapter):
         return httpx.AsyncClient(
             base_url=self.base_url,
             timeout=self.timeout,
-            headers={"Authorization": f"Bearer {self.api_key}"},
+            # AetherDesk's verify_api_key reads the x-api-key header
+            # (src/api/services/auth.py) — it never parses Authorization Bearer.
+            headers={"x-api-key": self.api_key},
         )
 
     async def health(self) -> AdapterCallResult:
@@ -123,14 +125,16 @@ class AetherDeskAdapter(BaseAdapter):
 
     async def get_campaign_stats(self) -> CampaignStats:
         async with self._client() as client:
-            resp = await client.get("/campaign/stats")
+            # Real route: GET /api/v1/stats (campaign.py:474). Field mapping:
+            # total_calls_made / interested exist; voicemail is not reported.
+            resp = await client.get("/api/v1/stats")
             resp.raise_for_status()
             data = resp.json()
             return CampaignStats(
-                total_calls=data.get("total_calls", 0),
-                answered=data.get("answered", 0),
-                voicemail=data.get("voicemail", 0),
-                converted=data.get("converted", 0),
+                total_calls=int(data.get("total_calls_made", 0)),
+                answered=int(data.get("interested", 0)),
+                voicemail=int(data.get("needs_human_follow_up", 0)),
+                converted=int(data.get("interested", 0)),
             )
 
     async def get_usage_and_billing(self) -> UsageReport:
@@ -147,7 +151,7 @@ class AetherDeskAdapter(BaseAdapter):
     async def get_call_outcomes(self, since: datetime) -> List[CallEvent]:
         async with self._client() as client:
             resp = await client.get(
-                "/campaign/stats",
+                "/api/v1/stats",
                 params={"since": since.isoformat()},
             )
             resp.raise_for_status()
@@ -170,14 +174,17 @@ class AetherDeskAdapter(BaseAdapter):
 
     async def validate_lead_inventory(self, config: CampaignConfig) -> bool:
         async with self._client() as client:
+            # GET /api/v1/leads?status=... (campaign.py:141) — the summary
+            # endpoint this used to call does not exist. Count fresh leads.
             resp = await client.get(
-                "/campaign/leads/summary",
-                params={"profile_id": config.profile_id, "tenant_id": config.tenant_id},
+                "/api/v1/leads",
+                params={"status": "new"},
             )
             resp.raise_for_status()
-            data = resp.json()
-            leads_available = int(data.get("leads_available", 0))
-            return leads_available > 0
+            rows = resp.json()
+            if isinstance(rows, dict):
+                rows = rows.get("leads") or []
+            return len(rows or []) > 0
 
     async def launch_campaign(self, config: CampaignConfig, idempotency_key: str) -> CampaignStatus:
         async def _do_launch() -> AdapterCallResult:
@@ -191,7 +198,7 @@ class AetherDeskAdapter(BaseAdapter):
             }
             async with self._client() as client:
                 resp = await client.post(
-                    "/campaign/launch",
+                    "/api/v1/launch",
                     json=payload,
                     headers={"X-Idempotency-Key": idempotency_key},
                 )

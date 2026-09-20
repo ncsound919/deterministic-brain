@@ -41,6 +41,34 @@ LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8082")
 LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen3.5:4b")
 _API_PORT = int(os.environ.get("API_PORT", 8000))
 
+# ── Dev-Brain Advisory Layer (deterministic, no LLM) ─────────────
+# Dev-Brain (Dev-Brain/dist/server.cjs, port 3450) is the deterministic
+# advisor: weighted decision matrix over 120 leaders across 6 sectors
+# (Dev, Business, Marketing, Financial, ScienceBiotech, ScienceSports).
+# The deterministic brain (this service, 3210) is the executor. Advisory
+# consults are best-effort and never block task execution.
+DEV_BRAIN_URL = os.getenv("DEV_BRAIN_URL", "http://127.0.0.1:3450")
+
+def _consult_dev_brain_sync(query: str, timeout: float = 2.0) -> Optional[Dict[str, Any]]:
+    """Consult Dev-Brain for deterministic advisory (weighted matrix). Best-effort, never raises."""
+    try:
+        import httpx as _hb
+        url = f"{DEV_BRAIN_URL.rstrip('/')}/api/decide"
+        # Use a single synthetic candidate so Dev-Brain's templated matrix fires
+        payload = {
+            "problem": query[:2000],
+            "candidates": [{"name": "execute-as-planned", "description": query[:400], "tags": ["executor"]}],
+            "strategy": "balanced_pareto",
+        }
+        resp = _hb.post(url, json=payload, timeout=timeout)
+        if resp.is_success:
+            data = resp.json()
+            if isinstance(data, dict) and "options" in data:
+                return data
+    except Exception as _e:
+        _api_logger.debug("Dev-Brain advisory skipped: %s", _e)
+    return None
+
 # Bundle config cache (avoid YAML parse on every /bundles request)
 _BUNDLES_CACHE = {"mtime": 0, "bundles": []}
 
@@ -75,6 +103,13 @@ _ul2_adapter = UL2Adapter(
     base_url=os.environ.get("UL2_API_URL", "http://127.0.0.1:3004"),
 )
 
+# Recourse Adapter (shared instance for the self-developing architecture OS)
+from adapters.recourse import RecourseAdapter
+_recourse_adapter = RecourseAdapter(
+    base_url=os.environ.get("RECOURSE_URL", "http://127.0.0.1:3050"),
+    timeout=float(os.environ.get("RECOURSE_TIMEOUT_MS", "30000")) / 1000.0,
+)
+
 # Inject adapters into the deterministic governor once, so the route handler
 # can dispatch through a shared adapter registry rather than creating clients
 # on each request.
@@ -84,6 +119,7 @@ _governor.register_adapter("openhub", _openhub_adapter)
 _governor.register_adapter("aetherdesk", _aetherdesk_adapter)
 _governor.register_adapter("uplift-venture", _uplift_adapter)
 _governor.register_adapter("ul2", _ul2_adapter)
+_governor.register_adapter("recourse", _recourse_adapter)
 
 def _get_bundles_cached():
     import yaml
@@ -161,6 +197,7 @@ from api.routes.media import router as media_router
 from api.routes.knowledge import router as knowledge_router
 from api.routes.agi import router as agi_router
 from api.routes.acquisition import router as acquisition_router
+from api.routes.genome import router as genome_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -349,6 +386,7 @@ app.include_router(media_router)
 app.include_router(knowledge_router)
 app.include_router(agi_router)
 app.include_router(acquisition_router)
+app.include_router(genome_router)
 
 # Notifications
 try:
@@ -592,6 +630,22 @@ def run_task(req: TaskRequest) -> Dict:
                     tracker.set_agent_status(agent_id, "online")
         except Exception as _ds:
             _api_logger.debug("Dashboard sync skipped: %s", _ds)
+
+        # ---- Dev-Brain Advisory (deterministic, best-effort, never blocks) ----
+        # Attach weighted decision advisory so callers (Draymond fusion, UI) see
+        # both advisor (Dev-Brain 120 leaders, 6 sectors) and executor (this brain)
+        # in a single /task round trip. If Dev-Brain is down, result is unchanged.
+        try:
+            advisory = _consult_dev_brain_sync(req.query, timeout=1.8)
+            if advisory and isinstance(result, dict):
+                result.setdefault("advisory", {})
+                result["advisory"]["dev_brain"] = advisory
+                # Surface the recommended option id as a hint for skill selection
+                rec = advisory.get("recommendedOptionId")
+                if rec:
+                    result["advisory"]["recommended_option"] = rec
+        except Exception as _ad:
+            _api_logger.debug("Dev-Brain advisory attach skipped: %s", _ad)
             
         return result if result else {"status": "ok", "final_output": {}, "knowledge_used": 0}
     except Exception as e:
@@ -606,6 +660,35 @@ def run_task(req: TaskRequest) -> Dict:
             "traceback": tb.splitlines()[-8:],
         })
 
+
+# ── Dev-Brain Advisory Proxy (explicit endpoints) ──────────────
+@app.get("/advisory/dev-brain/status")
+def dev_brain_status() -> Dict:
+    """Health probe for Dev-Brain advisory layer (never throws)."""
+    try:
+        import httpx as _hb
+        r = _hb.get(f"{DEV_BRAIN_URL.rstrip('/')}/api/health", timeout=1.5)
+        return {"dev_brain_url": DEV_BRAIN_URL, "reachable": r.is_success, "status": r.json() if r.is_success else None}
+    except Exception as e:
+        return {"dev_brain_url": DEV_BRAIN_URL, "reachable": False, "error": str(e)}
+
+class DevBrainDecideRequest(BaseModel):
+    problem: str
+    candidates: List[Dict[str, Any]] = []
+    strategy: str = "balanced_pareto"
+
+@app.post("/advisory/dev-brain/decide")
+def dev_brain_decide_proxy(req: DevBrainDecideRequest) -> Dict:
+    """Proxy a deterministic matrix request to Dev-Brain (3210 → 3450). Advisory only."""
+    try:
+        import httpx as _hb
+        payload = {"problem": req.problem, "candidates": req.candidates, "strategy": req.strategy}
+        r = _hb.post(f"{DEV_BRAIN_URL.rstrip('/')}/api/decide", json=payload, timeout=4.0)
+        if r.is_success:
+            return {"ok": True, "source": "dev-brain", "matrix": r.json()}
+        return {"ok": False, "error": f"Dev-Brain HTTP {r.status_code}", "body": r.text[:500]}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail={"error": str(e), "dev_brain_url": DEV_BRAIN_URL})
 
 @app.post("/reason")
 def reason_only(req: TaskRequest) -> Dict:
@@ -2863,6 +2946,9 @@ _GOVERNOR_ROUTES = [
     {"patterns": ["community", "member", "course", "marketplace", "education"], "target": "ul2", "action": "community_feature"},
     {"patterns": ["call", "voice", "routing", "recording", "sip", "telephony"], "target": "aetherdesk", "action": "call_center"},
     {"patterns": ["research", "simulation", "clinical", "archetype", "playbook", "bio", "genome"], "target": "bb-tech", "action": "research_experiment"},
+    # Recourse: autonomous self-development / self-healing / tool registry /
+    # recursive-math / template component building intent.
+    {"patterns": ["self-repair", "self_repair", "self-heal", "tool registry", "recursive math", "dream engine", "template component", "component template", "recourse"], "target": "recourse", "action": "registry"},
 ]
 
 _GOVERNOR_ADAPTERS = {
@@ -2871,6 +2957,7 @@ _GOVERNOR_ADAPTERS = {
     "aetherdesk": _aetherdesk_adapter,
     "uplift-venture": _uplift_adapter,
     "ul2": _ul2_adapter,
+    "recourse": _recourse_adapter,
 }
 
 class GovernorRouteRequest(BaseModel):
@@ -3176,6 +3263,80 @@ def kaggle_research_status() -> Dict:
     base = get_kaggle().status()
     base["feeds"] = len(get_kaggle_research().list_feeds())
     return base
+
+# ── Recourse ───────────────────────────────────────────────────────
+# Bridge to the autonomous self-developing architecture OS (agents/recourse,
+# canonical port 3050). Defined BEFORE the SPA catch-all so /recourse/* is
+# never swallowed by index.html. Fail-soft: when Recourse is down these report
+# 502 with the honest error instead of fabricating data.
+@app.get("/recourse/status")
+async def recourse_status() -> Dict:
+    result = await _recourse_adapter.get_status()
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse unreachable: {result.error or result.status_code}")
+    data = result.data or {}
+    return {"status": "ok", "recourse": data.get("status", data)}
+
+@app.get("/recourse/registry")
+async def recourse_registry() -> Dict:
+    result = await _recourse_adapter.get_registry()
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse unreachable: {result.error or result.status_code}")
+    data = result.data or {}
+    return {"status": "ok", "registry": data.get("registry", data)}
+
+@app.get("/recourse/provenance")
+async def recourse_provenance() -> Dict:
+    result = await _recourse_adapter.get_provenance()
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse unreachable: {result.error or result.status_code}")
+    return {"status": "ok", "provenance": (result.data or {})}
+
+@app.post("/recourse/verify")
+async def recourse_verify(body: Dict[str, Any]) -> Dict:
+    result = await _recourse_adapter.execute("verify_code", body or {})
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse verify failed: {result.error or result.status_code}")
+    return {"status": "ok", "verifier": (result.data or {}).get("result", result.data)}
+
+@app.post("/recourse/repair")
+async def recourse_repair(body: Dict[str, Any]) -> Dict:
+    result = await _recourse_adapter.execute("self_repair", body or {})
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse repair failed: {result.error or result.status_code}")
+    data = result.data or {}
+    return {"status": "ok", "repair": data.get("healResult", data)}
+
+@app.post("/recourse/scan-heal")
+async def recourse_scan_heal() -> Dict:
+    result = await _recourse_adapter.execute("scan_heal", {})
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse scan-heal failed: {result.error or result.status_code}")
+    data = result.data or {}
+    return {"status": "ok", "scan_heal": data}
+
+@app.post("/recourse/build")
+async def recourse_build(body: Dict[str, Any]) -> Dict:
+    result = await _recourse_adapter.execute("build_component", body or {})
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse build failed: {result.error or result.status_code}")
+    return {"status": "ok", "build": result.data}
+
+@app.get("/recourse/math")
+async def recourse_math_state() -> Dict:
+    result = await _recourse_adapter.execute("math_state", {})
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse math state failed: {result.error or result.status_code}")
+    data = result.data or {}
+    return {"status": "ok", "math": data.get("mathResult", data)}
+
+@app.get("/recourse/lego")
+async def recourse_lego_state() -> Dict:
+    result = await _recourse_adapter.execute("lego_state", {})
+    if not result.ok:
+        raise HTTPException(status_code=502, detail=f"Recourse lego state failed: {result.error or result.status_code}")
+    data = result.data or {}
+    return {"status": "ok", "lego": data.get("state", data)}
 
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):

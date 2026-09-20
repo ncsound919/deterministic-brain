@@ -396,7 +396,22 @@ class TestLocalModelLive:
         assert "backends" in status
 
     def test_vision_capability_live(self):
-        """The gemma models on this box advertise vision."""
+        """supports_vision() reflects the ACTIVE model's capability, not a fixed roster.
+
+        The local tier is configurable: it may be a text-only model (e.g.
+        Spark-X2.5-4B) or a vision model (gemma/qwen3.5/medgemma). Assert the
+        invariant that the reported capability matches the active model rather
+        than hardcoding True for a specific box.
+        """
         _require_local()
         svc = get_local_model()
-        assert svc.supports_vision() is True
+        cap = svc.supports_vision()
+        assert isinstance(cap, bool)
+
+        model = (svc.status().get("model") or "").lower()
+        vision_tags = ("gemma-4", "gemma3", "qwen3.5", "medgemma", "vl", "llava")
+        if any(tag in model for tag in vision_tags):
+            assert cap is True
+        else:
+            # A text-only model must not claim vision support.
+            assert cap is False
