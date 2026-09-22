@@ -47,12 +47,18 @@ def design_and_build(
     design = og_glass_brief(goal)
     steps.append(_step("design", design))
     design_md: Optional[str] = None
+    refined_design_md: Optional[str] = None
     preset_id: Optional[str] = None
     quality_passed: Optional[bool] = None
+    refinement: Optional[Dict[str, Any]] = None
     if design.get("ok"):
         preset_id = design.get("preset_resolved")
         quality_passed = design.get("quality", {}).get("passed")
         design_md = design.get("design_md")
+        refined = design.get("refined") or {}
+        refined_design_md = refined.get("refined_design_md")
+        if refined.get("strategy"):
+            refinement = {"strategy": refined.get("strategy"), "math_report": refined.get("math_report"), "quality": refined.get("refined_quality")}
 
     # 2. Backend generation (BigBack REST)
     spec: Dict[str, Any] = {
@@ -77,6 +83,8 @@ def design_and_build(
         "plan": plan,
         "design": {"preset_id": preset_id, "quality_passed": quality_passed, "source": design.get("source")},
         "design_md": design_md,
+        "refined_design_md": refined_design_md,
+        "refinement": refinement,
         "backend": {"framework": framework, "files": len(backend.get("files", [])) if backend.get("ok") else 0, "ok": backend.get("ok")},
         "beta": {"status": beta.get("status")},
         "steps": steps,
