@@ -531,3 +531,27 @@ def get_tool(name: str) -> Dict[str, Any]:
 
 
 tool_registry = ToolRegistry()
+
+
+# Fleet bridges (OG-Glass / BigBack / Middle-Man / Beta Team) — registered at
+# import so they are discoverable; each returns honest per-step status.
+try:
+    from tools.fleet_bridges import (  # noqa: E402
+        bigback_generate,
+        fleet_status,
+        og_glass_brief,
+        middleman_relay,
+        beta_team_status,
+        math_x_status,
+    )
+
+    tool_registry.register("fleet_status", fleet_status)
+    tool_registry.register("og_glass_brief", og_glass_brief)
+    tool_registry.register("bigback_generate", bigback_generate)
+    tool_registry.register("middleman_relay", middleman_relay)
+    tool_registry.register("beta_team_status", beta_team_status)
+    tool_registry.register("math_x_status", math_x_status)
+except Exception as exc:  # pragma: no cover
+    import logging
+
+    logging.getLogger(__name__).debug(f"fleet bridges not registered: {exc}")
