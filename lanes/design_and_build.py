@@ -57,8 +57,16 @@ def design_and_build(
         design_md = design.get("design_md")
         refined = design.get("refined") or {}
         refined_design_md = refined.get("refined_design_md")
+        refined_grade = refined.get("refined_grade")
+        kit = refined.get("kit")
         if refined.get("strategy"):
-            refinement = {"strategy": refined.get("strategy"), "math_report": refined.get("math_report"), "quality": refined.get("refined_quality")}
+            refinement = {
+                "strategy": refined.get("strategy"),
+                "math_report": refined.get("math_report"),
+                "quality": refined.get("refined_quality"),
+                "grade": refined_grade,
+                "kit_files": len(kit) if isinstance(kit, list) else 0,
+            }
 
     # 2. Backend generation (BigBack REST)
     spec: Dict[str, Any] = {
