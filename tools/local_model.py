@@ -532,6 +532,20 @@ class LlamaServerBackend(LocalModelBackend):
                     return m
         return self.model_name()
 
+    def vision_model_name(self) -> str:
+        """Best installed vision-capable model, or the default llama-server model."""
+        override = _env("LOCAL_MODEL_VISION", "").strip()
+        installed = self.list_models()
+        if override and installed:
+            for m in installed:
+                if m == override or m.endswith(f":{override}"):
+                    return m
+        for pref in ("qwen3.5", "medgemma", "gemma-4", "gemma3", "llava", "qwen2.5-vl"):
+            for m in installed:
+                if pref.lower() in m.lower():
+                    return m
+        return self.model_name()
+
     def chat(self, system: str, user: str, max_tokens: int = DEFAULT_MAX_TOKENS,
              temperature: float = DEFAULT_TEMPERATURE, use_cot: bool = False,
              fast: bool = False, model: str = "") -> str:

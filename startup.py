@@ -384,8 +384,8 @@ def main() -> None:
         epilog=__doc__,
     )
     parser.add_argument("--no-server", action="store_true", help="Skip API server")
-    parser.add_argument("--host", default="0.0.0.0", help="API host")
-    parser.add_argument("--port", type=int, default=8000, help="API port")
+    parser.add_argument("--host", default=os.environ.get("BRAIN_HOST", "0.0.0.0"), help="API host")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("API_PORT", 8000)), help="API port")
     parser.add_argument("--status", action="store_true", help="Show system status and exit")
     parser.add_argument("--stop", action="store_true", help="Stop daemons and exit")
     parser.add_argument("--no-cron", action="store_true", help="Skip cron scheduler")

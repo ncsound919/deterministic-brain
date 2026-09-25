@@ -64,7 +64,7 @@ class BrainConfig(BaseSettings):
     )
     ollama_model: str = "qwen3:4b"
     local_model_fast: str = "qwen3:0.6b"
-    # Local-first tier: Spark-X2.5-4B served by llama.cpp on :11434
+    # Local-first tier: MiniCPM5-1B served by llama.cpp on :11434
     # (OpenAI-compatible /v1). The OllamaBackend points at the same port but
     # probes Ollama-native /api/tags, which llama.cpp does not serve, so the
     # LlamaServerBackend is the backend that actually activates here.
@@ -72,7 +72,7 @@ class BrainConfig(BaseSettings):
         "http://127.0.0.1:11434",
         validation_alias=AliasChoices("LLAMA_SERVER_URL", "LOCAL_MODEL_URL"),
     )
-    local_model_name: str = "minicpm5-2b"
+    local_model_name: str = "minicpm5-1b"
 
     # --- Neo4j ---
     neo4j_uri: str = ""
@@ -244,7 +244,7 @@ def get_setting_schema() -> dict:
             {"key": "NEO4J_DEPTH", "type": "int", "default": "1", "label": "Neo4j Depth", "min": 1, "max": 5},
         ],
         "Models": [
-            {"key": "LOCAL_MODEL_NAME", "type": "string", "default": "minicpm5-2b", "label": "Preferred Local Model (blank = auto)"},
+            {"key": "LOCAL_MODEL_NAME", "type": "string", "default": "minicpm5-1b", "label": "Preferred Local Model (blank = auto)"},
             {"key": "LOCAL_MODEL_FAST", "type": "string", "default": "qwen3:0.6b", "label": "Fast-tier Local Model (interactive calls)"},
             {"key": "OLLAMA_BASE_URL", "type": "string", "default": "http://localhost:11434", "label": "Ollama Base URL"},
             {"key": "OLLAMA_MODEL", "type": "string", "default": "qwen3:4b", "label": "Ollama Model"},

@@ -450,7 +450,7 @@ def run_autodream(dry_run: bool = False) -> Dict:
     try:
         from orchestration.event_bus import event_bus
         if corrections_written > 0:
-            event_bus.emit("correction_found", {"count": corrections_written})
+            event_bus.emit("correction_found", count=corrections_written)
         event_bus.emit("autodream_run", dry_run=dry_run,
                        corrections_count=len(results["corrections"]),
                        corrections_written=corrections_written)
