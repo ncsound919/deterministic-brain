@@ -7,6 +7,7 @@ attempts to serve requests.
 
 from __future__ import annotations
 import importlib
+import importlib.util
 import logging
 import os
 import sys
@@ -54,10 +55,12 @@ OPTIONAL_PACKAGES = [
 
 
 def _check_import(name: str) -> bool:
+    # Locate the module WITHOUT importing it. Importing optional heavy deps
+    # (e.g. sentence_transformers -> torch) at boot hangs startup; find_spec
+    # proves availability without executing module code.
     try:
-        importlib.import_module(name)
-        return True
-    except ImportError:
+        return importlib.util.find_spec(name) is not None
+    except (ImportError, ValueError, ModuleNotFoundError):
         return False
 
 
