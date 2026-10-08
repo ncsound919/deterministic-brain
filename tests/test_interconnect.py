@@ -229,7 +229,7 @@ def mocked_orchestrator(openhub_adapter):
 async def test_orchestrator_run_review(mocked_orchestrator):
     aeth = mocked_orchestrator.aetherdesk
 
-    stats_resp = MagicMock(status_code=200, json=lambda: {"total_calls": 45, "answered": 12, "voicemail": 8, "converted": 3, "interested": 3})
+    stats_resp = MagicMock(status_code=200, json=lambda: {"total_calls_made": 45, "interested": 12, "needs_human_follow_up": 8})
     usage_resp = MagicMock(status_code=200, json=lambda: {"total_calls": 100, "total_minutes": 234.5, "total_cost": 3.52})
     pipeline_resp = MagicMock(status_code=200, json=lambda: {"active": 1, "completed_today": 3, "failed_today": 0, "queue_depth": 0})
 
@@ -293,7 +293,7 @@ async def test_orchestrator_run_stage(mocked_orchestrator):
     )
     aeth = mocked_orchestrator.aetherdesk
 
-    mock_leads_resp = MagicMock(status_code=200, json=lambda: {"leads_available": 25})
+    mock_leads_resp = MagicMock(status_code=200, json=lambda: {"leads": [{"id": "LEAD-001"}] * 25})
     plan_result = await mocked_orchestrator.run_plan({"phase": "review", "status": "ok", "context": ctx})
     assert plan_result["status"] == "ok"
 

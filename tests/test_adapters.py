@@ -232,6 +232,88 @@ def adapter():
     return AetherDeskAdapter(base_url="http://aetherdesk.local", api_key="test-key")
 
 
+# ═════════════════════════════════════════════════════════════════════
+# Base-URL normalisation
+# ═════════════════════════════════════════════════════════════════════
+# Every call site passes a full "/api/v1/..." path, so the client base must be
+# a bare origin. .env.local sets AETHERDESK_API_URL WITH the /api/v1 suffix;
+# joining that to "/api/v1/usage" would produce /api/v1/api/v1/usage.
+
+def test_base_url_strips_api_v1_suffix():
+    a = AetherDeskAdapter(base_url="http://127.0.0.1:8002/api/v1", api_key="k")
+    assert a.base_url == "http://127.0.0.1:8002"
+
+
+def test_base_url_accepts_bare_origin():
+    a = AetherDeskAdapter(base_url="http://127.0.0.1:8002", api_key="k")
+    assert a.base_url == "http://127.0.0.1:8002"
+
+
+def test_base_url_strips_trailing_slashes():
+    a = AetherDeskAdapter(base_url="http://127.0.0.1:8002/api/v1/", api_key="k")
+    assert a.base_url == "http://127.0.0.1:8002"
+
+
+# ═════════════════════════════════════════════════════════════════════
+# Route contract — these paths 404'd in production
+# ═════════════════════════════════════════════════════════════════════
+# AetherDesk mounts campaign.py with prefix="/campaign" under /api/v1, so
+# /api/v1/stats, /api/v1/leads and /api/v1/launch do not exist. A permissive
+# health check (status < 500) reported those 404s as "ok" and hid the fact that
+# the whole integration was dead.
+
+@pytest.mark.asyncio
+async def test_health_rejects_404_instead_of_reporting_ok(adapter):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 404
+    mock_resp.json.return_value = {"detail": "Not Found"}
+
+    with patch.object(adapter, "_client") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+        result = await adapter.health()
+        assert not result.ok
+        assert result.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_health_rejects_401(adapter):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 401
+    mock_resp.json.return_value = {"detail": "invalid api key"}
+
+    with patch.object(adapter, "_client") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
+        result = await adapter.health()
+        assert not result.ok
+
+
+@pytest.mark.asyncio
+async def test_launch_campaign_posts_to_the_real_route(adapter):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "campaign_id": "C-1", "status": "launched", "leads_queued": 4,
+    }
+
+    with patch.object(adapter, "call_with_idempotency", new=AsyncMock()) as idem:
+        async def _passthrough(key, fn):
+            return await fn()
+        idem.side_effect = _passthrough
+        with patch.object(adapter, "_client") as mock_client:
+            post = AsyncMock(return_value=mock_resp)
+            mock_client.return_value.__aenter__.return_value.post = post
+            status = await adapter.launch_campaign(
+                CampaignConfig(
+                    profile_id="p", max_concurrent=1, delay_between_calls=1.0,
+                    filter_status="new", lead_limit=10, tenant_id="TENANT-001",
+                ),
+                "idem-1",
+            )
+            assert post.call_args[0][0] == "/api/v1/campaign/launch"
+            assert status.id == "C-1"
+            assert status.leads_queued == 4
+
+
 @pytest.mark.asyncio
 async def test_adapter_health_ok(adapter):
     mock_resp = MagicMock()
@@ -258,18 +340,28 @@ async def test_adapter_health_fails(adapter):
 
 @pytest.mark.asyncio
 async def test_get_campaign_stats(adapter):
+    # Response shape mirrors the real route (campaign.py:554-563), which returns
+    # total_calls_made / interested / needs_human_follow_up — NOT the
+    # total_calls/answered/voicemail names the adapter's dataclass uses.
     mock_resp = MagicMock()
     mock_resp.status_code = 200
     mock_resp.json.return_value = {
-        "total_calls": 45, "answered": 12, "voicemail": 8, "converted": 3
+        "total_leads": 9,
+        "untouched_leads": 5,
+        "total_calls_made": 45,
+        "interested": 12,
+        "needs_human_follow_up": 8,
+        "conversion_rate": "26.7%",
     }
 
     with patch.object(adapter, "_client") as mock_client:
-        mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=[mock_resp])
+        get = AsyncMock(side_effect=[mock_resp])
+        mock_client.return_value.__aenter__.return_value.get = get
         stats = await adapter.get_campaign_stats()
         assert stats.total_calls == 45
         assert stats.answered == 12
-        assert stats.converted == 3
+        # /campaign/stats is the real route; the bare /api/v1/stats 404s.
+        assert get.call_args[0][0] == "/api/v1/campaign/stats"
 
 
 @pytest.mark.asyncio
@@ -288,16 +380,24 @@ async def test_get_usage_and_billing(adapter):
 
 @pytest.mark.asyncio
 async def test_validate_lead_inventory_has_leads(adapter):
+    # /campaign/leads returns a bare JSON list (campaign.py:191), not a wrapper
+    # object, so "leads_available" style counts are not a real response shape.
     mock_resp = MagicMock()
     mock_resp.status_code = 200
-    mock_resp.json.return_value = {"leads_available": 5}
+    mock_resp.json.return_value = [
+        {"id": "L-1", "status": "new"},
+        {"id": "L-2", "status": "new"},
+    ]
 
     with patch.object(adapter, "_client") as mock_client:
-        mock_client.return_value.__aenter__.return_value.get = AsyncMock(side_effect=[mock_resp])
+        get = AsyncMock(side_effect=[mock_resp])
+        mock_client.return_value.__aenter__.return_value.get = get
         assert await adapter.validate_lead_inventory(CampaignConfig(
             profile_id="test", max_concurrent=1, delay_between_calls=5.0,
             filter_status="new", lead_limit=50
         ))
+        assert get.call_args[0][0] == "/api/v1/campaign/leads"
+        assert get.call_args[1]["params"] == {"status": "new"}
 
 
 @pytest.mark.asyncio

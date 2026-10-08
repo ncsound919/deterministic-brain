@@ -32,7 +32,7 @@ class OllamaClient:
       - gemma3:4b   (~3GB) — good reasoning, code
       - gemma3:1b   (~1GB) — ultra-light, fast
       - llama3.2:3b (~2GB) — strong all-around
-      - qwen3:4b    (~3GB) — excellent code generation
+      - qwen3.5-2b  (1.3GB) — the local model (text+vision)
     """
 
     def __init__(self, model: str = "gemma3:4b"):

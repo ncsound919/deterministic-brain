@@ -1,7 +1,6 @@
 """Tests for the deterministic (zero-LLM) cancer verifier."""
 import json
 import os
-import sys
 import tempfile
 
 import pytest
@@ -91,31 +90,51 @@ def test_verify_events_are_recorded_on_event_bus():
 def test_verify_event_lands_in_dashboard_audit_feed():
     """The /cancer/verify HTTP route writes a `cancer_verify` trace event that
     /dashboard/audit surfaces (same store + allowlist)."""
+    import tools.dashboard as dashboard
+    import tools.tracing as tracing
+
     tmp = tempfile.mkdtemp()
     db = os.path.join(tmp, "traces.db")
-    old = os.environ.get("TRACE_DB")
-    os.environ["TRACE_DB"] = db
-    try:
-        # Fresh import so tracing picks up the temp TRACE_DB.
-        import importlib
-        for mod in ("tools.tracing", "tools.dashboard"):
-            if mod in sys.modules:
-                del sys.modules[mod]
-        from tools.tracing import log_event
-        from tools.dashboard import Dashboard
 
-        log_event("cancer_verify", {
+    # Point the tracing writer and the dashboard reader at a scratch DB by
+    # resetting their module-level connection state in place. Do NOT reload
+    # these modules from sys.modules: other test modules import their functions
+    # and singletons at collection time, so replacing the module object orphans
+    # them and leaks closed connections across the rest of the suite.
+    old_trace_db = tracing._DB_PATH
+    old_schema_initialized = tracing._schema_initialized
+    old_dash_db = dashboard.DB_PATH
+    old_dash_conn = dashboard._global_conn
+
+    tracing._close_connections()
+    if hasattr(tracing._local, "conn"):
+        del tracing._local.conn
+    tracing._DB_PATH = db
+    tracing._schema_initialized = False
+    dashboard.DB_PATH = db
+    dashboard._global_conn = None
+
+    try:
+        tracing.log_event("cancer_verify", {
             "target": "AUDIT-MARKER", "hypothesis_id": "h-a",
             "manifest_hash": "bb" * 32, "verdict": "pass", "score": 1.0,
             "signature": "c" * 64, "llm_used": False,
         })
-        feed = Dashboard().audit_feed()
+        feed = dashboard.Dashboard().audit_feed()
         markers = [e for e in feed if e["data"].get("target") == "AUDIT-MARKER"]
         assert len(markers) == 1
         assert markers[0]["event"] == "cancer_verify"
         assert markers[0]["data"]["llm_used"] is False
     finally:
-        if old is None:
-            os.environ.pop("TRACE_DB", None)
-        else:
-            os.environ["TRACE_DB"] = old
+        tracing._close_connections()
+        if hasattr(tracing._local, "conn"):
+            del tracing._local.conn
+        tracing._DB_PATH = old_trace_db
+        tracing._schema_initialized = old_schema_initialized
+        if old_dash_conn is not None:
+            try:
+                old_dash_conn.close()
+            except Exception:
+                pass
+        dashboard.DB_PATH = old_dash_db
+        dashboard._global_conn = None

@@ -59,8 +59,8 @@ DEFAULT_TIMEOUT = 120
 
 # Ordered preference when no explicit LOCAL_MODEL_NAME is set.
 # Names are matched by case-insensitive substring against installed models.
-# 2026-08-24 roster: qwen3.5:4b is the mid/vision/reasoning workhorse,
-# phi4-mini the terse backup, medgemma:4b the biomed specialist.
+# 2026-09-28: the local lane is a single model (qwen3.5-2b, text+vision); the
+# old multi-model specialist roster is retired.
 DEFAULT_MODEL_PREFERENCE: List[str] = [
     os.getenv("LOCAL_MODEL_NAME", ""),
     os.getenv("OLLAMA_MODEL", ""),
@@ -238,7 +238,7 @@ class OllamaBackend(LocalModelBackend):
         override = _env("LOCAL_MODEL_NAME", _env("OLLAMA_MODEL", ""))
         installed = self.list_models()
         if not installed:
-            return override or "qwen3:4b"
+            return override or "qwen3.5-2b"
         if override:
             for m in installed:
                 if m == override or m.endswith(f":{override}"):
@@ -259,8 +259,8 @@ class OllamaBackend(LocalModelBackend):
             for m in installed:
                 if m == override or m.endswith(f":{override}"):
                     return m
-        # qwen3.5:4b is multimodal (image+video) and beat the gemma-4 line
-        # on this host; medgemma:4b carries a SigLIP vision tower as backup.
+        # qwen3.5-2b is multimodal (image) and serves the vision path
+        # on this host; the model itself carries the vision tower.
         for pref in ("qwen3.5", "medgemma", "gemma-4", "gemma3", "llava", "qwen2.5-vl"):
             for m in installed:
                 if pref.lower() in m.lower():
@@ -288,9 +288,13 @@ class OllamaBackend(LocalModelBackend):
         return self.model_name()
 
     def ocr_model_name(self) -> Optional[str]:
-        """Document-OCR specialist, or None when not installed."""
+        """Document-OCR model, or None when no vision-capable local model is installed.
+
+        The local lane serves one multimodal model (qwen3.5-2b), so OCR falls
+        back to it. Kept as a lookup so a future OCR-specific lane still works.
+        """
         for m in self.list_models():
-            if "deepseek-ocr" in m.lower():
+            if "qwen3.5-2b" in m.lower():
                 return m
         return None
 
@@ -371,7 +375,7 @@ class OllamaBackend(LocalModelBackend):
     def fast_model_name(self) -> str:
         """A lighter model for interactive calls, when one is installed.
 
-        Set LOCAL_MODEL_FAST to pin it (e.g. 'qwen3:0.6b' or 'gemma3:1b').
+        Set LOCAL_MODEL_FAST to pin it (e.g. 'qwen3.5-2b').
         Falls back to the default model when no fast model is configured or
         installed, so it is always safe to call.
         """
@@ -382,7 +386,7 @@ class OllamaBackend(LocalModelBackend):
                 if m == fast or m.endswith(f":{fast}"):
                     return m
         # Known light models to prefer if present.
-        for pref in ("qwen3:0.6b", "qwen3:1.7b", "gemma3:1b", "gemma3:4b"):
+        for pref in ("qwen3.5-2b",):
             for m in installed:
                 if pref.lower() in m.lower():
                     return m
@@ -520,7 +524,7 @@ class LlamaServerBackend(LocalModelBackend):
             for m in installed:
                 if pref.lower() in m.lower():
                     return m
-        return installed[0] if installed else "qwen3.5:4b"
+        return installed[0] if installed else "qwen3.5-2b"
 
     def fast_model_name(self) -> str:
         """Lighter model for interactive calls if one is installed, else default."""
@@ -917,7 +921,7 @@ class LocalModelService:
     def ensure_model(self, name: str | None = None) -> Dict[str, Any]:
         """Pull a model into Ollama. Picks a default if none given."""
         if not name:
-            name = _env("LOCAL_MODEL_NAME", _env("OLLAMA_MODEL", "qwen3:4b"))
+            name = _env("LOCAL_MODEL_NAME", _env("OLLAMA_MODEL", "qwen3.5-2b"))
         for b in self.backends:
             if b.name == "ollama" and b.is_available():
                 return b.ensure_model(name)

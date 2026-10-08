@@ -229,10 +229,10 @@ class TestOllamaBackendUnit:
             status_code = 200
 
             def json(self):
-                return {"models": [{"name": "qwen3:4b"}, {"name": "gemma3:4b"}]}
+                return {"models": [{"name": "qwen3.5-2b"}, {"name": "gemma3:4b"}]}
 
         monkeypatch.setattr("tools.local_model.requests.get", lambda *a, **k: FakeResp())
-        assert backend.list_models() == ["qwen3:4b", "gemma3:4b"]
+        assert backend.list_models() == ["qwen3.5-2b", "gemma3:4b"]
 
     def test_is_available_false_when_no_models(self, monkeypatch):
         backend = OllamaBackend(base_url="http://fake:11434")
@@ -261,11 +261,11 @@ class TestOllamaBackendUnit:
 
     def test_model_name_prefers_env_override(self, monkeypatch):
         backend = OllamaBackend(base_url="http://fake:11434")
-        monkeypatch.setenv("LOCAL_MODEL_NAME", "qwen3:4b")
+        monkeypatch.setenv("LOCAL_MODEL_NAME", "qwen3.5-2b")
         monkeypatch.setattr(
-            backend, "list_models", lambda: ["gemma3:4b", "qwen3:4b", "other"]
+            backend, "list_models", lambda: ["gemma3:4b", "qwen3.5-2b", "other"]
         )
-        assert backend.model_name() == "qwen3:4b"
+        assert backend.model_name() == "qwen3.5-2b"
 
 
 class TestOllamaVisionAndTools:
@@ -286,13 +286,12 @@ class TestOllamaVisionAndTools:
         monkeypatch.setattr("tools.local_model.requests.get", lambda *a, **k: FakeResp())
         assert backend.supports_vision() is True
 
-    def test_vision_model_prefers_gemma(self, monkeypatch):
+    def test_vision_model_uses_local_multimodal(self, monkeypatch):
+        # The local lane serves a single multimodal model (qwen3.5-2b). It IS the
+        # vision model; the old "prefer a separate gemma-4-E2B" precedence is gone.
         backend = OllamaBackend(base_url="http://fake:11434")
-        monkeypatch.setattr(
-            backend, "list_models",
-            lambda: ["qwen3:0.6b", "hf.co/unsloth/gemma-4-E2B-it-GGUF:UD-IQ2_M"],
-        )
-        assert "gemma-4-E2B" in backend.vision_model_name()
+        monkeypatch.setattr(backend, "list_models", lambda: ["qwen3.5-2b"])
+        assert backend.vision_model_name() == "qwen3.5-2b"
 
     def test_chat_with_image_missing_file_returns_empty(self):
         backend = OllamaBackend(base_url="http://fake:11434")
@@ -353,9 +352,9 @@ class TestOllamaVisionAndTools:
 
     def test_fast_model_picks_configured(self, monkeypatch):
         backend = OllamaBackend(base_url="http://fake:11434")
-        monkeypatch.setenv("LOCAL_MODEL_FAST", "qwen3:0.6b")
-        monkeypatch.setattr(backend, "list_models", lambda: ["qwen3:0.6b", "gemma3:4b"])
-        assert backend.fast_model_name() == "qwen3:0.6b"
+        monkeypatch.setenv("LOCAL_MODEL_FAST", "qwen3.5-2b")
+        monkeypatch.setattr(backend, "list_models", lambda: ["qwen3.5-2b", "gemma3:4b"])
+        assert backend.fast_model_name() == "qwen3.5-2b"
 
 
 # ── Live integration tests (skip when no local backend) ────────────────────

@@ -10,7 +10,7 @@ import asyncio
 from functools import wraps
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -38,7 +38,7 @@ _DISTRIBUTED = os.environ.get("DISTRIBUTED_MODE", "").lower() in ("1", "true", "
 # ── Hermes Integration ─────────────────────────────────────────
 HERMES_URL = os.getenv("HERMES_URL", "http://127.0.0.1:9119")
 LOCAL_MODEL_URL = os.getenv("LOCAL_MODEL_URL", "http://127.0.0.1:8082")
-LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen3.5:4b")
+LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "qwen3.5-2b")
 _API_PORT = int(os.environ.get("API_PORT", 8000))
 
 # ── Dev-Brain Advisory Layer (deterministic, no LLM) ─────────────
@@ -85,9 +85,14 @@ _openhub_adapter = OpenHubAdapter(
 )
 
 # AetherDesk Adapter (shared instance for call center routing)
+# Port 8002 is the pm2 entry (fleet-manifest.js); 3002 was never a live port.
+# AETHERDESK_API_URL / AETHERDESK_BASE_URL are both accepted; the adapter
+# normalises either form to a bare origin.
 from adapters.aetherdesk import AetherDeskAdapter
 _aetherdesk_adapter = AetherDeskAdapter(
-    base_url=os.environ.get("AETHERDESK_API_URL", "http://127.0.0.1:3002"),
+    base_url=os.environ.get("AETHERDESK_API_URL")
+    or os.environ.get("AETHERDESK_BASE_URL")
+    or "http://127.0.0.1:8002",
     api_key=os.environ.get("AETHERDESK_API_KEY", "dev-key"),
 )
 
@@ -1374,8 +1379,7 @@ def local_model_list() -> Dict:
 def local_model_chat(req: ChatRequest) -> Dict:
     """Chat directly with the unified local model.
 
-    Optional req.model pins an explicit lane model (e.g. medgemma:4b for
-    biomed, deepseek-ocr:3b for document OCR). Empty/unknown -> default.
+    Optional req.model pins an explicit lane model. Empty/unknown -> default.
     """
     try:
         from tools.local_model import get_local_model
@@ -1492,7 +1496,7 @@ def local_harness_chat(req: ChatRequest) -> Dict:
 def local_harness_reason(body: Dict) -> Dict:
     """Reasoning through the local harness.
 
-    Defaults to the FAST tier (qwen3:0.6b, thinking disabled) for time-boxed
+    Defaults to the FAST tier (qwen3.5-2b, thinking disabled) for time-boxed
     ops triage — returns {answer}. Pass {"mode":"cot"} for a full chain-of-
     thought (slow on this CPU) → {scratchpad, answer}.
     """
@@ -2329,6 +2333,23 @@ def system_backends() -> Dict:
 def metrics_dump() -> Dict:
     """Full runtime metrics snapshot — latency, error rates, cache, SQLite."""
     return get_metrics().snapshot()
+
+
+@app.get("/metrics/prometheus")
+def metrics_prometheus():
+    """Prometheus text exposition of the same metrics (tools/metrics.py).
+
+    503 (not fake zeros) when prometheus-client is missing or the mirror is
+    unavailable in DISTRIBUTED_MODE. JSON at /metrics is unchanged.
+    """
+    from tools.metrics import render_prometheus
+    body, content_type = render_prometheus()
+    if not body:
+        return PlainTextResponse(
+            "prometheus exposition unavailable (prometheus-client missing or DISTRIBUTED_MODE)\n",
+            status_code=503,
+        )
+    return Response(content=body, media_type=content_type)
 
 
 @app.get("/dashboard/performance")

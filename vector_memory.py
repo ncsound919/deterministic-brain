@@ -12,11 +12,13 @@ import atexit
 import sys
 import threading
 
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
-from sentence_transformers import SentenceTransformer
+import os
 
 from config import cfg
+
+# NOTE: qdrant_client + sentence_transformers are imported lazily inside
+# VectorMemory.__init__ (local mode only). Remote mode (BRAIN_VECTOR_URL) keeps
+# them unloaded — no local torch/qdrant CPU or RAM is paid.
 
 @dataclass
 class MemoryEntry:
@@ -40,6 +42,20 @@ class VectorMemory:
 
     def __init__(self, persist_directory: Optional[Path] = None):
         """Initialize vector memory with Qdrant"""
+        # Lazy local-only imports (remote mode never reaches this constructor).
+        from qdrant_client import QdrantClient
+        from qdrant_client import models as _qmodels
+        from sentence_transformers import SentenceTransformer
+        globals().update({
+            "QdrantClient": QdrantClient,
+            "SentenceTransformer": SentenceTransformer,
+            "Distance": _qmodels.Distance,
+            "VectorParams": _qmodels.VectorParams,
+            "PointStruct": _qmodels.PointStruct,
+            "Filter": _qmodels.Filter,
+            "FieldCondition": _qmodels.FieldCondition,
+            "MatchValue": _qmodels.MatchValue,
+        })
         self.persist_dir = persist_directory or Path(".qdrant_data")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
         
@@ -402,13 +418,22 @@ class VectorMemory:
 _vector_memory_instance: Optional[VectorMemory] = None
 _vector_memory_lock = threading.Lock()
 
-def get_vector_memory() -> VectorMemory:
-    """Get the shared VectorMemory instance, creating it on first use."""
+def get_vector_memory():
+    """Get the shared VectorMemory instance, creating it on first use.
+
+    Remote mode: set BRAIN_VECTOR_URL to serve vector memory from the Cloudflare
+    `vec-memory` Worker (Workers AI embeddings + D1) instead of local qdrant +
+    sentence-transformers — no local embedding/VDB CPU.
+    """
     global _vector_memory_instance
     if _vector_memory_instance is None:
         with _vector_memory_lock:
             if _vector_memory_instance is None:
-                _vector_memory_instance = VectorMemory()
+                if os.environ.get("BRAIN_VECTOR_URL"):
+                    from vector_memory_remote import RemoteVectorMemory
+                    _vector_memory_instance = RemoteVectorMemory()
+                else:
+                    _vector_memory_instance = VectorMemory()
     return _vector_memory_instance
 
 class _LazyVectorMemoryProxy:

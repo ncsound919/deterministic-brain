@@ -306,6 +306,30 @@ class TestResetMetrics:
         assert m2 is not m1
 
 
+class TestPrometheusRender:
+    """render_prometheus() feeds GET /metrics/prometheus (api/server.py)."""
+
+    def test_render_returns_prometheus_text(self):
+        from tools.metrics import render_prometheus
+        m = _fresh()
+        m.record_request("/probe", 1.0, 200)
+        body, ctype = render_prometheus()
+        if not body:
+            pytest.skip("prometheus-client unavailable")
+        assert isinstance(body, (bytes, bytearray))
+        assert b"brain_requests_total" in bytes(body)
+        assert "text/plain" in ctype
+
+    def test_render_reflects_route_errors(self):
+        from tools.metrics import render_prometheus
+        m = _fresh()
+        m.record_request("/boom", 2.0, 500)
+        body, _ = render_prometheus()
+        if not body:
+            pytest.skip("prometheus-client unavailable")
+        assert b'route="/boom"' in bytes(body)
+
+
 class TestConcurrency:
     def test_record_request_thread_safe(self):
         import threading

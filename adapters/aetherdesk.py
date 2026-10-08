@@ -58,7 +58,14 @@ class CampaignStats:
 class AetherDeskAdapter(BaseAdapter):
     def __init__(self, base_url: str, api_key: str, timeout: float = 30.0):
         super().__init__(name="aetherdesk")
-        self.base_url = base_url.rstrip("/")
+        # Every call site below passes a full "/api/v1/..." path, so the client
+        # base must be a BARE ORIGIN. Strip a trailing /api/v1 when the caller
+        # supplied an API base (AETHERDESK_API_URL in .env.local already carries
+        # it) so the join can never produce /api/v1/api/v1/....
+        base = (base_url or "").strip().rstrip("/")
+        if base.lower().endswith("/api/v1"):
+            base = base[: -len("/api/v1")]
+        self.base_url = base
         self.api_key = api_key
         self.timeout = timeout
 
@@ -75,7 +82,10 @@ class AetherDeskAdapter(BaseAdapter):
         async with self._client() as client:
             try:
                 resp = await client.get("/api/v1/usage")
-                ok = resp.status_code < 500
+                # Strictly 200. Anything else (401/403/404/5xx) is not healthy —
+                # a permissive "<500" check previously reported 404s as ok and
+                # masked the fact that none of the routes below existed.
+                ok = resp.status_code == 200
                 return AdapterCallResult(ok=ok, status_code=resp.status_code, data=resp.json())
             except Exception as e:
                 logger.warning("AetherDesk health check failed: %s", e)
@@ -125,9 +135,11 @@ class AetherDeskAdapter(BaseAdapter):
 
     async def get_campaign_stats(self) -> CampaignStats:
         async with self._client() as client:
-            # Real route: GET /api/v1/stats (campaign.py:474). Field mapping:
+            # Real route: GET /api/v1/campaign/stats (campaign.py:529). The
+            # router carries prefix="/campaign" (campaign.py:30), so the bare
+            # "/api/v1/stats" this used to call never existed. Field mapping:
             # total_calls_made / interested exist; voicemail is not reported.
-            resp = await client.get("/api/v1/stats")
+            resp = await client.get("/api/v1/campaign/stats")
             resp.raise_for_status()
             data = resp.json()
             return CampaignStats(
@@ -151,7 +163,7 @@ class AetherDeskAdapter(BaseAdapter):
     async def get_call_outcomes(self, since: datetime) -> List[CallEvent]:
         async with self._client() as client:
             resp = await client.get(
-                "/api/v1/stats",
+                "/api/v1/campaign/stats",
                 params={"since": since.isoformat()},
             )
             resp.raise_for_status()
@@ -174,10 +186,11 @@ class AetherDeskAdapter(BaseAdapter):
 
     async def validate_lead_inventory(self, config: CampaignConfig) -> bool:
         async with self._client() as client:
-            # GET /api/v1/leads?status=... (campaign.py:141) — the summary
-            # endpoint this used to call does not exist. Count fresh leads.
+            # Real route: GET /api/v1/campaign/leads (campaign.py:168) — the
+            # router carries prefix="/campaign" (campaign.py:30), so the bare
+            # "/api/v1/leads" this used to call never existed.
             resp = await client.get(
-                "/api/v1/leads",
+                "/api/v1/campaign/leads",
                 params={"status": "new"},
             )
             resp.raise_for_status()
@@ -197,8 +210,9 @@ class AetherDeskAdapter(BaseAdapter):
                 "tenant_id": config.tenant_id,
             }
             async with self._client() as client:
+                # Real route: POST /api/v1/campaign/launch (campaign.py:580).
                 resp = await client.post(
-                    "/api/v1/launch",
+                    "/api/v1/campaign/launch",
                     json=payload,
                     headers={"X-Idempotency-Key": idempotency_key},
                 )
