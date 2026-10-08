@@ -94,7 +94,7 @@ rapidfuzz>=3.0.0                 # Fuzzy string matching (self_healing/fuzzy_mat
 #   (post-install: python -m spacy download en_core_web_sm)
 
 # --- File watching ---
-watchdog>=4.0.0                  # Hot-reload skill watching
+watchdog>=6.0.0                  # Hot-reload skill watching
 
 # --- Deterministic OSS capabilities (no LLM, no API keys) ---
 trafilatura>=1.8.0               # Web-article extraction (research_publisher sourcing)
