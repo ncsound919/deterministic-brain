@@ -99,7 +99,7 @@ watchdog>=4.0.0                  # Hot-reload skill watching
 # --- Deterministic OSS capabilities (no LLM, no API keys) ---
 trafilatura>=1.8.0               # Web-article extraction (research_publisher sourcing)
 duckduckgo-search>=6.0.0         # Free web search (no API key)
-pymupdf>=1.24.0                  # Fast PDF text extraction
+pymupdf>=1.28.2                  # Fast PDF text extraction
 ruff>=0.3.0                      # Fast Python linter (linter tool + oss_tools)
 bandit>=1.7.0                    # Python security scanning (oss_tools)
 # markitdown>=0.1.0              # Microsoft doc → markdown (optional, nice-to-have)
