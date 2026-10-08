@@ -1,0 +1,110 @@
+{
+  "adjustments": [
+    {
+      "genome_id": "demis-hassabis",
+      "from_weight": 0.99,
+      "to_weight": 1.0,
+      "delta": 0.01,
+      "actual_outcome": "success",
+      "reason": "Outcome calibration: SUCCESS (Brier 0.16) on \"Promote the Capability Forge template into the DSH harness profile\".",
+      "reasoning_id": "council-1790723886386",
+      "sector": "dev",
+      "timestamp": "2026-09-29T23:18:06Z"
+    },
+    {
+      "genome_id": "yann-lecun",
+      "from_weight": 0.98,
+      "to_weight": 0.99,
+      "delta": 0.01,
+      "actual_outcome": "success",
+      "reason": "Outcome calibration: SUCCESS (Brier 0.16) on \"Promote the Capability Forge template into the DSH harness profile\".",
+      "reasoning_id": "council-1790723886386",
+      "sector": "dev",
+      "timestamp": "2026-09-29T23:18:06Z"
+    },
+    {
+      "genome_id": "andrej-karpathy",
+      "from_weight": 0.97,
+      "to_weight": 0.98,
+      "delta": 0.01,
+      "actual_outcome": "success",
+      "reason": "Outcome calibration: SUCCESS (Brier 0.16) on \"Promote the Capability Forge template into the DSH harness profile\".",
+      "reasoning_id": "council-1790723886386",
+      "sector": "dev",
+      "timestamp": "2026-09-29T23:18:06Z"
+    }
+  ],
+  "records": [
+    {
+      "id": "pm-1a0ef760d32",
+      "decisionTitle": "Promote the Capability Forge template into the DSH harness profile",
+      "sector": "dev",
+      "status": "success",
+      "chosenOption": "pilot",
+      "predictedProbability": 0.6,
+      "actualOutcomeBinary": 1.0,
+      "brierScore": 0.16,
+      "calibrationRating": "MISCALIBRATED",
+      "metricVariances": [],
+      "rootCauses": [
+        "gate passed on local scorers only; reporank/grader/deep unavailable"
+      ],
+      "keyLessons": [
+        "A local-model JEV tier can satisfy the decision gate at zero cloud token cost",
+        "Fail-closed audit gate correctly refused the first promotion attempt"
+      ],
+      "suggestedAdjustments": [
+        {
+          "leaderId": "andrej-karpathy",
+          "leaderName": "Andrej Karpathy",
+          "sector": "dev",
+          "currentBelievability": 0.97,
+          "recommendedBelievability": 0.98,
+          "delta": 0.01,
+          "reason": "Outcome calibration: SUCCESS (Brier 0.16) on \"Promote the Capability Forge template into the DSH harness profile\"."
+        },
+        {
+          "leaderId": "yann-lecun",
+          "leaderName": "Yann LeCun",
+          "sector": "dev",
+          "currentBelievability": 0.98,
+          "recommendedBelievability": 0.99,
+          "delta": 0.01,
+          "reason": "Outcome calibration: SUCCESS (Brier 0.16) on \"Promote the Capability Forge template into the DSH harness profile\"."
+        },
+        {
+          "leaderId": "demis-hassabis",
+          "leaderName": "Demis Hassabis",
+          "sector": "dev",
+          "currentBelievability": 0.99,
+          "recommendedBelievability": 1.0,
+          "delta": 0.01,
+          "reason": "Outcome calibration: SUCCESS (Brier 0.16) on \"Promote the Capability Forge template into the DSH harness profile\"."
+        }
+      ],
+      "retrospectiveSummary": "Gate refused the first attempt because the sca scorer was unavailable. After starting Claw-Protect the gate passed, and the deterministic matrix and local JEV agreed on the recommendation.",
+      "primaryLeader": "Andrej Karpathy"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "lesson-1a0ef760d32-1",
+      "text": "Fail-closed audit gate correctly refused the first promotion attempt",
+      "verdict": "success",
+      "leader_id": "andrej-karpathy",
+      "sector": "dev",
+      "decision_title": "Promote the Capability Forge template into the DSH harness profile",
+      "timestamp": "2026-09-29T23:18:06Z"
+    },
+    {
+      "id": "lesson-1a0ef760d32-0",
+      "text": "A local-model JEV tier can satisfy the decision gate at zero cloud token cost",
+      "verdict": "success",
+      "leader_id": "andrej-karpathy",
+      "sector": "dev",
+      "decision_title": "Promote the Capability Forge template into the DSH harness profile",
+      "timestamp": "2026-09-29T23:18:06Z"
+    }
+  ],
+  "saved_ts": 1790723886.3865898
+}
