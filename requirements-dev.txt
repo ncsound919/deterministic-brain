@@ -10,7 +10,7 @@ pytest-xdist>=3.5
 
 # --- Linting & static analysis ---
 ruff>=0.3.0
-mypy>=1.8.0
+mypy>=2.4.0
 
 # --- Code quality (optional pre-commit) ---
 # pre-commit>=3.6.0
