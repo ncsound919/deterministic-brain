@@ -123,3 +123,6 @@ node_modules/
 .qdrant_data/
 builds/
 datasets/kaggle/
+
+# Runtime stderr log (runaway loguru output, 479MB)
+brain.err

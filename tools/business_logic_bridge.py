@@ -20,14 +20,14 @@ from typing import Any, Dict, Optional
 
 from tools.mcp_client import MCPClient
 
-_DEFAULT_SERVER = r"C:\Users\User\Downloads\Uplift\05_Apps\Business-Logic-MCP\dist\index.js"
+_DEFAULT_SERVER = r"C:\Users\User\Downloads\BUSINESS\SKILLS\Skilltech\Business-Logic-MCP\dist\index.js"
 
 
 def _server_command() -> list[str]:
     entry = os.environ.get("BUSINESS_LOGIC_MCP", _DEFAULT_SERVER)
     if not Path(entry).is_file():
         # Fall back to the Skilltech clone if present; else report honestly.
-        alt = Path(r"C:\Users\User\Downloads\Skilltech\Business-Logic-MCP\dist\index.js")
+        alt = Path(r"C:\Users\User\Downloads\BUSINESS\SKILLS\Skilltech\Business-Logic-MCP\dist\index.js")
         if alt.is_file():
             entry = str(alt)
     return ["node", entry]
