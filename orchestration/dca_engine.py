@@ -204,11 +204,14 @@ class DeterministicCodingAgent:
             # Wire standalone skill handlers (keyword-first parallel path)
             from skills.cli_anything import register_cli_anything_skill
             from skills.content_creation import register_content_creation_skill
+            from skills.crm_tools import register_crm_tools_skill
             from skills.knowledge_synthesis import register_knowledge_synthesis_skill
 
             register_cli_anything_skill(self.intent_router)
             register_content_creation_skill(self.intent_router)
             register_knowledge_synthesis_skill(self.intent_router)
+            # CRM last: see register_crm_tools_skill for the ordering rationale.
+            register_crm_tools_skill(self.intent_router)
 
             # FIX: Wire hybrid engine intents to full DCA handle loop (NOT returning None)
             self.intent_router.register_intent(

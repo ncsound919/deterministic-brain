@@ -129,6 +129,24 @@ class ToolRegistry:
         except ImportError as e:
             logger.debug(f"finance_client not available: {e}")
 
+        # CRM — contacts + deal pipeline over crm/*.json (tools/crm.py).
+        # Deterministic and dependency-free: the crm-contact / crm-pipeline
+        # skill packs are prose-only and could never run without an LLM key.
+        try:
+            from tools.crm import get_crm_store
+
+            def _crm_contact(**kw):
+                return get_crm_store().contact_action(**kw)
+
+            def _crm_pipeline(**kw):
+                return get_crm_store().pipeline_action(**kw)
+
+            self.register("crm_contact", _crm_contact)
+            self.register("crm_pipeline", _crm_pipeline)
+            logger.info("Registered tools: crm_contact, crm_pipeline")
+        except Exception as e:  # noqa: BLE001 — a broken store must not kill the registry
+            logger.warning(f"crm tools not available: {e}")
+
         try:
             from tools.free_api_clients import (
                 FrankfurterClient, HackerNewsClient, WikipediaClient,

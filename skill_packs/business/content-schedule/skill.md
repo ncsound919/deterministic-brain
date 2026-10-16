@@ -1,6 +1,6 @@
 ---
 skill: content-schedule
-version: 1.0
+version: 1.1
 backend: local
 backend_skill_id: ""
 description: Schedule and track content publishing — blog posts, social media, newsletters
@@ -15,6 +15,14 @@ tools: [file_read, file_write]
 audit: []
 monte_carlo: false
 ---
+Engine: `tools/content_engine.py::ContentEngine`. `schedule_content(topic,
+platforms, segment=...)` accepts a **CRM segment** — a tag or company in
+`crm/contacts.json` — and stamps the draft with the audience it was aimed at
+(`tools/crm.py::CRMStore.audience_segments`). With an empty CRM the draft
+carries no `crm` block rather than a guessed one. The marketing engine
+(`features/autonomous_ceo.py::sync_crm_marketing`) drives this end to end:
+pipeline → segment → draft → CRM activity write-back.
+
 ## Step 1 — Read content calendar
 Load from `content/calendar.json`.
 
